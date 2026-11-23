@@ -16,7 +16,7 @@ const VIEWPORTS = [
 ];
 
 const TARGETS =
-  'button, summary, a.j6n-btn, .footer-nav a, label.check, label.drop, .j6n-segmented label, .j6n-skiplink';
+  'button, select, summary, a.j6n-btn, .footer-nav a, label.check, label.drop, .j6n-segmented label, .j6n-skiplink';
 
 for (const vp of VIEWPORTS) {
   test.describe(`viewport ${vp.name}`, () => {

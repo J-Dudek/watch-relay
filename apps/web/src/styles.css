@@ -37,6 +37,12 @@ app-root {
 }
 
 /* La bascule de thème a besoin de cibles ≥ 44 px (WCAG 2.5.8 / projet) */
+/* Sélecteur de langue : largeur du contenu (le thème met les champs à 100 %). */
+.language-select {
+  width: auto;
+  min-width: 8rem;
+}
+
 .header-tools .j6n-segmented label {
   min-height: 44px;
 }

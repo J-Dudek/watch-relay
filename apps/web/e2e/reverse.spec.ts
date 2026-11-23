@@ -52,7 +52,7 @@ test('le sens par défaut reste Garmin → COROS', async ({ page }) => {
 test('le sens suit la langue', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'COROS → Garmin' }).click();
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page.getByRole('heading', { name: 'COROS → Garmin migration' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Get your COROS export/ })).toBeVisible();
 });

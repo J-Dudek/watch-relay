@@ -11,7 +11,7 @@ test('logo dans l’en-tête et signature J6N avec lien sécurisé', async ({ pa
 
 test('la signature suit la langue', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page.getByText('Made by')).toBeVisible();
 });
 

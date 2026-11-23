@@ -23,11 +23,11 @@ test.describe('langue allemande du navigateur', () => {
 
 test('le sélecteur change la langue et la mémorise', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page.getByRole('heading', { name: /Get your Garmin export/ })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await page.reload();
   await expect(page.getByRole('heading', { name: /Get your Garmin export/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Passer en français' }).click();
+  await page.getByRole('combobox', { name: 'Language' }).selectOption('fr');
   await expect(page.getByRole('heading', { name: /Récupérer ton export Garmin/ })).toBeVisible();
 });

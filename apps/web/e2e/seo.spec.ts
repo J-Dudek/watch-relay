@@ -93,6 +93,6 @@ test('les anciens liens /#/faq sont ramenés à /faq', async ({ page }) => {
 
 test('la langue change aussi le titre de la page', async ({ page }) => {
   await page.goto('/faq');
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page).toHaveTitle(/^FAQ — Garmin ⇄ COROS migration/);
 });

@@ -14,8 +14,7 @@ const en: Base = {
   },
   stepsLabel: 'Steps',
   steps: ['Garmin export', 'Upload', 'Analysis', 'COROS import'],
-  languageSwitch: 'Français',
-  languageSwitchLabel: 'Passer en français',
+  languageLabel: 'Language',
   footer:
     'Independent tool, not affiliated with Garmin or COROS. Brand names are used for descriptive purposes only.',
   loading: 'Loading…',
@@ -23,7 +22,7 @@ const en: Base = {
   theme: { label: 'Appearance', auto: 'Auto', light: 'Light', dark: 'Dark' },
   skipLink: 'Skip to content',
   stepState: { done: '(completed)', current: '(current)', todo: '(upcoming)' },
-  design: { before: 'Design', name: 'design-j6n', href: 'https://github.com/J-Dudek/design-j6n' },
+  design: { before: 'Design', name: 'design-j6n', href: 'https://design.byj6n.fr' },
   signature: { before: 'Made by', name: 'J6N', href: 'https://me.byj6n.fr' },
   back: 'Back',
   restart: 'Start over',

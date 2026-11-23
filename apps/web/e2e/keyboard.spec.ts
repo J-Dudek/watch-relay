@@ -58,7 +58,7 @@ test('guide : ordre logique et focus toujours visible', async ({ page }) => {
   const stops = await tabThrough(page);
   const names = stops.map((s) => s.name);
   expect(names[0]).toBe('Aller au contenu'); // lien d'évitement en premier
-  expect(names).toContain('Switch to English');
+  expect(names).toContain('Langue');
   expect(names).toContain('Gestion des données de ton compte Garmin');
   expect(names.indexOf('J’ai mon fichier')).toBeGreaterThan(
     names.indexOf('Gestion des données de ton compte Garmin'),
@@ -155,8 +155,8 @@ test('pages d’information : liens du pied de page au clavier et retour', async
 
 test('le sélecteur de langue s’utilise au clavier', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Switch to English' }).focus();
-  await page.keyboard.press('Enter');
+  await page.getByRole('combobox', { name: 'Langue' }).focus();
+  await page.keyboard.press('ArrowDown'); // sélection au clavier : Français → English
   await expect(page.getByRole('heading', { name: /Get your Garmin export/ })).toBeVisible();
 });
 

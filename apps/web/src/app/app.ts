@@ -9,7 +9,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { I18n } from './i18n';
+import { I18n, type Locale } from './i18n';
 import { ProcessingService } from './processing.service';
 import { THEME_MODES, applyTheme, readTheme, storeTheme, type ThemeMode } from './theme';
 import { AnalyzeStep } from './steps/analyze-step';
@@ -45,15 +45,17 @@ import { ImportStep } from './steps/import-step';
             <label [for]="'theme-' + m">{{ t().theme[m] }}</label>
           }
         </div>
-        <button
-          type="button"
-          class="j6n-btn j6n-btn--secondary"
-          [attr.lang]="i18n.locale() === 'fr' ? 'en' : 'fr'"
-          [attr.aria-label]="t().languageSwitchLabel"
-          (click)="toggle()"
+        <select
+          class="j6n-select language-select"
+          [attr.aria-label]="t().languageLabel"
+          (change)="setLanguage($event)"
         >
-          {{ t().languageSwitch }}
-        </button>
+          @for (l of languages; track l.code) {
+            <option [value]="l.code" [attr.lang]="l.code" [selected]="i18n.locale() === l.code">
+              {{ l.label }}
+            </option>
+          }
+        </select>
       </div>
     </header>
 
@@ -180,8 +182,15 @@ export class App {
     document.getElementById('main')?.focus();
   }
 
-  protected toggle(): void {
-    void this.i18n.toggle();
+  /** Chaque langue est nommée dans sa propre langue (on la reconnaît sans la comprendre). */
+  protected readonly languages: readonly { code: Locale; label: string }[] = [
+    { code: 'fr', label: 'Français' },
+    { code: 'en', label: 'English' },
+  ];
+
+  protected setLanguage(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === 'fr' || value === 'en') void this.i18n.set(value);
   }
 
   protected go(step: number): void {

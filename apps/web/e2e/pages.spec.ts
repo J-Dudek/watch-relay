@@ -25,7 +25,7 @@ test('les pages FAQ, confidentialité et mentions légales sont accessibles (T3.
 test('un lien direct ouvre la page et suit la langue', async ({ page }) => {
   await page.goto('/faq');
   await expect(page.getByRole('heading', { name: 'Questions fréquentes' })).toBeVisible();
-  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible();
 });
 
