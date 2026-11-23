@@ -18,6 +18,8 @@ export interface ProcessProgress {
   /** Entrées d'activité traitées dans la phase courante. */
   readonly processed: number;
   readonly bytesRead: number;
+  /** Nombre de fichiers à écrire (connu à partir de la phase d'écriture). */
+  readonly total?: number;
 }
 
 export interface ProcessOptions {
@@ -138,7 +140,7 @@ export async function processArchive(
         );
         counts[index] = (counts[index] ?? 0) + 1;
         written++;
-        onProgress?.({ phase: 'write', processed: written, bytesRead });
+        onProgress?.({ phase: 'write', processed: written, bytesRead, total: kept.length });
       }
     }
 

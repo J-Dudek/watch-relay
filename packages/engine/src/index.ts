@@ -17,3 +17,5 @@ export * from './tcx.js';
 export * from './analyze.js';
 export * from './sink.js';
 export * from './process.js';
+export * from './opfs-sink.js';
+export * from './protocol.js';

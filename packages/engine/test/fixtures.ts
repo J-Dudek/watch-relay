@@ -7,12 +7,15 @@ const mesgNum = (name: string): number => Profile.MesgNum[name] as number;
 export interface FitOptions {
   sport?: string;
   start?: Date;
+  /** Taille minimale en octets (ajoute des messages RECORD) : COROS rejette < 20 Ko. */
+  minSize?: number;
 }
 
 /** FIT synthétique valide, généré avec l'encodeur officiel. */
 export function makeFit({
   sport = 'running',
   start = new Date(Date.UTC(2023, 4, 14, 7, 32, 10)),
+  minSize = 0,
 }: FitOptions = {}): Uint8Array {
   const enc = new Encoder();
   enc.onMesg(mesgNum('FILE_ID'), <Mesg>{
@@ -22,6 +25,13 @@ export function makeFit({
     timeCreated: start,
     serialNumber: 1234,
   });
+  for (let i = 0; i * 16 < minSize; i++) {
+    enc.onMesg(mesgNum('RECORD'), <Mesg>{
+      timestamp: new Date(start.getTime() + i * 1000),
+      heartRate: 100 + (i % 60),
+      distance: i * 3,
+    });
+  }
   enc.onMesg(mesgNum('SESSION'), <Mesg>{
     timestamp: new Date(start.getTime() + 3_600_000),
     startTime: start,
