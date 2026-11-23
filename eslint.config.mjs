@@ -11,6 +11,8 @@ export default tseslint.config(
       '**/.angular/**',
       '**/test-results/**',
       '**/playwright-report/**',
+      '.lighthouseci/**',
+      'lighthouserc*.cjs', // configuration CommonJS imposée par lhci, non typée
     ],
   },
   js.configs.recommended,

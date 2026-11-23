@@ -34,6 +34,7 @@ Un fichier corrompu n'interrompt jamais le traitement des autres.
 | Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible                                                                       |
 | Accessibilité          | axe-core (WCAG 2.2 AA) : 0 violation sur chaque écran, FR/EN, clair/sombre, 5 profils d'appareil                                                                   |
 | Responsive et visuel   | pas de défilement horizontal ni cible < 44 px de 320 à 1280 px ; captures de référence sur 3 tailles (`npm run e2e:update -w @watch-relay/web` pour les régénérer) |
+| Lighthouse             | Performance ≥ 95, Accessibilité 100, Best Practices 100, SEO ≥ 95 (mobile et bureau), bloquant en CI : `npm run lighthouse`                                        |
 | Hors ligne             | service worker sans dépendance, précache du build ; test e2e en mode hors ligne sur 5 profils                                                                      |
 | Pas de trace           | stockage temporaire vidé au démarrage et à « Recommencer »                                                                                                         |
 
@@ -86,7 +87,7 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier, tests responsive et régression visuelle. À venir : lecteurs d'écran et tests sur
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier, tests responsive et régression visuelle, Lighthouse CI. À venir : lecteurs d'écran et tests sur
 appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non
