@@ -81,10 +81,10 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
     }
 
     <footer class="footer">
-      <nav [attr.aria-label]="t().pages.nav.label" class="footer-nav">
-        <a href="#/faq">{{ t().pages.nav.faq }}</a>
-        <a href="#/privacy">{{ t().pages.nav.privacy }}</a>
-        <a href="#/legal">{{ t().pages.nav.legal }}</a>
+      <nav [attr.aria-label]="t().pagesNav.label" class="footer-nav">
+        <a href="#/faq">{{ t().pagesNav.faq }}</a>
+        <a href="#/privacy">{{ t().pagesNav.privacy }}</a>
+        <a href="#/legal">{{ t().pagesNav.legal }}</a>
       </nav>
       <p>{{ t().footer }}</p>
     </footer>

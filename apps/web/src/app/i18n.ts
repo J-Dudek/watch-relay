@@ -1,7 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ProcessingService } from './processing.service';
 import type { RejectReason } from '@watch-relay/engine';
-import { PAGES_EN, PAGES_FR } from './pages-content';
 
 export type Locale = 'fr' | 'en';
 export const LOCALES: readonly Locale[] = ['fr', 'en'];
@@ -25,6 +24,7 @@ const fr = {
   languageSwitchLabel: 'Switch to English',
   footer:
     'Outil indépendant, non affilié à Garmin ni à COROS. Les noms de marques ne sont utilisés qu’à titre descriptif.',
+  loading: 'Chargement…',
   back: 'Retour',
   restart: 'Recommencer',
   guide: {
@@ -138,7 +138,13 @@ const fr = {
       `${String(done)} / ${String(total)} archive(s) importée(s)`,
     finish: 'Terminer',
   },
-  pages: PAGES_FR,
+  pagesNav: {
+    label: 'Informations',
+    faq: 'FAQ',
+    privacy: 'Confidentialité',
+    legal: 'Mentions légales',
+    backToTool: '← Retour à l’outil',
+  },
   units: ['o', 'Ko', 'Mo', 'Go'],
   numberLocale: 'fr-FR',
 };
@@ -165,6 +171,7 @@ const en: Base = {
   languageSwitchLabel: 'Passer en français',
   footer:
     'Independent tool, not affiliated with Garmin or COROS. Brand names are used for descriptive purposes only.',
+  loading: 'Loading…',
   back: 'Back',
   restart: 'Start over',
   guide: {
@@ -277,7 +284,13 @@ const en: Base = {
       `${String(done)} / ${String(total)} archive(s) imported`,
     finish: 'Finish',
   },
-  pages: PAGES_EN,
+  pagesNav: {
+    label: 'Information',
+    faq: 'FAQ',
+    privacy: 'Privacy',
+    legal: 'Legal notice',
+    backToTool: '← Back to the tool',
+  },
   units: ['B', 'KB', 'MB', 'GB'],
   numberLocale: 'en-US',
 };

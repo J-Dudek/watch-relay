@@ -3,7 +3,6 @@ export interface Section {
   readonly p: readonly string[];
 }
 export interface PagesMessages {
-  readonly nav: { faq: string; privacy: string; legal: string; label: string; backToTool: string };
   readonly faq: { title: string; items: readonly { q: string; a: readonly string[] }[] };
   readonly privacy: { title: string; sections: readonly Section[] };
   readonly legal: { title: string; sections: readonly Section[] };
@@ -12,13 +11,6 @@ export interface PagesMessages {
 const CONTACT = 'julien.dudek@gmail.com';
 
 export const PAGES_FR: PagesMessages = {
-  nav: {
-    label: 'Informations',
-    faq: 'FAQ',
-    privacy: 'Confidentialité',
-    legal: 'Mentions légales',
-    backToTool: '← Retour à l’outil',
-  },
   faq: {
     title: 'Questions fréquentes',
     items: [
@@ -162,13 +154,6 @@ export const PAGES_FR: PagesMessages = {
 };
 
 export const PAGES_EN: PagesMessages = {
-  nav: {
-    label: 'Information',
-    faq: 'FAQ',
-    privacy: 'Privacy',
-    legal: 'Legal notice',
-    backToTool: '← Back to the tool',
-  },
   faq: {
     title: 'Frequently asked questions',
     items: [

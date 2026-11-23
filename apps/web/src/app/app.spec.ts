@@ -36,18 +36,27 @@ describe('App', () => {
     );
   });
 
-  it('affiche la FAQ via le hash et revient à l’outil', async () => {
+  it('affiche la FAQ (chunk chargé à la demande) via le hash et revient à l’outil', async () => {
     await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    location.hash = '#/faq';
-    await new Promise((r) => setTimeout(r, 0));
-    await fixture.whenStable();
-    expect(el.querySelector('h2')?.textContent).toContain('Questions fréquentes');
-    location.hash = '#/';
-    await new Promise((r) => setTimeout(r, 0));
-    await fixture.whenStable();
+    const until = async (check: () => boolean): Promise<void> => {
+      for (let i = 0; i < 100 && !check(); i++) {
+        await new Promise((r) => setTimeout(r, 20));
+        await fixture.whenStable();
+      }
+    };
+    try {
+      location.hash = '#/faq';
+      await until(
+        () => el.querySelector('h2')?.textContent.includes('Questions fréquentes') === true,
+      );
+      expect(el.querySelector('h2')?.textContent).toContain('Questions fréquentes');
+    } finally {
+      location.hash = '#/';
+    }
+    await until(() => el.querySelector('h2')?.textContent.includes('Récupérer') === true);
     expect(el.querySelector('h2')?.textContent).toContain('Récupérer ton export Garmin');
   });
 
