@@ -1,4 +1,5 @@
 import { ParseError } from './fit.js';
+import { haversine, trackToTcx } from './tcx-writer.js';
 import type { ActivityMeta } from './types.js';
 
 /**
@@ -14,7 +15,6 @@ export const MAX_GPX_BYTES = 50 * 1024 * 1024;
 const MAX_POINTS = 500_000;
 const DTD = /<!\s*(DOCTYPE|ENTITY)/i;
 const COORD = /^-?\d{1,3}(?:\.\d{1,15})?$/;
-const EARTH_RADIUS_M = 6_371_000;
 
 interface Point {
   readonly lat: string;
@@ -152,16 +152,6 @@ export function parseGpx(bytes: Uint8Array, hint?: string): ParsedGpx {
   };
 }
 
-function haversine(a: Point, b: Point): number {
-  const rad = Math.PI / 180;
-  const dLat = (Number(b.lat) - Number(a.lat)) * rad;
-  const dLon = (Number(b.lon) - Number(a.lon)) * rad;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(Number(a.lat) * rad) * Math.cos(Number(b.lat) * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
 /** Entités XML prédéfinies et références numériques (le GPX est lu sans parseur XML). */
 function xmlUnescape(s: string): string {
   return s.replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|lt|gt|amp|quot|apos);/gi, (m, e: string) => {
@@ -178,62 +168,15 @@ function xmlUnescape(s: string): string {
   });
 }
 
-const xmlEscape = (s: string): string =>
-  s.replace(/[&<>"']/g, (c) => `&#${String(c.charCodeAt(0))};`);
-
-const TCX_SPORT: Record<string, string> = { running: 'Running', cycling: 'Biking' };
-
 /** TCX conforme au schéma Garmin (le schéma ne connaît que Running, Biking et Other). */
 export function gpxToTcx(parsed: ParsedGpx): string {
-  const out: string[] = [];
-  let distance = 0;
-  let hrSum = 0;
-  let hrCount = 0;
-  let hrMax = 0;
-  const tracks: string[] = [];
-  let prev: Point | undefined;
-  for (const segment of parsed.segments) {
-    const pts: string[] = [];
-    for (const p of segment) {
-      if (prev) distance += haversine(prev, p);
-      prev = p;
-      if (p.hr !== undefined) {
-        hrSum += p.hr;
-        hrCount++;
-        hrMax = Math.max(hrMax, p.hr);
-      }
-      pts.push(
-        `<Trackpoint><Time>${new Date(p.time).toISOString()}</Time>` +
-          `<Position><LatitudeDegrees>${p.lat}</LatitudeDegrees><LongitudeDegrees>${p.lon}</LongitudeDegrees></Position>` +
-          (p.ele === undefined ? '' : `<AltitudeMeters>${p.ele}</AltitudeMeters>`) +
-          `<DistanceMeters>${distance.toFixed(1)}</DistanceMeters>` +
-          (p.hr === undefined
-            ? ''
-            : `<HeartRateBpm><Value>${String(Math.round(p.hr))}</Value></HeartRateBpm>`) +
-          (p.cad === undefined ? '' : `<Cadence>${String(Math.round(p.cad))}</Cadence>`) +
-          `</Trackpoint>`,
-      );
-    }
-    tracks.push(`<Track>${pts.join('')}</Track>`);
-  }
-
-  const start = new Date(parsed.meta.startTime).toISOString();
-  out.push(
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenter/v2">',
-    `<Activities><Activity Sport="${TCX_SPORT[parsed.sport] ?? 'Other'}"><Id>${start}</Id>`,
-    `<Lap StartTime="${start}"><TotalTimeSeconds>${(parsed.meta.durationS ?? 0).toFixed(1)}</TotalTimeSeconds>`,
-    `<DistanceMeters>${distance.toFixed(1)}</DistanceMeters><Calories>0</Calories>`,
-    hrCount > 0
-      ? `<AverageHeartRateBpm><Value>${String(Math.round(hrSum / hrCount))}</Value></AverageHeartRateBpm><MaximumHeartRateBpm><Value>${String(Math.round(hrMax))}</Value></MaximumHeartRateBpm>`
-      : '',
-    '<Intensity>Active</Intensity><TriggerMethod>Manual</TriggerMethod>',
-    tracks.join(''),
-    '</Lap>',
-    parsed.name ? `<Notes>${xmlEscape(parsed.name)}</Notes>` : '',
-    '</Activity></Activities></TrainingCenterDatabase>',
-  );
-  return out.join('\n');
+  return trackToTcx({
+    sport: parsed.sport,
+    ...(parsed.name ? { name: parsed.name } : {}),
+    startTime: parsed.meta.startTime,
+    durationS: parsed.meta.durationS ?? 0,
+    segments: parsed.segments,
+  });
 }
 
 /** Distance totale (m), utile au rapport. */

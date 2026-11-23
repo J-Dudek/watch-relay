@@ -1,22 +1,26 @@
-import type { Base, FlowMessages, Messages } from './fr';
+import type { Base, Messages, PolarMessages, ReverseMessages } from './fr';
 
 const en: Base = {
   htmlTitle: 'Garmin ⇄ COROS migration – activity transfer, 100% local',
   siteName: 'Garmin ⇄ COROS migration',
   htmlDescription:
-    'Prepare your Garmin activity history for COROS, or the other way round. Everything happens in your browser: no data is sent, no account required.',
-  title: 'Garmin → COROS migration',
+    'Prepare your activity history between Garmin, COROS and Polar. Everything happens in your browser: no data is sent, no account required.',
   tagline: '100% on your device: no data is sent, no account required.',
   direction: {
     label: 'Transfer direction',
-    toCoros: 'Garmin → COROS',
-    toGarmin: 'COROS → Garmin',
+    from: 'From',
+    to: 'To',
+    unavailable: 'unavailable',
+    polarNote: 'Polar Flow does not import activity history: Polar is only available as a source.',
   },
+  titleFor: (from: string, to: string) => `${from} → ${to} migration`,
+  stepExport: (name: string) => `${name} export`,
+  stepImport: (name: string) => `${name} import`,
+  stepMiddle: ['Upload', 'Analysis'],
   stepsLabel: 'Steps',
-  steps: ['Garmin export', 'Upload', 'Analysis', 'COROS import'],
   languageLabel: 'Language',
   footer:
-    'Independent tool, not affiliated with Garmin or COROS. Brand names are used for descriptive purposes only.',
+    'Independent tool, not affiliated with Garmin, COROS or Polar. Brand names are used for descriptive purposes only.',
   loading: 'Loading…',
   logoAlt: 'watch-relay',
   theme: { label: 'Appearance', auto: 'Auto', light: 'Light', dark: 'Dark' },
@@ -69,6 +73,8 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    polarConverted: (n: number) =>
+      `${String(n)} Polar session(s) (JSON from the global export) converted to TCX. Times and time zones come from the export: check the first imported session.`,
     gpxConverted: (n: number) =>
       `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (walking and hiking become “Other”, the TCX format has no other category).`,
     healthExported: (rows: number, files: number) =>
@@ -160,9 +166,7 @@ const en: Base = {
   numberLocale: 'en-US',
 };
 
-const enReverse: FlowMessages = {
-  title: 'COROS → Garmin migration',
-  steps: ['COROS export', 'Upload', 'Analysis', 'Garmin import'],
+const enReverse: ReverseMessages = {
   guide: {
     title: '1. Get your COROS export',
     s1Before: 'From a computer, open',
@@ -220,4 +224,30 @@ const enReverse: FlowMessages = {
   },
 };
 
-export const MESSAGES_EN: Messages = { ...en, reverse: enReverse };
+/** Polar: source only (Polar Flow does not import activity history). */
+const enPolar: PolarMessages = {
+  guide: {
+    title: '1. Get your Polar sessions',
+    s1Before: 'From a computer, open',
+    s1Href: 'https://flow.polar.com',
+    s1Link: 'Polar Flow',
+    s1After: 'and sign in.',
+    s2Before: 'Open a session in the Diary, then the',
+    s2Strong: 'Export',
+    s3Before: 'Choose the format',
+    s3Strong: 'TCX (or FIT)',
+    s4Before: 'Repeat for each session, then put all the files in a single',
+    s4After: 'file to upload here.',
+    noteBefore: 'Polar also offers a global export of all your data (JSON):',
+    noteStrong: 'drop the ZIP as received',
+    noteAfter:
+      ', sessions are converted to TCX (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
+    haveFile: 'I have my file',
+  },
+  drop: {
+    choose: 'Choose the Polar sessions ZIP',
+    notZip: 'This file is not a ZIP. Put your exported sessions in a ZIP archive.',
+  },
+};
+
+export const MESSAGES_EN: Messages = { ...en, reverse: enReverse, polar: enPolar };

@@ -2,6 +2,8 @@ import { TextReader, Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
 import { ZipSizeEstimator } from './compress.js';
 import { gpxToTcx, parseGpx } from './gpx.js';
+import { parsePolarSession } from './polar.js';
+import { trackToTcx } from './tcx-writer.js';
 import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
@@ -48,6 +50,11 @@ export interface ProcessOptions {
    * par défaut : ces données sont sensibles et ne sont lues que sur demande explicite.
    */
   readonly healthExport?: boolean;
+  /**
+   * Lit aussi les JSON de séance de l'export global de Polar Flow et les convertit en TCX. Désactivé par
+   * défaut : tous les JSON d'un export doivent alors être lus pour reconnaître les séances.
+   */
+  readonly polarSessions?: boolean;
   readonly signal?: AbortSignal;
   readonly onProgress?: (progress: ProcessProgress) => void;
 }
@@ -121,10 +128,49 @@ export async function processArchive(
 
     for await (const event of scanArchive(input, limits, signal, {
       collectHealth: collector !== undefined,
+      collectSessions: options.polarSessions === true,
     })) {
       throwIfAborted(signal);
       const id = idFor(event.path);
-      if (event.kind === 'health') {
+      if (event.kind === 'json') {
+        let exercises: ReturnType<typeof parsePolarSession>;
+        try {
+          exercises = parsePolarSession(event.data);
+        } catch (e) {
+          rejections.push({
+            candidate: {
+              id,
+              format: 'tcx',
+              size: event.data.byteLength,
+              meta: { sport: 'unknown', startTime: 0 },
+            },
+            reason: 'CORRUPTED',
+            detail: e instanceof Error ? e.message : 'JSON Polar illisible',
+          });
+          processed++;
+          continue;
+        }
+        if (exercises === null) {
+          ignored.push({ path: event.path, note: 'pas une activité' });
+          continue;
+        }
+        for (const [i, ex] of exercises.entries()) {
+          const tcx = new TextEncoder().encode(trackToTcx(ex.track));
+          const candidate: Candidate = {
+            id: `${id}~${String(i)}`,
+            format: 'tcx',
+            convertedFrom: 'polar-json',
+            exerciseIndex: i,
+            size: tcx.byteLength,
+            meta: ex.meta,
+          };
+          candidates.push(candidate);
+          await estimator.observe(ZipSizeEstimator.groupOf(candidate), tcx);
+          processed++;
+          onProgress?.({ phase: 'analyze', processed, bytesRead });
+        }
+        bytesRead += event.data.byteLength;
+      } else if (event.kind === 'health') {
         collector?.add(event.path, event.data);
         ignored.push({ path: event.path, note: 'données de santé', kind: 'health' });
       } else if (event.kind === 'activity') {
@@ -193,9 +239,37 @@ export async function processArchive(
       let written = 0;
       const idFor2 = makeIdAllocator();
       if (kept.length > 0) {
-        for await (const event of scanArchive(input, limits, signal)) {
+        for await (const event of scanArchive(input, limits, signal, {
+          collectSessions: options.polarSessions === true,
+        })) {
           throwIfAborted(signal);
           const id = idFor2(event.path);
+          if (event.kind === 'json') {
+            // JSON Polar : chaque séance retenue est reconvertie (même taille qu'en passe 1).
+            let exercises: ReturnType<typeof parsePolarSession>;
+            try {
+              exercises = parsePolarSession(event.data);
+            } catch {
+              continue;
+            }
+            for (const [i, ex] of (exercises ?? []).entries()) {
+              const candidate = byId.get(`${id}~${String(i)}`);
+              const index = batchOf.get(`${id}~${String(i)}`);
+              if (!candidate || index === undefined) continue;
+              const output = new TextEncoder().encode(trackToTcx(ex.track));
+              if (output.byteLength !== candidate.size) {
+                throw new Error('Le fichier source a changé pendant le traitement.');
+              }
+              await (writers[index] as ZipWriter<unknown>).add(
+                entryName(candidate, takenNames[index] as Set<string>),
+                new Uint8ArrayReader(output),
+              );
+              counts[index] = (counts[index] ?? 0) + 1;
+              written++;
+              onProgress?.({ phase: 'write', processed: written, bytesRead, total: kept.length });
+            }
+            continue;
+          }
           if (event.kind !== 'activity') continue;
           const candidate = byId.get(id);
           const index = batchOf.get(id);

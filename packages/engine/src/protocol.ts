@@ -12,6 +12,8 @@ export interface StartOptions {
   readonly period?: Period;
   /** Extraire aussi les données de santé en CSV (archive à part). */
   readonly healthExport?: boolean;
+  /** Convertir les JSON de séance de l'export global Polar. */
+  readonly polarSessions?: boolean;
   /** Plateforme de destination (défaut : `coros`). */
   readonly target?: Target;
 }

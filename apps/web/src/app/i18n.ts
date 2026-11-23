@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { ProcessingService } from './processing.service';
+import { PLATFORM_NAMES, ProcessingService } from './processing.service';
 import { withRetry } from './retry';
 import type { FlowMessages, Messages } from './messages/fr';
 
@@ -40,10 +40,30 @@ export class I18n {
     return m;
   });
   private readonly processing = inject(ProcessingService);
-  /** Textes du sens de transfert courant (Garmin → COROS par défaut). */
-  readonly flow = computed<FlowMessages>(() =>
-    this.processing.target() === 'coros' ? this.t() : this.t().reverse,
-  );
+  /** Textes du couple source → destination courant (Garmin → COROS par défaut). */
+  readonly flow = computed<FlowMessages>(() => {
+    const t = this.t();
+    const source = this.processing.source();
+    const target = this.processing.target();
+    const from = PLATFORM_NAMES[source];
+    const to = PLATFORM_NAMES[target];
+    const origin =
+      source === 'garmin'
+        ? { guide: t.guide, drop: t.drop }
+        : source === 'coros'
+          ? { guide: t.reverse.guide, drop: t.reverse.drop }
+          : { guide: t.polar.guide, drop: { ...t.drop, ...t.polar.drop } };
+    const destination =
+      target === 'coros'
+        ? { import: t.import, reject: t.reject }
+        : { import: t.reverse.import, reject: t.reverse.reject };
+    return {
+      title: t.titleFor(from, to),
+      steps: [t.stepExport(from), ...t.stepMiddle, t.stepImport(to)],
+      ...origin,
+      ...destination,
+    };
+  });
 
   /** Charge la langue initiale ; exécuté avant le premier rendu (initialiseur d'application). */
   async init(): Promise<void> {

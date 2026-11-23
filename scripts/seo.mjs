@@ -10,7 +10,7 @@ export const ROUTES = [
     file: 'index.html',
     title: 'Migration Garmin ⇄ COROS – transfert d’activités, 100 % local',
     description:
-      'Prépare ton historique d’activités Garmin pour COROS, ou l’inverse. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
+      'Prépare ton historique d’activités entre Garmin, COROS et Polar. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
   },
   {
     path: '/faq',

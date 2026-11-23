@@ -18,7 +18,7 @@ import { I18n } from '../i18n';
     <h2>{{ d.title }}</h2>
     <p>{{ d.intro }}</p>
 
-    @if (target() === 'coros') {
+    @if (source() === 'garmin') {
       <label class="check health-option">
         <input
           type="checkbox"
@@ -60,7 +60,7 @@ import { I18n } from '../i18n';
 })
 export class DropStep {
   protected readonly processing = inject(ProcessingService);
-  protected readonly target = this.processing.target;
+  protected readonly source = this.processing.source;
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
   protected readonly flow = this.i18n.flow;

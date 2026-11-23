@@ -11,6 +11,8 @@ export type ScanEvent =
       readonly format: ActivityFormat;
       readonly data: Uint8Array;
     }
+  /** JSON de séance (si `collectSessions`) : contenu fourni pour la conversion (export global Polar). */
+  | { readonly kind: 'json'; readonly path: string; readonly data: Uint8Array }
   /** JSON de santé (si `collectHealth`) : contenu fourni pour l'extraction CSV. */
   | { readonly kind: 'health'; readonly path: string; readonly data: Uint8Array }
   | { readonly kind: 'ignored'; readonly path: string; readonly note: string }
@@ -37,11 +39,14 @@ export const CENTRAL_DIRECTORY_BYTES_PER_ENTRY = 256;
 export interface ScanOptions {
   /** Fournit aussi le contenu des JSON de santé (événements `health`), pour l'extraction CSV. */
   readonly collectHealth?: boolean;
+  /** Fournit le contenu de tous les JSON (événements `json`) : séances de l'export global Polar. */
+  readonly collectSessions?: boolean;
 }
 
 interface State {
   readonly limits: ScanLimits;
   readonly collectHealth: boolean;
+  readonly collectSessions: boolean;
   readonly signal?: AbortSignal;
   totalBytes: number;
   entries: number;
@@ -177,7 +182,10 @@ async function* walk(
       let data: Blob;
       try {
         if (entry.uncompressedSize > cap) throw new EntryAbort();
-        data = await extract(entry, cap, state, state.collectHealth && isHealthJsonPath(path));
+        const keepOther =
+          (state.collectHealth && isHealthJsonPath(path)) ||
+          (state.collectSessions && /\.json$/i.test(path));
+        data = await extract(entry, cap, state, keepOther);
       } catch (e) {
         if (e instanceof LimitError || isAbort(e)) throw e;
         if (e instanceof EntryOther) {
@@ -213,7 +221,9 @@ async function* walk(
 
       const format = detectFormat(head);
       if (!format) {
-        if (state.collectHealth && isHealthJsonPath(path)) {
+        if (state.collectSessions && /\.json$/i.test(path)) {
+          yield { kind: 'json', path, data: new Uint8Array(await data.arrayBuffer()) };
+        } else if (state.collectHealth && isHealthJsonPath(path)) {
           yield { kind: 'health', path, data: new Uint8Array(await data.arrayBuffer()) };
         } else yield { kind: 'ignored', path, note: 'pas une activité' };
       } else if (data.size > limits.maxFileSize) yield { kind: 'ignored', path, note: 'TOO_LARGE' };
@@ -240,6 +250,7 @@ export function scanArchive(
   return walk(input, '', 1, {
     limits,
     collectHealth: options.collectHealth ?? false,
+    collectSessions: options.collectSessions ?? false,
     ...(signal ? { signal } : {}),
     totalBytes: 0,
     entries: 0,

@@ -4,7 +4,7 @@
 
 # watch-relay
 
-**Migrez l'historique de vos activités entre montres Garmin et COROS, dans les deux sens, sans qu'aucune donnée ne quitte votre navigateur.**
+**Migrez l'historique de vos activités entre montres Garmin, COROS et Polar, sans qu'aucune donnée ne quitte votre navigateur.**
 
 [![CI](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml)
 [![Security scans](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml)
@@ -12,11 +12,11 @@
 ![Node 22](https://img.shields.io/badge/node-22-339933.svg)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)
 
-watch-relay lit l'export de données d'un compte **Garmin** ou **COROS**, en extrait les fichiers d'activité
+watch-relay lit l'export de données d'un compte **Garmin**, **COROS** ou **Polar**, en extrait les fichiers d'activité
 (`.fit`, `.tcx`), applique les contraintes de la plateforme de destination et produit des archives prêtes à
 importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou écarté, et pourquoi.
 
-> Projet indépendant, non affilié à Garmin ni à COROS. « Garmin » et « COROS » sont des marques de leurs propriétaires respectifs.
+> Projet indépendant, non affilié à Garmin, COROS ni Polar. « Garmin », « COROS » et « Polar » sont des marques de leurs propriétaires respectifs.
 
 ## Sommaire
 
@@ -50,7 +50,8 @@ le contrôle et le découpage.
 
 ## Fonctionnalités
 
-- **Deux sens** : Garmin → COROS et COROS → Garmin, chacun avec ses règles et ses consignes d'import.
+- **Quatre trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS et Polar → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
+- **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'**export global JSON de Polar** (un JSON par séance) est converti en TCX (trace GPS, fréquence cardiaque, cadence, calories) ; le schéma vient d'un convertisseur communautaire et n'est **pas validé sur un export récent** : les JSON de forme inattendue sont ignorés ou signalés, jamais convertis de travers.
 - **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
@@ -65,7 +66,7 @@ le contrôle et le découpage.
 - **Gros volumes** : traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), écran maintenu allumé.
 - **PWA** : installable et utilisable **hors ligne** après la première visite.
 - **Interface** FR / EN, mobile-first, thème **clair / sombre / auto** (bascule mémorisée localement), accessible (WCAG 2.2 AA).
-- **Design** : l'interface repose sur [**design-j6n**](https://github.com/J-Dudek/design-j6n) (voir [Design system](#design-system)).
+- **Design** : l'interface repose sur [**design-j6n**](https://design.byj6n.fr) (voir [Design system](#design-system)).
 
 ## Fonctionnement
 
@@ -128,12 +129,12 @@ Choix structurants :
 - **Aucune ressource tierce** : ni CDN ni service de polices (Sora et IBM Plex Mono sont empaquetées par le build), CSS global (compatible `style-src 'self'`).
 
 Dépendances runtime : Angular (4 paquets), `rxjs`, `tslib`, [`@zip.js/zip.js`](https://gildas-lormeau.github.io/zip.js/),
-le [SDK FIT officiel de Garmin](https://developer.garmin.com/fit/overview/) et [`design-j6n`](https://github.com/J-Dudek/design-j6n)
+le [SDK FIT officiel de Garmin](https://developer.garmin.com/fit/overview/) et [`design-j6n`](https://design.byj6n.fr)
 (feuilles de style et polices uniquement, aucun code exécuté côté client).
 
 ## Design system
 
-L'interface utilise **[design-j6n](https://github.com/J-Dudek/design-j6n)** (« Foulée »), le design system de l'auteur,
+L'interface utilise **[design-j6n](https://design.byj6n.fr)** (« Foulée »), le design system de l'auteur,
 publié sur npm : tokens (`--j6n-*`), thème clair et sombre à parité, polices Sora et IBM Plex Mono auto-hébergées, et
 composants (boutons, carte, alertes, étapes, accordéon, contrôle segmenté, lien d'évitement…).
 
@@ -169,7 +170,7 @@ npm run serve:dist -w @watch-relay/web             # sert le build avec les vrai
 | `npm run check:licenses` | Licences des dépendances runtime                                                                                        |
 | `npm run sbom`           | SBOM CycloneDX                                                                                                          |
 
-Les e2e couvrent notamment : le parcours dans les deux sens, l'absence de requête sortante, la CSP et Trusted Types,
+Les e2e couvrent notamment : le parcours dans chaque sens, l'absence de requête sortante, la CSP et Trusted Types,
 le fonctionnement hors ligne, **axe-core** (0 violation WCAG 2.2 AA sur chaque écran, FR/EN, clair/sombre),
 la navigation au clavier, l'absence de défilement horizontal et les cibles tactiles ≥ 44 px de 320 à 1280 px, et la
 régression visuelle (références Linux/Chromium ; `npm run e2e:update -w @watch-relay/web` pour les régénérer).
