@@ -18,7 +18,7 @@ describe('App', () => {
     const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    el.querySelector<HTMLButtonElement>('.header-top button')?.click();
+    el.querySelector<HTMLButtonElement>('.header-tools > button')?.click();
     // Le changement de langue charge le chunk de textes : on attend qu'il soit affiché.
     for (let i = 0; i < 100 && !el.textContent.includes('Get your Garmin export'); i++) {
       await new Promise((r) => setTimeout(r, 20));
@@ -32,7 +32,7 @@ describe('App', () => {
     const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.stepper li')).toHaveLength(4);
+    expect(el.querySelectorAll('.j6n-stepper li')).toHaveLength(4);
     expect(el.querySelector('h2')?.textContent).toContain('Récupérer ton export Garmin');
     expect(el.querySelector('[aria-current="step"]')?.textContent).toContain('Export Garmin');
   });

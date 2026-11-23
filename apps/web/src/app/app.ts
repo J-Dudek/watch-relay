@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { I18n } from './i18n';
 import { ProcessingService } from './processing.service';
+import { THEME_MODES, applyTheme, readTheme, storeTheme, type ThemeMode } from './theme';
 import { AnalyzeStep } from './steps/analyze-step';
 import { DropStep } from './steps/drop-step';
 import { InfoPage, type InfoPageId } from './steps/info-page';
@@ -26,13 +27,30 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
   imports: [GuideStep, DropStep, AnalyzeStep, ImportStep, InfoPage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <a class="j6n-skiplink" href="#main" (click)="skipToContent($event)">{{ t().skipLink }}</a>
     <header class="header">
       <div class="header-top">
         <img class="logo" src="icons/logo-256.png" width="64" height="64" [alt]="t().logoAlt" />
         <h1>{{ flow().title }}</h1>
+      </div>
+      <p class="j6n-muted">{{ t().tagline }}</p>
+      <div class="header-tools">
+        <div class="j6n-segmented" role="radiogroup" [attr.aria-label]="t().theme.label">
+          @for (m of themeModes; track m) {
+            <input
+              type="radio"
+              name="theme"
+              [id]="'theme-' + m"
+              [value]="m"
+              [checked]="theme() === m"
+              (change)="setTheme(m)"
+            />
+            <label [for]="'theme-' + m">{{ t().theme[m] }}</label>
+          }
+        </div>
         <button
           type="button"
-          class="btn btn-small"
+          class="j6n-btn j6n-btn--secondary"
           [attr.lang]="i18n.locale() === 'fr' ? 'en' : 'fr'"
           [attr.aria-label]="t().languageSwitchLabel"
           (click)="toggle()"
@@ -40,30 +58,39 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
           {{ t().languageSwitch }}
         </button>
       </div>
-      <p class="muted">{{ t().tagline }}</p>
     </header>
 
     @if (infoPage(); as info) {
-      <main id="main" class="card" tabindex="-1">
+      <main id="main" class="j6n-card" tabindex="-1">
         <app-info-page [page]="info" />
       </main>
     } @else {
       <nav [attr.aria-label]="t().stepsLabel">
-        <ol class="stepper">
+        <ol class="j6n-stepper">
           @for (label of flow().steps; track label; let i = $index) {
             <li
-              [class.current]="i === step()"
-              [class.done]="i < step()"
+              class="j6n-stepper__step"
+              [class.is-current]="i === step()"
+              [class.is-done]="i < step()"
               [attr.aria-current]="i === step() ? 'step' : null"
             >
-              <span class="stepper-num">{{ i + 1 }}</span>
-              <span class="stepper-label">{{ label }}</span>
+              <span class="j6n-stepper__num">{{ i + 1 }}</span>
+              <span class="j6n-stepper__label"
+                >{{ label }}
+                <span class="j6n-sr-only">{{
+                  i < step()
+                    ? t().stepState.done
+                    : i === step()
+                      ? t().stepState.current
+                      : t().stepState.todo
+                }}</span></span
+              >
             </li>
           }
         </ol>
       </nav>
 
-      <main id="main" class="card" tabindex="-1">
+      <main id="main" class="j6n-card" tabindex="-1">
         @switch (step()) {
           @case (0) {
             <app-guide-step (next)="go(1)" />
@@ -81,7 +108,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
       </main>
     }
 
-    <footer class="footer">
+    <footer class="j6n-footer j6n-mt-6 j6n-py-5 app-footer">
       <nav [attr.aria-label]="t().pagesNav.label" class="footer-nav">
         <a href="#/faq">{{ t().pagesNav.faq }}</a>
         <a href="#/privacy">{{ t().pagesNav.privacy }}</a>
@@ -91,6 +118,9 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
       <p class="signature">
         {{ t().signature.before }}
         <a [href]="t().signature.href" target="_blank" rel="noopener">{{ t().signature.name }}</a>
+        ·
+        {{ t().design.before }}
+        <a [href]="t().design.href" target="_blank" rel="noopener">{{ t().design.name }}</a>
       </p>
     </footer>
   `,
@@ -121,6 +151,21 @@ export class App {
     effect(() => {
       if (this.processing.status() === 'idle' && this.step() >= 2) this.step.set(1);
     });
+  }
+
+  protected readonly themeModes = THEME_MODES;
+  protected readonly theme = signal<ThemeMode>(readTheme());
+
+  protected setTheme(mode: ThemeMode): void {
+    this.theme.set(mode);
+    applyTheme(mode);
+    storeTheme(mode);
+  }
+
+  /** Le lien d'évitement ne passe pas par `#main` : le hash sert à la navigation de l'app. */
+  protected skipToContent(event: Event): void {
+    event.preventDefault();
+    document.getElementById('main')?.focus();
   }
 
   protected toggle(): void {

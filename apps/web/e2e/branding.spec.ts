@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('logo dans l’en-tête et signature J6N avec lien sécurisé', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('img', { name: 'watch-relay' })).toBeVisible();
-  const sig = page.getByRole('link', { name: 'J6N' });
+  const sig = page.getByRole('link', { name: 'J6N', exact: true });
   await expect(sig).toHaveAttribute('href', 'https://me.byj6n.fr');
   await expect(sig).toHaveAttribute('target', '_blank');
   await expect(sig).toHaveAttribute('rel', /noopener/);

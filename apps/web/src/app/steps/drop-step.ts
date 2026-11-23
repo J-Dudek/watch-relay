@@ -36,11 +36,13 @@ import { I18n } from '../i18n';
     </label>
 
     @if (errorText(); as message) {
-      <p class="alert alert-error" role="alert">{{ message }}</p>
+      <p class="j6n-alert j6n-alert--danger" role="alert">{{ message }}</p>
     }
 
     <div class="actions">
-      <button type="button" class="btn" (click)="back.emit()">{{ t().back }}</button>
+      <button type="button" class="j6n-btn j6n-btn--secondary" (click)="back.emit()">
+        {{ t().back }}
+      </button>
     </div>
   `,
 })

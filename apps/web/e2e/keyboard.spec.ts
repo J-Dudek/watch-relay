@@ -13,10 +13,19 @@ async function currentStop(page: Page): Promise<Stop> {
   return page.evaluate(() => {
     const el = document.activeElement as HTMLElement | null;
     if (!el || el === document.body) return { name: '(body)', visible: false };
-    // Le champ fichier est masqué visuellement : l'indicateur est porté par sa zone (label).
-    const target = el.matches('input[type=file]') ? (el.closest('label') ?? el) : el;
+    // Champs masqués visuellement : l'indicateur est porté par la zone (fichier) ou l'étiquette
+    // voisine (boutons radio du sélecteur de thème).
+    let target: HTMLElement = el;
+    if (el.matches('input[type=file]')) target = el.closest('label') ?? el;
+    else if (el.matches('input[type=radio]'))
+      target = el.nextElementSibling instanceof HTMLElement ? el.nextElementSibling : el;
     const s = getComputedStyle(target);
-    const outline = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2;
+    // design-j6n : anneau en box-shadow (contour transparent pour le mode contraste élevé).
+    const outline =
+      (s.outlineStyle !== 'none' &&
+        parseFloat(s.outlineWidth) >= 2 &&
+        s.outlineColor !== 'rgba(0, 0, 0, 0)') ||
+      s.boxShadow !== 'none';
     const name =
       el.getAttribute('aria-label') ??
       (el.textContent.trim() || el.getAttribute('type') || el.tagName.toLowerCase());
@@ -47,14 +56,21 @@ test('guide : ordre logique et focus toujours visible', async ({ page }) => {
   await page.goto('/');
   const stops = await tabThrough(page);
   const names = stops.map((s) => s.name);
-  expect(names[0]).toBe('Switch to English'); // sélecteur de langue en premier
+  expect(names[0]).toBe('Aller au contenu'); // lien d'évitement en premier
+  expect(names).toContain('Switch to English');
   expect(names).toContain('Gestion des données de ton compte Garmin');
   expect(names.indexOf('J’ai mon fichier')).toBeGreaterThan(
     names.indexOf('Gestion des données de ton compte Garmin'),
   );
   // Les liens du pied de page viennent après le contenu.
   expect(names.indexOf('FAQ')).toBeGreaterThan(names.indexOf('J’ai mon fichier'));
-  expect(names.slice(-4)).toEqual(['FAQ', 'Confidentialité', 'Mentions légales', 'J6N']);
+  expect(names.slice(-5)).toEqual([
+    'FAQ',
+    'Confidentialité',
+    'Mentions légales',
+    'J6N',
+    'design-j6n',
+  ]);
   for (const s of stops) expect(s.visible, `focus invisible sur « ${s.name} »`).toBe(true);
 });
 
@@ -130,7 +146,25 @@ test('pages d’information : liens du pied de page au clavier et retour', async
 
 test('le sélecteur de langue s’utilise au clavier', async ({ page }) => {
   await page.goto('/');
-  await page.keyboard.press('Tab');
+  await page.getByRole('button', { name: 'Switch to English' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: /Get your Garmin export/ })).toBeVisible();
+});
+
+test('le skiplink amène au contenu sans changer de page', async ({ page }) => {
+  await page.goto('/#/faq');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main')).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Questions fréquentes' })).toBeVisible();
+});
+
+test('le thème se choisit, se mémorise et revient en automatique', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('label[for=theme-dark]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.locator('label[for=theme-auto]').click();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
 });

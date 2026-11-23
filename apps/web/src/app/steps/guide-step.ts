@@ -10,7 +10,7 @@ import { ProcessingService } from '../processing.service';
     <div class="direction" role="group" [attr.aria-label]="t().direction.label">
       <button
         type="button"
-        class="btn"
+        class="j6n-btn j6n-btn--secondary"
         [attr.aria-pressed]="target() === 'coros'"
         (click)="target.set('coros')"
       >
@@ -18,7 +18,7 @@ import { ProcessingService } from '../processing.service';
       </button>
       <button
         type="button"
-        class="btn"
+        class="j6n-btn j6n-btn--secondary"
         [attr.aria-pressed]="target() === 'garmin'"
         (click)="target.set('garmin')"
       >
@@ -44,7 +44,7 @@ import { ProcessingService } from '../processing.service';
       {{ g.noteBefore }} <strong>{{ g.noteStrong }}</strong>{{ g.noteAfter }}
     </p>
     <div class="actions">
-      <button type="button" class="btn btn-primary" (click)="next.emit()">
+      <button type="button" class="j6n-btn" (click)="next.emit()">
         {{ g.haveFile }}
       </button>
     </div>

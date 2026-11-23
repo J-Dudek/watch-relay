@@ -31,15 +31,17 @@ import type { RejectReason } from '@watch-relay/engine';
         }
         <p class="note">{{ a.keepOpen }}</p>
         <div class="actions">
-          <button type="button" class="btn" (click)="processing.cancel()">{{ a.cancel }}</button>
+          <button type="button" class="j6n-btn j6n-btn--secondary" (click)="processing.cancel()">
+            {{ a.cancel }}
+          </button>
         </div>
       }
       @case ('error') {
         @if (processing.failure(); as f) {
-          <p class="alert alert-error" role="alert">{{ errorText(f.code) }}</p>
+          <p class="j6n-alert j6n-alert--danger" role="alert">{{ errorText(f.code) }}</p>
         }
         <div class="actions">
-          <button type="button" class="btn btn-primary" (click)="restart.emit()">
+          <button type="button" class="j6n-btn" (click)="restart.emit()">
             {{ t().restart }}
           </button>
         </div>
@@ -52,22 +54,28 @@ import type { RejectReason } from '@watch-relay/engine';
           </p>
 
           @if (r.kept === 0) {
-            <p class="alert alert-warn" role="alert">
+            <p class="j6n-alert j6n-alert--warning" role="alert">
               {{ a.nothing }}
             </p>
           }
 
-          @for (entry of reasons(); track entry.reason) {
-            <details class="detail">
-              <summary>{{ entry.title }} ({{ entry.count }})</summary>
-              <p>{{ entry.hint }}</p>
-            </details>
-          }
+          <div class="j6n-accordion">
+            @for (entry of reasons(); track entry.reason) {
+              <details class="j6n-accordion__item">
+                <summary class="j6n-accordion__trigger">
+                  {{ entry.title }} ({{ entry.count }})
+                </summary>
+                <div class="j6n-accordion__panel">
+                  <p>{{ entry.hint }}</p>
+                </div>
+              </details>
+            }
+          </div>
 
           @if (r.kept > 0) {
-            <details class="detail">
-              <summary>{{ a.breakdown }}</summary>
-              <div class="cols">
+            <details class="j6n-accordion__item j6n-mt-3">
+              <summary class="j6n-accordion__trigger">{{ a.breakdown }}</summary>
+              <div class="j6n-accordion__panel cols">
                 <ul>
                   @for (s of r.bySport | keyvalue; track s.key) {
                     <li>{{ s.key }} : {{ s.value }}</li>
@@ -83,9 +91,11 @@ import type { RejectReason } from '@watch-relay/engine';
           }
         }
         <div class="actions">
-          <button type="button" class="btn" (click)="restart.emit()">{{ t().restart }}</button>
+          <button type="button" class="j6n-btn j6n-btn--secondary" (click)="restart.emit()">
+            {{ t().restart }}
+          </button>
           @if ((report()?.kept ?? 0) > 0) {
-            <button type="button" class="btn btn-primary" (click)="next.emit()">
+            <button type="button" class="j6n-btn" (click)="next.emit()">
               {{ a.continue }}
             </button>
           }

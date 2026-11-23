@@ -134,7 +134,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Composants tiers',
         p: [
-          'L’outil s’appuie sur des logiciels libres (Angular, zip.js) et sur le SDK FIT de Garmin, utilisé selon sa licence.',
+          'L’outil s’appuie sur des logiciels libres (Angular, zip.js), sur le SDK FIT de Garmin, utilisé selon sa licence, et sur le système de design design-j6n (licence MIT, github.com/J-Dudek/design-j6n) avec ses polices auto-hébergées Sora et IBM Plex Mono (licence SIL OFL 1.1).',
         ],
       },
       {

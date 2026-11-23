@@ -16,7 +16,7 @@ const VIEWPORTS = [
 ];
 
 const TARGETS =
-  'button, summary, a.btn, .footer-nav a, label.check, label.drop, .header-top button';
+  'button, summary, a.j6n-btn, .footer-nav a, label.check, label.drop, .j6n-segmented label, .j6n-skiplink';
 
 for (const vp of VIEWPORTS) {
   test.describe(`viewport ${vp.name}`, () => {
@@ -25,6 +25,13 @@ for (const vp of VIEWPORTS) {
     for (const screen of SCREENS) {
       test(`${screen} : pas de défilement horizontal et cibles ≥ 44 px`, async ({ page }) => {
         await openScreen(page, screen);
+        // Laisse finir les transitions avant de mesurer.
+        await page.evaluate(() =>
+          Promise.race([
+            Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+            new Promise((resolve) => setTimeout(resolve, 500)),
+          ]),
+        );
         await page.evaluate(() => {
           document.querySelectorAll('details').forEach((d) => {
             d.open = true;

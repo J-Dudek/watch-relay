@@ -25,6 +25,7 @@ importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou éca
 - [Fonctionnement](#fonctionnement)
 - [Modèle de confiance et sécurité](#modèle-de-confiance-et-sécurité)
 - [Architecture](#architecture)
+- [Design system](#design-system)
 - [Démarrage rapide](#démarrage-rapide)
 - [Qualité et tests](#qualité-et-tests)
 - [Valider sur un vrai export](#valider-sur-un-vrai-export)
@@ -60,7 +61,8 @@ le contrôle et le découpage.
 - **Robuste** : un fichier corrompu n'interrompt jamais le lot ; traitement annulable ; progression en direct.
 - **Gros volumes** : traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), écran maintenu allumé.
 - **PWA** : installable et utilisable **hors ligne** après la première visite.
-- **Interface** FR / EN, mobile-first, clair / sombre, accessible (WCAG 2.2 AA).
+- **Interface** FR / EN, mobile-first, thème **clair / sombre / auto** (bascule mémorisée localement), accessible (WCAG 2.2 AA).
+- **Design** : l'interface repose sur [**design-j6n**](https://github.com/J-Dudek/design-j6n) (voir [Design system](#design-system)).
 
 ## Fonctionnement
 
@@ -91,7 +93,7 @@ cookie, ni traceur, ni ressource tierce.
 | Archives hostiles          | Limites sur le ratio de compression (100:1), la profondeur, le nombre d'entrées, la taille du répertoire central et le volume total ; octets réellement produits comptés (les tailles déclarées ne sont jamais crues) ; zip slip neutralisé par construction (les noms de sortie sont générés) |
 | Fichiers forgés            | CRC FIT vérifié via le SDK officiel ; TCX sans parseur XML et sans DTD/entités (XXE, _billion laughs_) ; expressions régulières à temps linéaire ; plafond d'analyse mémoire                                                                                                                   |
 | Aucune injection HTML      | Aucune donnée de fichier dans le DOM autrement qu'en texte ; `innerHTML` et `bypassSecurityTrust*` interdits par ESLint, tout comme `fetch`, `XMLHttpRequest`, `WebSocket`, `sendBeacon` et les cookies dans le code livré                                                                     |
-| Chaîne d'approvisionnement | 8 dépendances runtime justifiées ; `npm audit` bloquant ; licences vérifiées ; SBOM CycloneDX ; actions CI épinglées par SHA ; Dependabot avec délai de carence                                                                                                                                |
+| Chaîne d'approvisionnement | 9 dépendances runtime justifiées ; `npm audit` bloquant ; licences vérifiées ; SBOM CycloneDX ; actions CI épinglées par SHA ; Dependabot avec délai de carence                                                                                                                                |
 | Pas de trace               | Stockage temporaire vidé au démarrage, à « Recommencer » / « Terminer », après un échec et à la fermeture de l'onglet (au mieux)                                                                                                                                                               |
 
 Le code a fait l'objet d'un **fuzzing** (FIT, TCX, ZIP : 10 000 itérations par propriété), d'analyses **Semgrep** et
@@ -120,10 +122,25 @@ Choix structurants :
   sa taille de lot, sans toucher au pipeline.
 - **Règles composables** : une règle par fichier (`FileRule`) ou sur l'ensemble (`SetRule`), un test par règle.
 - **Une seule source pour les en-têtes** : `security/headers.mjs` alimente le build, le serveur de test, `_headers` et les e2e.
-- **Aucune ressource tierce** : ni police ni CDN (polices système), CSS global (compatible `style-src 'self'`).
+- **Aucune ressource tierce** : ni CDN ni service de polices (Sora et IBM Plex Mono sont empaquetées par le build), CSS global (compatible `style-src 'self'`).
 
-Dépendances runtime : Angular (4 paquets), `rxjs`, `tslib`, [`@zip.js/zip.js`](https://gildas-lormeau.github.io/zip.js/)
-et le [SDK FIT officiel de Garmin](https://developer.garmin.com/fit/overview/).
+Dépendances runtime : Angular (4 paquets), `rxjs`, `tslib`, [`@zip.js/zip.js`](https://gildas-lormeau.github.io/zip.js/),
+le [SDK FIT officiel de Garmin](https://developer.garmin.com/fit/overview/) et [`design-j6n`](https://github.com/J-Dudek/design-j6n)
+(feuilles de style et polices uniquement, aucun code exécuté côté client).
+
+## Design system
+
+L'interface utilise **[design-j6n](https://github.com/J-Dudek/design-j6n)** (« Foulée »), le design system de l'auteur,
+publié sur npm : tokens (`--j6n-*`), thème clair et sombre à parité, polices Sora et IBM Plex Mono auto-hébergées, et
+composants (boutons, carte, alertes, étapes, accordéon, contrôle segmenté, lien d'évitement…).
+
+- **Intégration** : `design-j6n/fonts.css` et `design-j6n/theme.css` sont chargés avant `apps/web/src/styles.css`, qui ne
+  contient que la mise en page propre à l'application. Les polices sont empaquetées par le build (aucune requête tierce).
+- **Thème** : « Auto » suit `prefers-color-scheme` ; « Clair » et « Sombre » posent `<html data-theme>`, attribut
+  que design-j6n comprend. Le choix est mémorisé dans le navigateur (`localStorage`), jamais envoyé.
+- **`theme.js` volontairement non chargé** : l'application n'utilise aucun de ses comportements dynamiques (onglets, menus,
+  infobulles, toasts…), et le code livré reste ainsi sans script tiers, compatible avec la CSP stricte et Trusted Types.
+- **Mise à jour** : `npm update design-j6n`, puis `npm run e2e:update -w @watch-relay/web` pour régénérer les captures.
 
 ## Démarrage rapide
 

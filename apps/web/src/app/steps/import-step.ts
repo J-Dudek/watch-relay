@@ -19,7 +19,7 @@ import { ProcessingService } from '../processing.service';
     <h2>{{ i.title }}</h2>
 
     @if (mobile) {
-      <p class="alert alert-warn" role="note">
+      <p class="j6n-alert j6n-alert--warning" role="note">
         {{ i.mobileBefore }} <strong>{{ i.mobileStrong }}</strong>.
         @if (canShare()) {
           {{ i.mobileShare }}
@@ -33,14 +33,16 @@ import { ProcessingService } from '../processing.service';
         <li class="file">
           <div>
             <strong>{{ a.name }}</strong><br />
-            <span class="muted">{{ i.activities(a.fileCount) }} · {{ size(a.size) }}</span>
+            <span class="j6n-muted">{{ i.activities(a.fileCount) }} · {{ size(a.size) }}</span>
           </div>
           <div class="file-actions">
-            <button type="button" class="btn btn-primary" (click)="save(a)">
+            <button type="button" class="j6n-btn" (click)="save(a)">
               {{ i.download }}
             </button>
             @if (mobile && canShare()) {
-              <button type="button" class="btn" (click)="share(a)">{{ i.shareTo }}</button>
+              <button type="button" class="j6n-btn j6n-btn--secondary" (click)="share(a)">
+                {{ i.shareTo }}
+              </button>
             }
             <label class="check">
               <input type="checkbox" [checked]="isDone(a.name)" (change)="toggle(a.name)" />
@@ -53,9 +55,13 @@ import { ProcessingService } from '../processing.service';
 
     <div class="actions">
       @if (!mobile && archives().length > 1) {
-        <button type="button" class="btn" (click)="saveAll()">{{ i.downloadAll }}</button>
+        <button type="button" class="j6n-btn j6n-btn--secondary" (click)="saveAll()">
+          {{ i.downloadAll }}
+        </button>
       }
-      <button type="button" class="btn" (click)="saveCsv()">{{ i.csv }}</button>
+      <button type="button" class="j6n-btn j6n-btn--secondary" (click)="saveCsv()">
+        {{ i.csv }}
+      </button>
     </div>
 
     <h3>{{ i.howTo }}</h3>
@@ -73,11 +79,15 @@ import { ProcessingService } from '../processing.service';
       </li>
       <li>{{ i.h4 }}</li>
     </ol>
-    <p class="muted">{{ i.progress(doneCount(), archives().length) }}</p>
+    <p class="j6n-muted">{{ i.progress(doneCount(), archives().length) }}</p>
 
     <div class="actions">
-      <button type="button" class="btn" (click)="back.emit()">{{ t().back }}</button>
-      <button type="button" class="btn" (click)="restart.emit()">{{ i.finish }}</button>
+      <button type="button" class="j6n-btn j6n-btn--secondary" (click)="back.emit()">
+        {{ t().back }}
+      </button>
+      <button type="button" class="j6n-btn j6n-btn--secondary" (click)="restart.emit()">
+        {{ i.finish }}
+      </button>
     </div>
   `,
 })

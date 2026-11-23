@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Après `ng build` : injecte la CSP en <meta> (filet de sécurité si l'hébergeur ne permet pas
 // de poser les en-têtes, T2.9) et génère `_headers` (Netlify) ; `--caddy` ajoute `Caddyfile.snippet`.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { HASHED_ASSET, NO_CACHE_PATHS, buildCsp, buildHeaders } from '../security/headers.mjs';
 
@@ -26,6 +26,18 @@ if (!html.includes('http-equiv="Content-Security-Policy"')) {
     process.exit(1);
   }
   html = next;
+  writeFileSync(indexPath, html);
+}
+
+// Précharge la police du texte (Sora) : sans cela, son chargement tardif décale la mise en page (CLS).
+// Les noms de fichiers au hash ne sont connus qu'après le build, d'où l'injection ici.
+const mediaDir = join(dist, 'media');
+const sora = existsSync(mediaDir)
+  ? readdirSync(mediaDir).find((f) => /^sora-latin-var-.*\.woff2$/.test(f))
+  : undefined;
+if (sora && !html.includes(`media/${sora}`)) {
+  const link = `<link rel="preload" href="media/${sora}" as="font" type="font/woff2" crossorigin>`;
+  html = html.replace('</head>', `  ${link}\n  </head>`);
   writeFileSync(indexPath, html);
 }
 

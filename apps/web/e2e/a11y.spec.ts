@@ -7,6 +7,13 @@ import { buildExport } from './helpers';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function audit(page: Page, screen: string): Promise<void> {
+  // Laisse finir les transitions : axe mesurerait sinon des couleurs intermédiaires.
+  await page.evaluate(() =>
+    Promise.race([
+      Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+      new Promise((resolve) => setTimeout(resolve, 500)), // animations infinies : on n'attend pas
+    ]),
+  );
   // Ouvre tous les <details> pour auditer aussi leur contenu.
   await page.evaluate(() => {
     document.querySelectorAll('details').forEach((d) => {
@@ -36,7 +43,8 @@ const LANGS = [
 for (const scheme of SCHEMES) {
   for (const { lang, locale } of LANGS) {
     test.describe(`${lang} / ${scheme}`, () => {
-      test.use({ locale, colorScheme: scheme });
+      // Sans animation : axe mesurerait sinon des couleurs intermédiaires pendant les transitions.
+      test.use({ locale, colorScheme: scheme, reducedMotion: 'reduce' });
 
       test('guide et dépôt', async ({ page }) => {
         await page.goto('/');
@@ -72,7 +80,7 @@ for (const scheme of SCHEMES) {
           mimeType: 'application/zip',
           buffer: Buffer.from('ceci n’est pas un zip'),
         });
-        await expect(page.locator('.summary, .alert-error')).toBeVisible({ timeout: 30_000 });
+        await expect(page.locator('.summary, .j6n-alert--danger')).toBeVisible({ timeout: 30_000 });
         await audit(page, 'analyse en erreur ou vide');
       });
 

@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { buildExport } from './helpers';
 
 // Sens COROS → Garmin : destination Garmin, règles et consignes propres à Garmin.
@@ -57,11 +57,30 @@ test('le sens suit la langue', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Get your COROS export/ })).toBeVisible();
 });
 
+async function audit(page: Page, tags: string[]): Promise<string[]> {
+  // Laisse finir les transitions (boutons) : axe mesurerait sinon des couleurs intermédiaires.
+  await page.evaluate(() =>
+    Promise.race([
+      Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+      new Promise((resolve) => setTimeout(resolve, 500)), // animations infinies : on n'attend pas
+    ]),
+  );
+  const { violations } = await new AxeBuilder({ page }).withTags(tags).analyze();
+  return violations.map(
+    (v) =>
+      `${v.id}: ${v.nodes
+        .map((n) => `${n.target.join(' ')} → ${n.any.map((a) => a.message).join(' / ')}`)
+        .join(' | ')}`,
+  );
+}
+
 test('COROS → Garmin : 0 violation d’accessibilité (guide et import)', async ({ page }) => {
+  // Sans animation : axe mesurerait sinon des couleurs intermédiaires pendant les transitions des boutons.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
   await page.goto('/');
   await page.getByRole('button', { name: 'COROS → Garmin' }).click();
-  expect((await new AxeBuilder({ page }).withTags(tags).analyze()).violations).toEqual([]);
+  expect(await audit(page, tags)).toEqual([]);
 
   await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
   await page.locator('input[type=file]').setInputFiles({
@@ -74,5 +93,5 @@ test('COROS → Garmin : 0 violation d’accessibilité (guide et import)', asyn
   await expect(
     page.getByRole('heading', { name: '4. Importer dans Garmin Connect' }),
   ).toBeVisible();
-  expect((await new AxeBuilder({ page }).withTags(tags).analyze()).violations).toEqual([]);
+  expect(await audit(page, tags)).toEqual([]);
 });

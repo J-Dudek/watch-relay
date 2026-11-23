@@ -1,97 +1,91 @@
-:root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --text: #14181f;
-  --muted: #566070;
-  --border: #d3d8e0;
-  --accent: #0a5cd6;
-  --accent-text: #ffffff;
-  --ok: #0b6b3a;
-  --warn-bg: #fff4d6;
-  --err-bg: #fde6e6;
-  --focus: #0a5cd6;
-  --radius: 12px;
-  --gap: 1rem;
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1218;
-    --surface: #181d26;
-    --text: #eef1f6;
-    --muted: #a3adbd;
-    --border: #2f3744;
-    --accent: #6ea8ff;
-    --accent-text: #0b1220;
-    --ok: #66d19e;
-    --warn-bg: #3a3112;
-    --err-bg: #3d1a1a;
-    --focus: #9cc4ff;
-  }
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font:
-    1rem/1.55 system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-}
+/*
+ * Styles propres à l'application. Les tokens, la typographie et les composants (boutons, cartes,
+ * alertes, étapes, accordéon, bascule de thème…) viennent de design-j6n (fonts.css + theme.css),
+ * chargés avant ce fichier : ici, seulement la mise en page et les éléments sans équivalent.
+ */
 
 app-root {
   display: block;
   max-width: 46rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: var(--j6n-space-4);
 }
 
-h1 {
-  font-size: 1.5rem;
-  margin: 0.5rem 0 0.25rem;
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: var(--j6n-space-4);
 }
-h2 {
-  font-size: 1.25rem;
-  margin-top: 0;
+.header-top h1 {
+  flex: 1;
+  margin: 0;
 }
-h3 {
-  font-size: 1.05rem;
-  margin: 1.5rem 0 0.5rem;
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j6n-space-3);
+  margin-bottom: var(--j6n-space-4);
 }
-a {
-  color: var(--accent);
+.logo {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--j6n-radius-lg);
+  background: #000;
 }
-code {
-  background: var(--bg);
-  padding: 0 0.3em;
-  border-radius: 4px;
+
+/* La bascule de thème a besoin de cibles ≥ 44 px (WCAG 2.5.8 / projet) */
+.header-tools .j6n-segmented label {
+  min-height: 44px;
 }
-.muted {
-  color: var(--muted);
+
+.j6n-stepper {
+  margin: var(--j6n-space-4) 0;
+}
+
+.steps {
+  padding-left: var(--j6n-space-5);
+}
+.steps li {
+  margin-bottom: var(--j6n-space-2);
 }
 .note {
-  color: var(--muted);
-  font-size: 0.95rem;
+  color: var(--j6n-text-muted);
+  font-size: var(--j6n-text-sm);
+}
+code {
+  font-family: var(--j6n-font-mono);
+  font-size: 0.9em;
+  background: var(--j6n-surface-2);
+  padding: 0 0.3em;
+  border-radius: var(--j6n-radius-sm);
 }
 
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-3);
+  margin-top: var(--j6n-space-5);
 }
+.direction {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-2);
+  margin-bottom: var(--j6n-space-4);
+}
+.direction .j6n-btn[aria-pressed='true'] {
+  --_bg: var(--j6n-accent);
+  --_fg: var(--j6n-text-invert);
+  --_bd: transparent;
+}
+
 #main:focus {
   outline: none;
 }
 
+/* Zone de dépôt : le champ fichier est masqué, l'indicateur de focus est porté par la zone. */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -100,153 +94,47 @@ code {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-}
-
-/* Stepper : numéros seuls sur mobile, libellés dès 600 px */
-.stepper {
-  display: flex;
-  gap: 0.5rem;
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0;
-}
-.stepper li {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted);
-}
-.stepper-num {
-  display: grid;
-  place-items: center;
-  min-width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  font-weight: 600;
-}
-.stepper .current {
-  color: var(--text);
-  font-weight: 600;
-}
-.stepper .current .stepper-num {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
-}
-.stepper .done .stepper-num {
-  border-color: var(--ok);
-  color: var(--ok);
-}
-.stepper-label {
-  display: none;
-}
-
-.steps {
-  padding-left: 1.25rem;
-}
-.steps li {
-  margin-bottom: 0.5rem;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-.btn {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0.5rem 1.1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
-}
-
 .drop {
   display: grid;
-  gap: 0.25rem;
+  gap: var(--j6n-space-1);
   place-items: center;
   text-align: center;
   min-height: 11rem;
-  padding: 1.5rem;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
+  padding: var(--j6n-space-5);
+  border: 2px dashed var(--j6n-border-interactive);
+  border-radius: var(--j6n-radius-lg);
   cursor: pointer;
 }
 .drop:hover,
 .drop-over,
 .drop:focus-within {
-  border-color: var(--accent);
-  background: var(--bg);
+  border-color: var(--j6n-accent);
+  background: var(--j6n-surface-2);
 }
 .drop:has(input:focus-visible) {
-  outline: 3px solid var(--focus);
+  outline: 2px solid transparent;
   outline-offset: 2px;
+  box-shadow: var(--j6n-ring);
 }
 .drop-title {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: var(--j6n-text-md);
 }
 .drop-sub {
-  color: var(--muted);
-}
-
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-.alert-error {
-  background: var(--err-bg);
-}
-.alert-warn {
-  background: var(--warn-bg);
+  color: var(--j6n-text-muted);
 }
 
 .bar {
   width: 100%;
   height: 1rem;
-  accent-color: var(--accent);
+  accent-color: var(--j6n-accent);
 }
 .summary {
-  font-size: 1.1rem;
-}
-
-.detail {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.25rem 0.75rem;
-  margin: 0.5rem 0;
-}
-.detail summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
+  font-size: var(--j6n-text-md);
 }
 .cols {
   display: grid;
-  gap: 1rem;
+  gap: var(--j6n-space-4);
   grid-template-columns: 1fr 1fr;
 }
 
@@ -255,49 +143,63 @@ code {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--j6n-space-3);
 }
 .file {
   display: grid;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  gap: var(--j6n-space-3);
+  padding: var(--j6n-space-3);
+  border: 1px solid var(--j6n-border);
+  border-radius: var(--j6n-radius-md);
   overflow-wrap: anywhere;
 }
 .file-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--j6n-space-2);
   align-items: center;
 }
 .check {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--j6n-space-2);
   min-height: 44px;
 }
 .check input {
   width: 1.4rem;
   height: 1.4rem;
+  accent-color: var(--j6n-accent);
 }
 
-.footer {
-  margin: 1.5rem 0;
-  color: var(--muted);
-  font-size: 0.85rem;
+.app-footer {
+  color: var(--j6n-text-muted);
+  font-size: var(--j6n-text-sm);
   text-align: center;
+}
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--j6n-space-1) var(--j6n-space-5);
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: var(--j6n-space-2);
+}
+.signature {
+  margin-top: var(--j6n-space-1);
+}
+.signature a {
+  font-weight: 600;
 }
 
 @media (min-width: 600px) {
   app-root {
-    padding: 2rem;
-  }
-  .card {
-    padding: 2rem;
-  }
-  .stepper-label {
-    display: inline;
+    padding: var(--j6n-space-6);
   }
   .file {
     grid-template-columns: 1fr auto;
@@ -305,71 +207,20 @@ code {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
+/* Lien d'évitement : invisible tant qu'il n'a pas le focus (même dans une capture pleine page). */
+.j6n-skiplink:not(:focus) {
+  clip-path: inset(50%);
 }
 
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.btn-small {
-  padding: 0.25rem 0.8rem;
-  flex-shrink: 0;
-}
-
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.25rem 1.25rem;
-}
-.footer-nav a {
-  min-width: 44px;
-  justify-content: center;
-  padding-inline: 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-a.btn {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.direction {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.direction .btn[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
-}
-
-.logo {
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: #000;
-}
+/* Échelle typographique d'un outil (le thème vise des pages éditoriales : titres plus grands). */
 .header-top h1 {
-  flex: 1;
-  margin: 0;
+  font-size: var(--j6n-text-xl);
+  line-height: var(--j6n-leading-tight);
 }
-.signature {
-  margin-top: 0.25rem;
+main h2 {
+  font-size: var(--j6n-text-lg);
 }
-.signature a {
-  font-weight: 700;
+main h3 {
+  font-size: var(--j6n-text-md);
+  margin-top: var(--j6n-space-5);
 }

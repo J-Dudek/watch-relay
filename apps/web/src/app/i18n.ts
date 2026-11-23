@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ProcessingService } from './processing.service';
+import { withRetry } from './retry';
 import type { FlowMessages, Messages } from './messages/fr';
 
 export type { FlowMessages, Messages };
@@ -46,13 +47,13 @@ export class I18n {
 
   /** Charge la langue initiale ; exécuté avant le premier rendu (initialiseur d'application). */
   async init(): Promise<void> {
-    this.messages.set(await LOADERS[this.locale()]());
+    this.messages.set(await withRetry(LOADERS[this.locale()]));
     this.applyToDocument();
   }
 
   /** Change de langue : l'ancienne reste affichée jusqu'à ce que la nouvelle soit chargée. */
   async set(locale: Locale): Promise<void> {
-    const messages = await LOADERS[locale]();
+    const messages = await withRetry(LOADERS[locale]);
     this.messages.set(messages);
     this.locale.set(locale);
     try {

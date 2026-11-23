@@ -134,7 +134,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Third-party components',
         p: [
-          'The tool relies on open-source software (Angular, zip.js) and on Garmin’s FIT SDK, used under its license.',
+          'The tool relies on open-source software (Angular, zip.js), on Garmin’s FIT SDK, used under its license, and on the design-j6n design system (MIT license, github.com/J-Dudek/design-j6n) with its self-hosted Sora and IBM Plex Mono fonts (SIL OFL 1.1 license).',
         ],
       },
       {

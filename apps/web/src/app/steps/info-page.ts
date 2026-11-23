@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { I18n } from '../i18n';
+import { withRetry } from '../retry';
 import type { PagesMessages, Section } from '../pages-types';
 
 export type InfoPageId = 'faq' | 'privacy' | 'legal';
@@ -28,14 +29,18 @@ const LOADERS: Record<'fr' | 'en', () => Promise<PagesMessages>> = {
     @if (content(); as c) {
       <h2>{{ title() }}</h2>
       @if (page() === 'faq') {
-        @for (item of c.faq.items; track item.q) {
-          <details class="detail">
-            <summary>{{ item.q }}</summary>
-            @for (para of item.a; track para) {
-              <p>{{ para }}</p>
-            }
-          </details>
-        }
+        <div class="j6n-accordion">
+          @for (item of c.faq.items; track item.q) {
+            <details class="j6n-accordion__item">
+              <summary class="j6n-accordion__trigger">{{ item.q }}</summary>
+              <div class="j6n-accordion__panel">
+                @for (para of item.a; track para) {
+                  <p>{{ para }}</p>
+                }
+              </div>
+            </details>
+          }
+        </div>
       } @else {
         @for (section of sections(); track section.h) {
           <h3>{{ section.h }}</h3>
@@ -45,10 +50,10 @@ const LOADERS: Record<'fr' | 'en', () => Promise<PagesMessages>> = {
         }
       }
     } @else {
-      <p role="status" class="muted">{{ t().loading }}</p>
+      <p role="status" class="j6n-muted">{{ t().loading }}</p>
     }
     <div class="actions">
-      <a class="btn" href="#/">{{ t().pagesNav.backToTool }}</a>
+      <a class="j6n-btn j6n-btn--secondary" href="#/">{{ t().pagesNav.backToTool }}</a>
     </div>
   `,
 })
@@ -71,7 +76,7 @@ export class InfoPage {
     // Recharge quand la langue change (la précédente reste affichée le temps du chargement).
     effect(() => {
       const locale = this.i18n.locale();
-      void LOADERS[locale]().then((pages) => {
+      void withRetry(LOADERS[locale]).then((pages) => {
         this.loaded.set({ pages });
       });
     });
