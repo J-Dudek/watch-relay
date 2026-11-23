@@ -1,7 +1,16 @@
 export type ActivityFormat = 'fit' | 'tcx';
 
 export type RejectReason =
-  'TOO_SMALL' | 'TOO_LARGE' | 'UNSUPPORTED_SPORT' | 'DUPLICATE' | 'CORRUPTED' | 'OUT_OF_RANGE';
+  | 'TOO_SMALL'
+  | 'TOO_LARGE'
+  | 'TOO_MANY_POINTS'
+  | 'UNSUPPORTED_SPORT'
+  | 'DUPLICATE'
+  | 'CORRUPTED'
+  | 'OUT_OF_RANGE';
+
+/** Plateforme de destination de l'import. */
+export type Target = 'coros' | 'garmin';
 
 export interface ActivityMeta {
   /** Nom du sport en minuscules, ex. `running`. */
@@ -12,6 +21,8 @@ export interface ActivityMeta {
   readonly durationS?: number;
   readonly distanceM?: number;
   readonly device?: string;
+  /** Nombre de points d'enregistrement (FIT : messages `record` ; TCX : `Trackpoint`). */
+  readonly points?: number;
 }
 
 /** Fichier d'activité identifié, prêt à passer dans les règles. */

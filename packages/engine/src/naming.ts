@@ -30,7 +30,7 @@ export function entryName(candidate: Candidate, taken: Set<string>): string {
 }
 
 /** Nom d'archive généré, ex. `coros-import-01-2019-03_2021-07.zip` (T1.17). */
-export function archiveName(batch: Batch, index: number): string {
+export function archiveName(batch: Batch, index: number, prefix = 'coros-import'): string {
   const first = batch.items[0];
   const last = batch.items.at(-1);
   const ym = (ms: number): string => {
@@ -38,5 +38,5 @@ export function archiveName(batch: Batch, index: number): string {
     return `${String(d.getUTCFullYear())}-${pad(d.getUTCMonth() + 1)}`;
   };
   const range = first && last ? `-${ym(first.meta.startTime)}_${ym(last.meta.startTime)}` : '';
-  return `coros-import-${pad(index + 1)}${range}.zip`;
+  return `${prefix}-${pad(index + 1)}${range}.zip`;
 }

@@ -109,7 +109,7 @@ export class AnalyzeStep {
 
   protected readonly reasons = computed(() =>
     (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
-      ([reason, count]) => ({ reason, count, ...this.t().reject[reason] }),
+      ([reason, count]) => ({ reason, count, ...this.i18n.flow().reject[reason] }),
     ),
   );
 

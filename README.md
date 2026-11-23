@@ -1,6 +1,9 @@
 # watch-relay
 
-Transforme l'export de données **Garmin** en archives ZIP prêtes à importer dans **COROS Training Hub**.
+Prépare l'historique de vos activités pour passer d'une montre à l'autre, dans les deux sens :
+
+- **Garmin → COROS** : transforme l'export de données Garmin en archives ZIP prêtes à importer dans COROS Training Hub ;
+- **COROS → Garmin** : lit l'export COROS (FIT/TCX) et retient les fichiers que Garmin Connect acceptera.
 
 > **100 % dans votre navigateur.** Vos fichiers ne quittent jamais votre appareil : aucun serveur de
 > traitement, aucun compte, aucun cookie, aucun tracker.
@@ -12,14 +15,21 @@ COROS ne sait importer l'historique que par `.fit`/`.tcx`, avec des contraintes 
 L'export Garmin, lui, est un gros ZIP (parfois plusieurs Go) contenant des ZIP imbriqués. watch-relay fait
 le tri et le découpage à votre place.
 
+**Sens inverse.** L'export COROS (Activity List › Export Data, FIT ou TCX) est déposé de la même façon. Garmin Connect
+refuse les FIT de plus de 50 Mo, les GPX/TCX de plus de 25 Mo et les fichiers de 99 999 points ou plus ; il n'a ni
+taille minimale ni liste de sports documentées. Garmin n'importe pas de ZIP : l'archive produite sert à télécharger
+les fichiers, à décompresser avant l'import. Les règles de chaque destination sont des « profils » du moteur
+(`packages/engine/src/profiles.ts`).
+
 ## Comment ça marche
 
-1. **Guide** : comment demander et récupérer votre export Garmin.
+0. **Sens** : Garmin → COROS (par défaut) ou COROS → Garmin.
+1. **Guide** : comment demander et récupérer votre export (Garmin ou COROS).
 2. **Dépôt** : vous déposez le ZIP (jamais envoyé nulle part).
 3. **Analyse** : lecture récursive des archives, détection des `.fit`/`.tcx`, application de règles
    (taille, sport, période, doublons) et rapport clair des fichiers écartés et pourquoi.
 4. **Import** : téléchargement d'un ou plusieurs ZIP (≤ 180 Mo chacun, ordre chronologique, ex.
-   `coros-import-01-2019-03_2021-07.zip`), puis guide d'import dans COROS. Rapport CSV en option.
+   `coros-import-01-2019-03_2021-07.zip`), puis guide d'import dans COROS (ou Garmin Connect). Rapport CSV en option.
 
 Un fichier corrompu n'interrompt jamais le traitement des autres.
 
@@ -90,7 +100,7 @@ Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du s
 partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier, tests responsive et régression visuelle, Lighthouse CI. À venir : lecteurs d'écran et tests sur
 appareils réels.
 
-Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non
+Limites connues : liste des sports COROS provisoire ; format exact de l'export COROS et limites de Garmin (nombre de fichiers par import, sports acceptés) non vérifiés sur des exports réels ; pas de délai maximal strict par fichier ; OPFS non
 vérifié sur un vrai iPhone (repli mémoire possible sur très gros exports) ; en-têtes HTTP à confirmer sur
 l'hébergement.
 

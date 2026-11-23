@@ -50,4 +50,17 @@ describe('App', () => {
     await fixture.whenStable();
     expect(el.querySelector('h2')?.textContent).toContain('Récupérer ton export Garmin');
   });
+
+  it('propose les deux sens de transfert, Garmin → COROS par défaut', async () => {
+    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.direction button')];
+    expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
+    buttons[1]?.click();
+    await fixture.whenStable();
+    expect(el.querySelector('h1')?.textContent).toContain('COROS → Garmin');
+    expect(el.querySelector('h2')?.textContent).toContain('export COROS');
+  });
 });

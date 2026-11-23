@@ -23,6 +23,13 @@ export const PAGES_FR: PagesMessages = {
     title: 'Questions fréquentes',
     items: [
       {
+        q: 'Peut-on aussi transférer de COROS vers Garmin ?',
+        a: [
+          'Oui. Choisis « COROS → Garmin » sur la première étape. L’outil lit l’export de ton compte COROS (Activity List, Export Data), écarte les fichiers que Garmin Connect refuse (FIT de plus de 50 Mo, TCX de plus de 25 Mo, 99 999 points ou plus), retire les doublons et classe le tout dans l’ordre chronologique.',
+          'Garmin n’importe pas de ZIP : décompresse l’archive produite puis importe les fichiers depuis Garmin Connect sur ordinateur. Les limites exactes de Garmin (nombre de fichiers par import, sports acceptés) ne sont pas toutes documentées : si un import échoue, réessaie avec moins de fichiers.',
+        ],
+      },
+      {
         q: 'Mes données sont-elles envoyées quelque part ?',
         a: [
           'Non. Ton export Garmin est lu et transformé directement dans ton navigateur. Aucun fichier, aucune activité, aucune métadonnée n’est transmis à un serveur.',
@@ -165,6 +172,13 @@ export const PAGES_EN: PagesMessages = {
   faq: {
     title: 'Frequently asked questions',
     items: [
+      {
+        q: 'Can I also transfer from COROS to Garmin?',
+        a: [
+          'Yes. Choose “COROS → Garmin” on the first step. The tool reads the export from your COROS account (Activity List, Export Data), excludes files Garmin Connect rejects (FIT over 50 MB, TCX over 25 MB, 99,999 points or more), removes duplicates and sorts everything chronologically.',
+          'Garmin does not import ZIPs: unzip the generated archive, then import the files from Garmin Connect on a computer. Garmin’s exact limits (files per import, accepted sports) are not all documented: if an import fails, retry with fewer files.',
+        ],
+      },
       {
         q: 'Is my data sent anywhere?',
         a: [

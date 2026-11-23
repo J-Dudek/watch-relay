@@ -14,7 +14,7 @@ import { I18n } from '../i18n';
   selector: 'app-drop-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @let d = t().drop;
+    @let d = flow().drop;
     <h2>{{ d.title }}</h2>
     <p>{{ d.intro }}</p>
 
@@ -48,6 +48,7 @@ export class DropStep {
   private readonly processing = inject(ProcessingService);
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
+  protected readonly flow = this.i18n.flow;
   readonly back = output();
   readonly started = output();
   protected readonly over = signal(false);
@@ -59,7 +60,7 @@ export class DropStep {
     const t = this.t();
     if (!e) return null;
     return e.kind === 'notZip'
-      ? t.drop.notZip
+      ? this.flow().drop.notZip
       : t.drop.tooLarge(formatBytes(e.size, t), formatBytes(MAX_INPUT_BYTES, t));
   });
 

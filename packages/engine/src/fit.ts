@@ -11,17 +11,20 @@ export class ParseError extends Error {
 }
 
 const SESSION_MESG = 18;
+const RECORD_MESG = 20;
 
 /** Extrait les métadonnées d'un FIT ; CRC invalide ou fichier tronqué → `ParseError` (T1.5, T1.7). */
 export function parseFit(bytes: Uint8Array): ActivityMeta {
   let session: Record<string, unknown> | undefined;
   let fileId: Record<string, unknown> | undefined;
+  let points = 0;
   try {
     const decoder = new Decoder(Stream.fromByteArray(bytes));
     if (!decoder.isFIT() || !decoder.checkIntegrity()) throw new ParseError('FIT invalide (CRC)');
     const { errors } = decoder.read({
       mesgListener: (num, mesg) => {
-        if (num === SESSION_MESG && !session) session = mesg as Record<string, unknown>;
+        if (num === RECORD_MESG) points++;
+        else if (num === SESSION_MESG && !session) session = mesg as Record<string, unknown>;
         else if (num === 0 && !fileId) fileId = mesg as Record<string, unknown>;
       },
     });
@@ -47,6 +50,7 @@ export function parseFit(bytes: Uint8Array): ActivityMeta {
   return {
     sport,
     startTime: start.getTime(),
+    points,
     ...(subSport === undefined ? {} : { subSport }),
     ...(durationS === undefined ? {} : { durationS }),
     ...(distanceM === undefined ? {} : { distanceM }),

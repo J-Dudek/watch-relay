@@ -20,5 +20,23 @@ export function parseTcx(bytes: Uint8Array): ActivityMeta {
 
   const startTime = Date.parse(timeRaw);
   if (Number.isNaN(startTime)) throw new ParseError('Date TCX invalide');
-  return { sport: SPORTS[sportRaw.toLowerCase()] ?? sportRaw.toLowerCase(), startTime };
+  return {
+    sport: SPORTS[sportRaw.toLowerCase()] ?? sportRaw.toLowerCase(),
+    startTime,
+    points: countTrackpoints(bytes),
+  };
+}
+
+/** Compte les `<Trackpoint` sans construire de grande chaîne : balayage des octets. */
+function countTrackpoints(bytes: Uint8Array): number {
+  const needle = new TextEncoder().encode('<Trackpoint');
+  let count = 0;
+  const last = bytes.length - needle.length;
+  for (let i = 0; i <= last; i++) {
+    if (bytes[i] !== 0x3c) continue; // '<'
+    let j = 1;
+    while (j < needle.length && bytes[i + j] === needle[j]) j++;
+    if (j === needle.length) count++;
+  }
+  return count;
 }

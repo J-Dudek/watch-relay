@@ -343,3 +343,15 @@ a.btn {
   align-items: center;
   text-decoration: none;
 }
+
+.direction {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.direction .btn[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}

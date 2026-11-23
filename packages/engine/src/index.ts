@@ -20,3 +20,5 @@ export * from './process.js';
 export * from './opfs-sink.js';
 export * from './protocol.js';
 export * from './zip-config.js';
+export * from './profiles.js';
+export * from './rules/points.js';

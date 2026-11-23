@@ -2,16 +2,15 @@ import { Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
 import { archiveName, entryName } from './naming.js';
 import { runPipeline } from './pipeline.js';
-import { splitIntoBatches, MAX_BATCH_SIZE } from './batching.js';
+import { splitIntoBatches } from './batching.js';
 import { buildReport, type IgnoredEntry, type Report } from './report.js';
 import { DEFAULT_LIMITS, type ScanLimits } from './limits.js';
 import { createDuplicateRule } from './rules/duplicate.js';
 import { createPeriodRule, type Period } from './rules/period.js';
-import { createSizeRules } from './rules/size.js';
-import { createSportRule } from './rules/sport.js';
+import { PROFILES } from './profiles.js';
 import { scanArchive } from './scan.js';
 import type { ArchiveSink, ArchiveTarget } from './sink.js';
-import type { Candidate, FileRule, Rejection } from './types.js';
+import type { Candidate, FileRule, Rejection, Target } from './types.js';
 
 export interface ProcessProgress {
   readonly phase: 'analyze' | 'write';
@@ -23,6 +22,8 @@ export interface ProcessProgress {
 }
 
 export interface ProcessOptions {
+  /** Plateforme de destination (défaut : `coros`). */
+  readonly target?: Target;
   readonly limits?: ScanLimits;
   readonly supportedSports?: ReadonlySet<string>;
   readonly period?: Period;
@@ -71,7 +72,8 @@ export async function processArchive(
 ): Promise<ProcessResult> {
   const { signal, onProgress } = options;
   const limits = options.limits ?? DEFAULT_LIMITS;
-  const maxBatch = options.maxBatchSize ?? MAX_BATCH_SIZE;
+  const profile = PROFILES[options.target ?? 'coros'];
+  const maxBatch = options.maxBatchSize ?? profile.maxBatchSize;
   const targets: ArchiveTarget[] = [];
   let done = false;
 
@@ -100,8 +102,7 @@ export async function processArchive(
     }
 
     const fileRules: FileRule[] = [
-      ...createSizeRules(options.minFileSize, options.maxFileSize),
-      createSportRule(options.supportedSports),
+      ...profile.fileRules(options),
       ...(options.period ? [createPeriodRule(options.period)] : []),
     ];
     const { kept, rejected } = runPipeline(candidates, fileRules, [createDuplicateRule()]);
@@ -116,7 +117,7 @@ export async function processArchive(
     const writers: ZipWriter<unknown>[] = [];
     const takenNames = batches.map(() => new Set<string>());
     const counts = batches.map(() => 0);
-    const names = batches.map((b, i) => archiveName(b, i));
+    const names = batches.map((b, i) => archiveName(b, i, profile.archivePrefix));
     for (const name of names) {
       const target = await sink.open(name);
       targets.push(target);

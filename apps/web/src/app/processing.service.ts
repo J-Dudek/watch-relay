@@ -6,6 +6,7 @@ import type {
   ErrorCode,
   ProcessProgress,
   Report,
+  Target,
   WorkerRequest,
   WorkerResponse,
 } from '@watch-relay/engine';
@@ -22,6 +23,8 @@ export const MAX_INPUT_BYTES = 10 * 1024 ** 3;
 
 @Injectable({ providedIn: 'root' })
 export class ProcessingService {
+  /** Destination de l'import : COROS (Garmin → COROS) ou Garmin (COROS → Garmin). */
+  readonly target = signal<Target>('coros');
   readonly status = signal<Status>('idle');
   readonly progress = signal<ProcessProgress | null>(null);
   readonly report = signal<Report | null>(null);
@@ -60,7 +63,7 @@ export class ProcessingService {
         message: 'Worker crashed',
       });
     };
-    this.send({ type: 'start', file });
+    this.send({ type: 'start', file, options: { target: this.target() } });
   }
 
   cancel(): void {

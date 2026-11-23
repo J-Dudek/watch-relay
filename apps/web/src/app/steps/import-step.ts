@@ -15,7 +15,7 @@ import { ProcessingService } from '../processing.service';
   selector: 'app-import-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @let i = t().import;
+    @let i = flow().import;
     <h2>{{ i.title }}</h2>
 
     @if (mobile) {
@@ -62,7 +62,7 @@ import { ProcessingService } from '../processing.service';
     <ol class="steps">
       <li>
         {{ i.h1Before }}
-        <a href="https://t.coros.com" target="_blank" rel="noopener noreferrer">t.coros.com</a>
+        <a [href]="i.h1Href" target="_blank" rel="noopener noreferrer">{{ i.h1Link }}</a>
         {{ i.h1After }}
       </li>
       <li>
@@ -83,7 +83,9 @@ import { ProcessingService } from '../processing.service';
 })
 export class ImportStep {
   private readonly processing = inject(ProcessingService);
-  protected readonly t = inject(I18n).t;
+  private readonly i18n = inject(I18n);
+  protected readonly t = this.i18n.t;
+  protected readonly flow = this.i18n.flow;
   readonly back = output();
   readonly restart = output();
   protected readonly archives = this.processing.archives;
@@ -132,7 +134,7 @@ export class ImportStep {
     if (report)
       download(
         new Blob([reportToCsv(report)], { type: 'text/csv;charset=utf-8' }),
-        this.t().import.csvFileName,
+        this.flow().import.csvFileName,
       );
   }
 }

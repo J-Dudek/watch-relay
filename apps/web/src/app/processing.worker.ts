@@ -48,6 +48,7 @@ async function start(
     const { report, archives } = await processArchive(file, sink, {
       signal: controller.signal,
       ...(options?.period ? { period: options.period } : {}),
+      ...(options?.target ? { target: options.target } : {}),
       onProgress(progress) {
         const now = performance.now();
         if (now - last < 250 && progress.processed !== progress.total) return;

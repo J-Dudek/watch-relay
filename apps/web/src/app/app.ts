@@ -28,7 +28,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
   template: `
     <header class="header">
       <div class="header-top">
-        <h1>{{ t().title }}</h1>
+        <h1>{{ flow().title }}</h1>
         <button
           type="button"
           class="btn btn-small"
@@ -49,7 +49,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
     } @else {
       <nav [attr.aria-label]="t().stepsLabel">
         <ol class="stepper">
-          @for (label of t().steps; track label; let i = $index) {
+          @for (label of flow().steps; track label; let i = $index) {
             <li
               [class.current]="i === step()"
               [class.done]="i < step()"
@@ -93,6 +93,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
 export class App {
   protected readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
+  protected readonly flow = this.i18n.flow;
   private readonly injector = inject(Injector);
   protected readonly step = signal(0);
   protected readonly route = signal<'home' | InfoPageId>(routeFromHash(location.hash));

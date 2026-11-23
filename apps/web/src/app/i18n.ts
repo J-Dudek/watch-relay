@@ -1,4 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { ProcessingService } from './processing.service';
 import type { RejectReason } from '@watch-relay/engine';
 import { PAGES_EN, PAGES_FR } from './pages-content';
 
@@ -8,11 +9,16 @@ const STORAGE_KEY = 'watch-relay.lang';
 
 /** Source de vérité : le français. `en` doit avoir exactement la même forme (vérifié par le compilateur). */
 const fr = {
-  htmlTitle: 'Migration Garmin vers COROS',
+  htmlTitle: 'Migration Garmin ⇄ COROS',
   htmlDescription:
-    'Prépare ton historique d’activités Garmin pour l’importer dans COROS. Tout se passe dans ton navigateur : aucune donnée n’est envoyée.',
+    'Prépare ton historique d’activités Garmin pour COROS, ou l’inverse. Tout se passe dans ton navigateur : aucune donnée n’est envoyée.',
   title: 'Migration Garmin → COROS',
   tagline: '100 % sur ton appareil : aucune donnée n’est envoyée, aucun compte requis.',
+  direction: {
+    label: 'Sens du transfert',
+    toCoros: 'Garmin → COROS',
+    toGarmin: 'COROS → Garmin',
+  },
   stepsLabel: 'Étapes',
   steps: ['Export Garmin', 'Dépôt', 'Analyse', 'Import COROS'],
   languageSwitch: 'English',
@@ -24,6 +30,7 @@ const fr = {
   guide: {
     title: '1. Récupérer ton export Garmin',
     s1Before: 'Ouvre la page',
+    s1Href: 'https://www.garmin.com/account/datamanagement/',
     s1Link: 'Gestion des données de ton compte Garmin',
     s1After: 'et connecte-toi.',
     s2Before: 'Choisis',
@@ -80,6 +87,10 @@ const fr = {
       title: 'Fichiers trop volumineux',
       hint: 'COROS refuse les fichiers de plus de 200 Mo. Ces activités doivent être ajoutées autrement.',
     },
+    TOO_MANY_POINTS: {
+      title: 'Fichiers trop détaillés',
+      hint: 'Ces fichiers dépassent le nombre de points d’enregistrement accepté par la plateforme.',
+    },
     UNSUPPORTED_SPORT: {
       title: 'Sports non pris en charge',
       hint: 'COROS ferait échouer l’import du ZIP entier : on les écarte pour protéger les autres.',
@@ -113,9 +124,13 @@ const fr = {
     csvFileName: 'rapport-import.csv',
     howTo: 'Importer dans COROS Training Hub',
     h1Before: 'Depuis un ordinateur, ouvre',
+    h1Href: 'https://t.coros.com',
+    h1Link: 't.coros.com',
     h1After: 'et connecte-toi.',
     h2Before: 'Va dans',
+    h2A: 'Activity List',
     h2Mid: ', puis',
+    h2B: 'Import Data',
     h3Before: 'Sélectionne un ZIP, lance l’import et attends la confirmation. Fais-le',
     h3Strong: 'un ZIP à la fois',
     h4: 'Coche « Importé » ci-dessus pour suivre ta progression.',
@@ -128,14 +143,22 @@ const fr = {
   numberLocale: 'fr-FR',
 };
 
-export type Messages = typeof fr;
+type Base = typeof fr;
+/** Textes qui dépendent du sens du transfert. */
+export type FlowMessages = Pick<Base, 'title' | 'steps' | 'guide' | 'drop' | 'import' | 'reject'>;
+export type Messages = Base & { readonly reverse: FlowMessages };
 
-const en: Messages = {
-  htmlTitle: 'Garmin to COROS migration',
+const en: Base = {
+  htmlTitle: 'Garmin ⇄ COROS migration',
   htmlDescription:
-    'Prepare your Garmin activity history for import into COROS. Everything happens in your browser: no data is sent anywhere.',
+    'Prepare your Garmin activity history for COROS, or the other way round. Everything happens in your browser: no data is sent anywhere.',
   title: 'Garmin → COROS migration',
   tagline: '100% on your device: no data is sent, no account required.',
+  direction: {
+    label: 'Transfer direction',
+    toCoros: 'Garmin → COROS',
+    toGarmin: 'COROS → Garmin',
+  },
   stepsLabel: 'Steps',
   steps: ['Garmin export', 'Upload', 'Analysis', 'COROS import'],
   languageSwitch: 'Français',
@@ -147,6 +170,7 @@ const en: Messages = {
   guide: {
     title: '1. Get your Garmin export',
     s1Before: 'Open the',
+    s1Href: 'https://www.garmin.com/account/datamanagement/',
     s1Link: 'Data Management page of your Garmin account',
     s1After: 'and sign in.',
     s2Before: 'Choose',
@@ -203,6 +227,10 @@ const en: Messages = {
       title: 'Files too large',
       hint: 'COROS rejects files over 200 MB. These activities must be added another way.',
     },
+    TOO_MANY_POINTS: {
+      title: 'Files too detailed',
+      hint: 'These files exceed the number of recording points the platform accepts.',
+    },
     UNSUPPORTED_SPORT: {
       title: 'Unsupported sports',
       hint: 'COROS would fail the whole ZIP import: they are excluded to protect the others.',
@@ -235,9 +263,13 @@ const en: Messages = {
     csvFileName: 'import-report.csv',
     howTo: 'Import into COROS Training Hub',
     h1Before: 'From a computer, open',
+    h1Href: 'https://t.coros.com',
+    h1Link: 't.coros.com',
     h1After: 'and sign in.',
     h2Before: 'Go to',
+    h2A: 'Activity List',
     h2Mid: ', then',
+    h2B: 'Import Data',
     h3Before: 'Select a ZIP, start the import and wait for the confirmation. Do it',
     h3Strong: 'one ZIP at a time',
     h4: 'Tick “Imported” above to track your progress.',
@@ -250,7 +282,129 @@ const en: Messages = {
   numberLocale: 'en-US',
 };
 
-const DICTIONARIES: Record<Locale, Messages> = { fr, en };
+const frReverse: FlowMessages = {
+  title: 'Migration COROS → Garmin',
+  steps: ['Export COROS', 'Dépôt', 'Analyse', 'Import Garmin'],
+  guide: {
+    title: '1. Récupérer ton export COROS',
+    s1Before: 'Depuis un ordinateur, ouvre',
+    s1Href: 'https://t.coros.com',
+    s1Link: 'COROS Training Hub',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Va dans',
+    s2Strong: 'Activity List, puis Export Data',
+    s3Before: 'Saisis ton e-mail et choisis le format',
+    s3Strong: 'FIT (recommandé) ou TCX',
+    s4Before: 'Télécharge le fichier',
+    s4After: 'reçu par e-mail, sans le décompresser.',
+    noteBefore: 'L’import dans Garmin Connect se fait ensuite',
+    noteStrong: 'depuis un ordinateur',
+    noteAfter: '. Tu peux préparer les fichiers ici, même depuis un téléphone.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    ...fr.drop,
+    choose: 'Choisir le fichier ZIP COROS',
+    notZip: 'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de COROS, sans la décompresser.',
+  },
+  import: {
+    ...fr.import,
+    title: '4. Importer dans Garmin Connect',
+    mobileStrong: 'l’import Garmin Connect se fait depuis un ordinateur',
+    howTo: 'Importer dans Garmin Connect',
+    h1Before: 'Depuis un ordinateur, décompresse le ZIP, puis ouvre',
+    h1Href: 'https://connect.garmin.com',
+    h1Link: 'connect.garmin.com',
+    h1After: 'et connecte-toi.',
+    h2Before: 'Clique sur l’icône',
+    h2A: 'nuage',
+    h2Mid: 'en haut à droite, puis',
+    h2B: 'Importer des données',
+    h3Before:
+      'Garmin n’accepte pas les ZIP : sélectionne les fichiers décompressés, par petits groupes si l’import échoue. Fais-le',
+    h3Strong: 'une archive à la fois',
+  },
+  reject: {
+    ...fr.reject,
+    TOO_LARGE: {
+      title: 'Fichiers trop volumineux',
+      hint: 'Garmin refuse les fichiers FIT de plus de 50 Mo et TCX de plus de 25 Mo. Ces activités doivent être ajoutées autrement.',
+    },
+    TOO_MANY_POINTS: {
+      title: 'Fichiers trop détaillés',
+      hint: 'Garmin refuse les fichiers de 99 999 points d’enregistrement ou plus. Ces activités doivent être ajoutées autrement.',
+    },
+    CORRUPTED: {
+      title: 'Fichiers illisibles',
+      hint: 'Ces fichiers sont abîmés (téléchargement interrompu ?). Tu peux refaire un export depuis COROS.',
+    },
+  },
+};
+
+const enReverse: FlowMessages = {
+  title: 'COROS → Garmin migration',
+  steps: ['COROS export', 'Upload', 'Analysis', 'Garmin import'],
+  guide: {
+    title: '1. Get your COROS export',
+    s1Before: 'From a computer, open',
+    s1Href: 'https://t.coros.com',
+    s1Link: 'COROS Training Hub',
+    s1After: 'and sign in.',
+    s2Before: 'Go to',
+    s2Strong: 'Activity List, then Export Data',
+    s3Before: 'Enter your email and choose the format',
+    s3Strong: 'FIT (recommended) or TCX',
+    s4Before: 'Download the',
+    s4After: 'file sent by email, without unzipping it.',
+    noteBefore: 'Importing into Garmin Connect is then done',
+    noteStrong: 'from a computer',
+    noteAfter: '. You can prepare the files here, even from a phone.',
+    haveFile: 'I have my file',
+  },
+  drop: {
+    ...en.drop,
+    choose: 'Choose the COROS ZIP file',
+    notZip:
+      'This file is not a ZIP. Choose the archive you received from COROS, without unzipping it.',
+  },
+  import: {
+    ...en.import,
+    title: '4. Import into Garmin Connect',
+    mobileStrong: 'the Garmin Connect import must be done from a computer',
+    howTo: 'Import into Garmin Connect',
+    h1Before: 'From a computer, unzip the ZIP, then open',
+    h1Href: 'https://connect.garmin.com',
+    h1Link: 'connect.garmin.com',
+    h1After: 'and sign in.',
+    h2Before: 'Click the',
+    h2A: 'cloud icon',
+    h2Mid: 'at the top right, then',
+    h2B: 'Import Data',
+    h3Before:
+      'Garmin does not accept ZIPs: select the unzipped files, in smaller groups if the import fails. Do it',
+    h3Strong: 'one archive at a time',
+  },
+  reject: {
+    ...en.reject,
+    TOO_LARGE: {
+      title: 'Files too large',
+      hint: 'Garmin rejects FIT files over 50 MB and TCX files over 25 MB. These activities must be added another way.',
+    },
+    TOO_MANY_POINTS: {
+      title: 'Files too detailed',
+      hint: 'Garmin rejects files with 99,999 recording points or more. These activities must be added another way.',
+    },
+    CORRUPTED: {
+      title: 'Unreadable files',
+      hint: 'These files are damaged (interrupted download?). You can export again from COROS.',
+    },
+  },
+};
+
+const DICTIONARIES: Record<Locale, Messages> = {
+  fr: { ...fr, reverse: frReverse },
+  en: { ...en, reverse: enReverse },
+};
 
 /** FR par défaut ; EN si la première langue du navigateur est l'anglais. */
 export function detectLocale(languages: readonly string[]): Locale {
@@ -271,6 +425,11 @@ function readStored(): Locale | null {
 export class I18n {
   readonly locale = signal<Locale>(readStored() ?? detectLocale(navigator.languages));
   readonly t = computed(() => DICTIONARIES[this.locale()]);
+  private readonly processing = inject(ProcessingService);
+  /** Textes du sens de transfert courant (Garmin → COROS par défaut). */
+  readonly flow = computed<FlowMessages>(() =>
+    this.processing.target() === 'coros' ? this.t() : this.t().reverse,
+  );
 
   set(locale: Locale): void {
     this.locale.set(locale);

@@ -2,6 +2,7 @@ import type { LimitCode } from './limits.js';
 import type { ProcessProgress } from './process.js';
 import type { Period } from './rules/period.js';
 import type { Report } from './report.js';
+import type { Target } from './types.js';
 
 /** Répertoire OPFS de travail (nettoyé au démarrage et à la réinitialisation, T1.24). */
 export const WORK_DIR = 'watch-relay-out';
@@ -9,6 +10,8 @@ export const WORK_DIR = 'watch-relay-out';
 /** Contrat typé partagé entre l'interface et le worker (T1.21). */
 export interface StartOptions {
   readonly period?: Period;
+  /** Plateforme de destination (défaut : `coros`). */
+  readonly target?: Target;
 }
 
 export type WorkerRequest =

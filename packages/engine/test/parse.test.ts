@@ -32,7 +32,10 @@ describe('parseTcx', () => {
       `<?xml version="1.0"?>${extra}<TrainingCenterDatabase><Activities><Activity Sport="Biking"><Id>2020-05-01T10:00:00Z</Id></Activity></Activities></TrainingCenterDatabase>`,
     );
   it('extrait sport et date', () => {
-    expect(parseTcx(tcx())).toEqual({ sport: 'cycling', startTime: Date.UTC(2020, 4, 1, 10) });
+    expect(parseTcx(tcx())).toMatchObject({
+      sport: 'cycling',
+      startTime: Date.UTC(2020, 4, 1, 10),
+    });
   });
   it('neutralise XXE et billion laughs', () => {
     const xxe = '<!DOCTYPE x [<!ENTITY a SYSTEM "file:///etc/passwd">]>';

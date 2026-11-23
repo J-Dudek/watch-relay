@@ -50,7 +50,7 @@ describe('I18n', () => {
     const i18n = TestBed.inject(I18n);
     i18n.set('en');
     expect(document.documentElement.lang).toBe('en');
-    expect(document.title).toContain('Garmin to COROS');
+    expect(document.title).toContain('Garmin ⇄ COROS');
     i18n.set('fr');
     expect(document.documentElement.lang).toBe('fr');
   });
