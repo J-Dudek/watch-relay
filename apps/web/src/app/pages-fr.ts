@@ -53,7 +53,7 @@ export const PAGES_FR: PagesMessages = {
       {
         q: 'Pourquoi plusieurs ZIP ?',
         a: [
-          'COROS refuse les ZIP de plus de 200 Mo. L’outil découpe donc ton historique en ZIP d’au plus 180 Mo, dans l’ordre chronologique. Importe-les un par un.',
+          'COROS refuse les ZIP de plus de 200 Mo. L’outil découpe donc ton historique en ZIP d’au plus 180 Mo (taille compressée, celle que COROS contrôle), dans l’ordre chronologique : un petit historique tient souvent en un seul ZIP. Importe-les un par un.',
         ],
       },
       {

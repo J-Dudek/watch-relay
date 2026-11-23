@@ -55,7 +55,7 @@ le contrôle et le découpage.
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
   on garde le fichier le plus complet).
-- **Découpage** en archives ≤ 180 Mo, en ordre chronologique, nommées de façon lisible
+- **Découpage** en archives ≤ 180 Mo **compressés** (taille mesurée par échantillonnage par type de fichier, avec repli prudent si une archive dépasse 198 Mo), en ordre chronologique, nommées de façon lisible
   (`coros-import-01-2019-03_2021-07.zip`).
 - **GPX → TCX** : COROS n'importe que FIT et TCX ; les activités GPX (ex. issues de Strava) sont converties en TCX (trace, altitude, fréquence cardiaque, cadence, distance cumulée), sans parseur XML ni DTD, avec le sport déduit du fichier ou de son nom. Vers Garmin, les GPX sont conservés tels quels.
 - **Données de santé reconnues** : les fichiers de suivi quotidien, de sommeil, etc. sont comptés et signalés (et non traités comme « corrompus »). Ils ne sont pas transférés (COROS n'importe que des activités), mais une option explicite (désactivée par défaut) les extrait en **CSV lisibles**, dans une archive à part, pour un archivage personnel (les formats JSON de Garmin variant, les fichiers sont aplatis sans supposer de champs).

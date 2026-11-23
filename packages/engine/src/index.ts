@@ -25,3 +25,4 @@ export * from './rules/points.js';
 export * from './health.js';
 export * from './health-export.js';
 export * from './gpx.js';
+export * from './compress.js';

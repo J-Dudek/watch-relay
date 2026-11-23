@@ -4,7 +4,12 @@ import { parseTcx } from './tcx.js';
 import type { ActivityFormat, Candidate, Rejection } from './types.js';
 
 export type AnalyzeOutcome =
-  | { readonly ok: true; readonly candidate: Candidate }
+  | {
+      readonly ok: true;
+      readonly candidate: Candidate;
+      /** Octets réellement écrits dans l'archive quand ils diffèrent de la source (GPX converti). */
+      readonly output?: Uint8Array;
+    }
   | { readonly ok: false; readonly rejection: Rejection }
   /** Fichier valide mais qui n'est pas une activité (santé, réglages…) : ni importé, ni en erreur. */
   | {
@@ -79,6 +84,7 @@ export function analyzeFile(
           size: tcx.byteLength,
           meta: parsed.meta,
         },
+        output: tcx,
       };
     }
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);

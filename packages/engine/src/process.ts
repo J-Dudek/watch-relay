@@ -1,11 +1,12 @@
 import { TextReader, Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
+import { ZipSizeEstimator } from './compress.js';
 import { gpxToTcx, parseGpx } from './gpx.js';
 import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
 import { runPipeline } from './pipeline.js';
-import { splitIntoBatches } from './batching.js';
+import { MAX_ARCHIVE_SIZE, splitIntoBatches } from './batching.js';
 import { buildReport, type IgnoredEntry, type Report } from './report.js';
 import { DEFAULT_LIMITS, type ScanLimits } from './limits.js';
 import { createDuplicateRule } from './rules/duplicate.js';
@@ -32,6 +33,13 @@ export interface ProcessOptions {
   readonly supportedSports?: ReadonlySet<string>;
   readonly period?: Period;
   readonly maxBatchSize?: number;
+  /**
+   * Taille maximale réelle d'une archive produite (défaut : limite dure de la destination). Si une archive
+   * la dépasse (estimation trop optimiste), le traitement recommence avec un découpage prudent.
+   */
+  readonly maxArchiveSize?: number;
+  /** Remplace l'estimation de la taille compressée d'un fichier (tests, réglages). */
+  readonly estimateZipSize?: (candidate: Candidate) => number;
   /** Seuils de taille par fichier (défaut : règles COROS 20 Ko – 200 Mo). */
   readonly minFileSize?: number;
   readonly maxFileSize?: number;
@@ -56,6 +64,9 @@ export interface ProcessResult {
   readonly report: Report;
   readonly archives: OutputArchive[];
 }
+
+/** Une archive produite dépasse la limite dure : l'estimation de taille était trop optimiste. */
+class OversizeError extends Error {}
 
 /** Identifiant unique et déterministe d'une entrée (identique aux deux passes). */
 export function makeIdAllocator(): (path: string) => string {
@@ -106,6 +117,7 @@ export async function processArchive(
     const idFor = makeIdAllocator();
 
     const collector = options.healthExport ? new HealthCollector() : undefined;
+    const estimator = new ZipSizeEstimator();
 
     for await (const event of scanArchive(input, limits, signal, {
       collectHealth: collector !== undefined,
@@ -119,8 +131,14 @@ export async function processArchive(
         const outcome = analyzeFile(id, event.format, event.data, {
           convertGpx: profile.convertGpx,
         });
-        if (outcome.ok) candidates.push(outcome.candidate);
-        else if ('skipped' in outcome) {
+        if (outcome.ok) {
+          candidates.push(outcome.candidate);
+          // Mesure (sur un échantillon) le taux de compression de ce type de fichier.
+          await estimator.observe(
+            ZipSizeEstimator.groupOf(outcome.candidate),
+            outcome.output ?? event.data,
+          );
+        } else if ('skipped' in outcome) {
           ignored.push({
             path: event.path,
             note: outcome.skipped.note,
@@ -147,61 +165,87 @@ export async function processArchive(
     const { kept, rejected } = runPipeline(candidates, fileRules, [createDuplicateRule()]);
     const report = buildReport(kept, [...rejections, ...rejected], ignored);
 
-    // Passe 2 : écriture des seuls fichiers retenus.
-    const batches = splitIntoBatches(kept, maxBatch);
-    const batchOf = new Map<string, number>();
-    for (const [i, b] of batches.entries()) for (const c of b.items) batchOf.set(c.id, i);
+    // Passe 2 : écriture des seuls fichiers retenus. Les lots sont remplis d'après la taille
+    // COMPRESSÉE estimée ; si une archive réelle dépasse la limite dure (estimation trop optimiste),
+    // on la jette et on recommence avec la taille brute, toujours prudente.
+    const hardLimit = options.maxArchiveSize ?? MAX_ARCHIVE_SIZE;
     const byId = new Map(kept.map((c) => [c.id, c]));
 
-    const writers: ZipWriter<unknown>[] = [];
-    const takenNames = batches.map(() => new Set<string>());
-    const counts = batches.map(() => 0);
-    const names = batches.map((b, i) => archiveName(b, i, profile.archivePrefix));
-    for (const name of names) {
-      const target = await sink.open(name);
-      targets.push(target);
-      writers.push(new ZipWriter(target.writable));
-    }
+    const writeActivityArchives = async (
+      sizeOf: (c: Candidate) => number,
+    ): Promise<OutputArchive[]> => {
+      const batches = splitIntoBatches(kept, maxBatch, sizeOf);
+      const batchOf = new Map<string, number>();
+      for (const [i, b] of batches.entries()) for (const c of b.items) batchOf.set(c.id, i);
 
-    let written = 0;
-    const idFor2 = makeIdAllocator();
-    if (kept.length > 0) {
-      for await (const event of scanArchive(input, limits, signal)) {
-        throwIfAborted(signal);
-        const id = idFor2(event.path);
-        if (event.kind !== 'activity') continue;
-        const candidate = byId.get(id);
-        const index = batchOf.get(id);
-        if (!candidate || index === undefined) continue;
-        // Le fichier source ne doit pas avoir changé entre les deux passes (un GPX converti est
-        // reconverti : sa taille de sortie doit être identique à celle de la passe 1).
-        let output = event.data;
-        const sourceFormat = candidate.convertedFrom ?? candidate.format;
-        if (candidate.convertedFrom === 'gpx' && event.format === 'gpx') {
-          const slash = event.path.lastIndexOf('/');
-          output = new TextEncoder().encode(
-            gpxToTcx(parseGpx(event.data, event.path.slice(slash + 1))),
-          );
-        }
-        if (output.byteLength !== candidate.size || event.format !== sourceFormat) {
-          throw new Error('Le fichier source a changé pendant le traitement.');
-        }
-        const taken = takenNames[index] as Set<string>;
-        await (writers[index] as ZipWriter<unknown>).add(
-          entryName(candidate, taken),
-          new Uint8ArrayReader(output),
-        );
-        counts[index] = (counts[index] ?? 0) + 1;
-        written++;
-        onProgress?.({ phase: 'write', processed: written, bytesRead, total: kept.length });
+      const mine: ArchiveTarget[] = [];
+      const writers: ZipWriter<unknown>[] = [];
+      const takenNames = batches.map(() => new Set<string>());
+      const counts = batches.map(() => 0);
+      const names = batches.map((b, i) => archiveName(b, i, profile.archivePrefix));
+      for (const name of names) {
+        const target = await sink.open(name);
+        targets.push(target);
+        mine.push(target);
+        writers.push(new ZipWriter(target.writable));
       }
-    }
 
-    const archives: OutputArchive[] = [];
-    for (const [i, writer] of writers.entries()) {
-      await writer.close();
-      const blob = await (targets[i] as ArchiveTarget).close();
-      archives.push({ name: names[i] as string, blob, fileCount: counts[i] ?? 0 });
+      let written = 0;
+      const idFor2 = makeIdAllocator();
+      if (kept.length > 0) {
+        for await (const event of scanArchive(input, limits, signal)) {
+          throwIfAborted(signal);
+          const id = idFor2(event.path);
+          if (event.kind !== 'activity') continue;
+          const candidate = byId.get(id);
+          const index = batchOf.get(id);
+          if (!candidate || index === undefined) continue;
+          // Le fichier source ne doit pas avoir changé entre les deux passes (un GPX converti est
+          // reconverti : sa taille de sortie doit être identique à celle de la passe 1).
+          let output = event.data;
+          const sourceFormat = candidate.convertedFrom ?? candidate.format;
+          if (candidate.convertedFrom === 'gpx' && event.format === 'gpx') {
+            const slash = event.path.lastIndexOf('/');
+            output = new TextEncoder().encode(
+              gpxToTcx(parseGpx(event.data, event.path.slice(slash + 1))),
+            );
+          }
+          if (output.byteLength !== candidate.size || event.format !== sourceFormat) {
+            throw new Error('Le fichier source a changé pendant le traitement.');
+          }
+          const taken = takenNames[index] as Set<string>;
+          await (writers[index] as ZipWriter<unknown>).add(
+            entryName(candidate, taken),
+            new Uint8ArrayReader(output),
+          );
+          counts[index] = (counts[index] ?? 0) + 1;
+          written++;
+          onProgress?.({ phase: 'write', processed: written, bytesRead, total: kept.length });
+        }
+      }
+
+      const out: OutputArchive[] = [];
+      for (const [i, writer] of writers.entries()) {
+        await writer.close();
+        const blob = await (mine[i] as ArchiveTarget).close();
+        out.push({ name: names[i] as string, blob, fileCount: counts[i] ?? 0 });
+      }
+      if (sizeOf !== rawSize && out.some((a) => a.blob.size > hardLimit)) {
+        await Promise.allSettled(mine.map((t) => t.discard()));
+        throw new OversizeError();
+      }
+      return out;
+    };
+
+    const rawSize = (c: Candidate): number => c.size;
+    let archives: OutputArchive[];
+    try {
+      archives = await writeActivityArchives(
+        options.estimateZipSize ?? ((c) => estimator.estimate(c)),
+      );
+    } catch (e) {
+      if (!(e instanceof OversizeError)) throw e;
+      archives = await writeActivityArchives(rawSize);
     }
     // Archive de santé : après les lots d'activités, hors du circuit d'import.
     let healthExport: HealthExportStats | undefined;

@@ -53,7 +53,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'Why several ZIPs?',
         a: [
-          'COROS rejects ZIPs over 200 MB. The tool therefore splits your history into ZIPs of at most 180 MB, in chronological order. Import them one at a time.',
+          'COROS rejects ZIPs over 200 MB. The tool therefore splits your history into ZIPs of at most 180 MB (compressed size, the one COROS checks), in chronological order: a small history often fits in a single ZIP. Import them one at a time.',
         ],
       },
       {

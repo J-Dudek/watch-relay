@@ -1,6 +1,8 @@
 import type { Candidate } from './types.js';
 
 export const MAX_BATCH_SIZE = 180 * 1024 * 1024;
+/** Limite dure d'une archive produite (COROS refuse au-delà de 200 Mo) : marge sous le plafond. */
+export const MAX_ARCHIVE_SIZE = 198 * 1024 * 1024;
 /** Surcoût ZIP par entrée (en-tête local + répertoire central + marge). */
 export const ZIP_ENTRY_OVERHEAD = 512;
 /** Surcoût fixe par archive (fin de répertoire central + marge). */
@@ -20,6 +22,8 @@ export interface Batch {
 export function splitIntoBatches(
   candidates: readonly Candidate[],
   maxSize: number = MAX_BATCH_SIZE,
+  /** Taille d'un fichier dans l'archive (brute par défaut ; compressée estimée pour remplir les lots). */
+  sizeOf: (candidate: Candidate) => number = (c) => c.size,
 ): Batch[] {
   const sorted = [...candidates].sort(
     (a, b) => a.meta.startTime - b.meta.startTime || a.id.localeCompare(b.id),
@@ -28,7 +32,7 @@ export function splitIntoBatches(
   let current = { items: [] as Candidate[], size: ZIP_BASE_OVERHEAD };
 
   for (const c of sorted) {
-    const cost = c.size + ZIP_ENTRY_OVERHEAD;
+    const cost = sizeOf(c) + ZIP_ENTRY_OVERHEAD;
     if (ZIP_BASE_OVERHEAD + cost > maxSize) {
       throw new RangeError(
         `Le fichier ${c.id} (${String(c.size)} o) dépasse la taille maximale d'un lot.`,
