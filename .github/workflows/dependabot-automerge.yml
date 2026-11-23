@@ -6,22 +6,35 @@ permissions:
   pull-requests: write
 
 jobs:
-  # T2.14 : fusion automatique des mises à jour patch, une fois les contrôles requis verts.
-  # Nécessite « Allow auto-merge » et une protection de branche avec contrôles requis (T2.18) ;
-  # sans cela, la commande échoue sans effet.
+  # T2.14 : fusion automatique des mises à jour PATCH de dépendances de DÉVELOPPEMENT, une fois les contrôles
+  # requis verts. Sans action tierce (le dépôt n'autorise que les actions GitHub) : le type de mise à jour est
+  # déduit du titre de la PR Dependabot (« Bump x from 1.2.3 to 1.2.4 »), la nature de la dépendance de
+  # package.json. Les PR groupées et tout titre inattendu ne sont jamais fusionnés automatiquement.
+  # Nécessite « Allow auto-merge » et une protection de branche avec contrôles requis (T2.18).
   automerge:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-      - id: meta
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      # Uniquement les patchs des dépendances de développement : le code livré reste relu à la main.
-      - if: >-
-          steps.meta.outputs.update-type == 'version-update:semver-patch' &&
-          steps.meta.outputs.dependency-type == 'direct:development'
-        run: gh pr merge --auto --squash "$PR_URL"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Fusion automatique des patchs de dépendances de développement
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$PR_TITLE" =~ ^[Bb]ump\ (@?[A-Za-z0-9._/-]+)\ from\ ([0-9]+)\.([0-9]+)\.([0-9]+)\ to\ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            echo "Titre non reconnu ou PR groupée : pas d'auto-merge."; exit 0
+          fi
+          pkg="${BASH_REMATCH[1]}"
+          if [[ "${BASH_REMATCH[2]}.${BASH_REMATCH[3]}" != "${BASH_REMATCH[5]}.${BASH_REMATCH[6]}" ]]; then
+            echo "Ce n'est pas un patch : pas d'auto-merge."; exit 0
+          fi
+          # Dépendance de développement dans tous les package.json, et jamais de runtime.
+          if jq -r --arg p "$pkg" '[.dependencies[$p]] | any(. != null)' package.json apps/web/package.json packages/engine/package.json | grep -q true; then
+            echo "Dépendance d'exécution : pas d'auto-merge."; exit 0
+          fi
+          if ! jq -r --arg p "$pkg" '[.devDependencies[$p]] | any(. != null)' package.json apps/web/package.json packages/engine/package.json | grep -q true; then
+            echo "Dépendance de développement introuvable : pas d'auto-merge."; exit 0
+          fi
+          gh pr merge --auto --squash "$PR_URL"
