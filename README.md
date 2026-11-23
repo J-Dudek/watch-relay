@@ -1,144 +1,217 @@
 # watch-relay
 
-Prépare l'historique de vos activités pour passer d'une montre à l'autre, dans les deux sens :
+**Migrez l'historique de vos activités entre montres Garmin et COROS, dans les deux sens, sans qu'aucune donnée ne quitte votre navigateur.**
 
-- **Garmin → COROS** : transforme l'export de données Garmin en archives ZIP prêtes à importer dans COROS Training Hub ;
-- **COROS → Garmin** : lit l'export COROS (FIT/TCX) et retient les fichiers que Garmin Connect acceptera.
+[![CI](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml)
+[![Security scans](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+![Node 22](https://img.shields.io/badge/node-22-339933.svg)
+![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)
 
-> **100 % dans votre navigateur.** Vos fichiers ne quittent jamais votre appareil : aucun serveur de
-> traitement, aucun compte, aucun cookie, aucun tracker.
+watch-relay lit l'export de données d'un compte **Garmin** ou **COROS**, en extrait les fichiers d'activité
+(`.fit`, `.tcx`), applique les contraintes de la plateforme de destination et produit des archives prêtes à
+importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou écarté, et pourquoi.
 
-## Le problème
+> Projet indépendant, non affilié à Garmin ni à COROS. « Garmin » et « COROS » sont des marques de leurs propriétaires respectifs.
 
-COROS ne sait importer l'historique que par `.fit`/`.tcx`, avec des contraintes strictes (fichier
-≥ 20 Ko, ZIP ≤ 200 Mo, sports pris en charge uniquement, import depuis un ordinateur sur t.coros.com).
-L'export Garmin, lui, est un gros ZIP (parfois plusieurs Go) contenant des ZIP imbriqués. watch-relay fait
-le tri et le découpage à votre place.
+## Sommaire
 
-**Sens inverse.** L'export COROS (Activity List › Export Data, FIT ou TCX) est déposé de la même façon. Garmin Connect
-refuse les FIT de plus de 50 Mo, les GPX/TCX de plus de 25 Mo et les fichiers de 99 999 points ou plus ; il n'a ni
-taille minimale ni liste de sports documentées. Garmin n'importe pas de ZIP : l'archive produite sert à télécharger
-les fichiers, à décompresser avant l'import. Les règles de chaque destination sont des « profils » du moteur
-(`packages/engine/src/profiles.ts`).
+- [Pourquoi](#pourquoi)
+- [Fonctionnalités](#fonctionnalités)
+- [Fonctionnement](#fonctionnement)
+- [Modèle de confiance et sécurité](#modèle-de-confiance-et-sécurité)
+- [Architecture](#architecture)
+- [Démarrage rapide](#démarrage-rapide)
+- [Qualité et tests](#qualité-et-tests)
+- [Valider sur un vrai export](#valider-sur-un-vrai-export)
+- [Déploiement](#déploiement)
+- [État du projet et limites connues](#état-du-projet-et-limites-connues)
+- [Contribuer](#contribuer)
+- [Sécurité](#sécurité)
+- [Licence](#licence)
 
-## Comment ça marche
+## Pourquoi
 
-0. **Sens** : Garmin → COROS (par défaut) ou COROS → Garmin.
-1. **Guide** : comment demander et récupérer votre export (Garmin ou COROS).
-2. **Dépôt** : vous déposez le ZIP (jamais envoyé nulle part).
-3. **Analyse** : lecture récursive des archives, détection des `.fit`/`.tcx`, application de règles
-   (taille, sport, période, doublons) et rapport clair des fichiers écartés et pourquoi.
-4. **Import** : téléchargement d'un ou plusieurs ZIP (≤ 180 Mo chacun, ordre chronologique, ex.
-   `coros-import-01-2019-03_2021-07.zip`), puis guide d'import dans COROS (ou Garmin Connect). Rapport CSV en option.
+Changer de montre ne devrait pas coûter des années d'historique. Or l'import d'un historique est contraint :
 
-Un fichier corrompu n'interrompt jamais le traitement des autres.
+| Plateforme de destination | Contraintes connues                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **COROS Training Hub**    | `.fit`/`.tcx` ; fichier ≥ 20 Ko ; fichier et ZIP ≤ 200 Mo ; un sport non pris en charge fait échouer **tout** le ZIP ; import depuis un ordinateur |
+| **Garmin Connect**        | `.fit` ≤ 50 Mo, `.gpx`/`.tcx` ≤ 25 Mo, moins de 99 999 points par fichier ; pas d'import de ZIP ; import depuis un ordinateur                      |
 
-## Garanties
+Les exports, eux, sont de gros ZIP (jusqu'à plusieurs Go) contenant des ZIP imbriqués. watch-relay automatise le tri,
+le contrôle et le découpage.
 
-| Garantie               | Comment elle est tenue                                                                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Zéro donnée sortante   | test e2e : aucune requête cross-origin ni non-GET pendant le traitement                                                                                            |
-| Sécurité du navigateur | CSP stricte, Trusted Types, HSTS, COOP/COEP, Permissions-Policy                                                                                                    |
-| Archives hostiles      | extraction en streaming avec limites (ratio 100:1, profondeur 3, nombre et taille), zip slip neutralisé                                                            |
-| Fichiers forgés        | CRC FIT vérifié, TCX sans DTD/entités (XXE, billion laughs), CSV protégé contre l'injection de formule                                                             |
-| Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible                                                                       |
-| Accessibilité          | axe-core (WCAG 2.2 AA) : 0 violation sur chaque écran, FR/EN, clair/sombre, 5 profils d'appareil                                                                   |
-| Responsive et visuel   | pas de défilement horizontal ni cible < 44 px de 320 à 1280 px ; captures de référence sur 3 tailles (`npm run e2e:update -w @watch-relay/web` pour les régénérer) |
-| Lighthouse             | Performance ≥ 95, Accessibilité 100, Best Practices 100, SEO ≥ 95 (mobile et bureau), bloquant en CI : `npm run lighthouse`                                        |
-| Hors ligne             | service worker sans dépendance, précache du build ; test e2e en mode hors ligne sur 5 profils                                                                      |
-| Pas de trace           | stockage temporaire vidé au démarrage et à « Recommencer »                                                                                                         |
+## Fonctionnalités
 
-## Structure
+- **Deux sens** : Garmin → COROS et COROS → Garmin, chacun avec ses règles et ses consignes d'import.
+- **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
+  **contenu** (octets magiques), jamais par leur nom ou leur extension.
+- **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
+  on garde le fichier le plus complet).
+- **Découpage** en archives ≤ 180 Mo, en ordre chronologique, nommées de façon lisible
+  (`coros-import-01-2019-03_2021-07.zip`).
+- **Rapport clair** : motifs d'exclusion en langage simple, répartition par sport et par année, export **CSV**
+  (protégé contre l'injection de formule).
+- **Robuste** : un fichier corrompu n'interrompt jamais le lot ; traitement annulable ; progression en direct.
+- **Gros volumes** : traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), écran maintenu allumé.
+- **PWA** : installable et utilisable **hors ligne** après la première visite.
+- **Interface** FR / EN, mobile-first, clair / sombre, accessible (WCAG 2.2 AA).
 
+## Fonctionnement
+
+```mermaid
+flowchart LR
+    A[Export ZIP<br/>Garmin ou COROS] --> B[Lecture en flux<br/>ZIP récursifs]
+    B --> C[Détection par contenu<br/>FIT / TCX]
+    C --> D[Analyse<br/>métadonnées, CRC, points]
+    D --> E{Règles de la<br/>destination}
+    E -->|retenus| F[Découpage ≤ 180 Mo<br/>ordre chronologique]
+    E -->|écartés| G[Rapport<br/>motifs + CSV]
+    F --> H[ZIP prêts à importer]
 ```
-packages/engine   moteur TypeScript pur (ZIP, FIT/TCX, règles, découpage, rapport) – utilisable sous Node
-apps/web          application Angular 22 (standalone, signals, zoneless) + Web Worker
-security/         source unique des en-têtes HTTP
-scripts/          post-build sécurité, serveur de prévisualisation, garde-fous (licences, signature…)
+
+Le traitement se fait en **deux passes** sur l'archive source : la première collecte les métadonnées, la seconde
+n'écrit que les fichiers retenus. Rien n'est conservé en mémoire entre les deux, ce qui permet de traiter des exports
+bien plus gros que la mémoire disponible.
+
+## Modèle de confiance et sécurité
+
+L'argument central est vérifiable : **aucune donnée sortante**. Il n'y a ni serveur de traitement, ni compte, ni
+cookie, ni traceur, ni ressource tierce.
+
+| Garantie                   | Mise en œuvre                                                                                                                                                                                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zéro donnée sortante       | CSP `default-src 'none'`, `connect-src 'self'` ; test e2e qui échoue sur toute requête cross-origin ou non-GET pendant un traitement                                                                                                                                                           |
+| Durcissement du navigateur | CSP stricte sans `unsafe-*`, **Trusted Types**, HSTS, COOP/COEP/CORP, Permissions-Policy minimale, `nosniff`, `no-referrer`                                                                                                                                                                    |
+| Archives hostiles          | Limites sur le ratio de compression (100:1), la profondeur, le nombre d'entrées, la taille du répertoire central et le volume total ; octets réellement produits comptés (les tailles déclarées ne sont jamais crues) ; zip slip neutralisé par construction (les noms de sortie sont générés) |
+| Fichiers forgés            | CRC FIT vérifié via le SDK officiel ; TCX sans parseur XML et sans DTD/entités (XXE, _billion laughs_) ; expressions régulières à temps linéaire ; plafond d'analyse mémoire                                                                                                                   |
+| Aucune injection HTML      | Aucune donnée de fichier dans le DOM autrement qu'en texte ; `innerHTML` et `bypassSecurityTrust*` interdits par ESLint, tout comme `fetch`, `XMLHttpRequest`, `WebSocket`, `sendBeacon` et les cookies dans le code livré                                                                     |
+| Chaîne d'approvisionnement | 8 dépendances runtime justifiées ; `npm audit` bloquant ; licences vérifiées ; SBOM CycloneDX ; actions CI épinglées par SHA ; Dependabot avec délai de carence                                                                                                                                |
+| Pas de trace               | Stockage temporaire vidé au démarrage, à « Recommencer » / « Terminer », après un échec et à la fermeture de l'onglet (au mieux)                                                                                                                                                               |
+
+Le code a fait l'objet d'un **fuzzing** (FIT, TCX, ZIP : 10 000 itérations par propriété), d'analyses **Semgrep** et
+**OWASP ZAP baseline** en CI, et d'une **revue de sécurité indépendante** dont les constats vérifiés ont été corrigés
+avec un test de non-régression chacun. Cette revue est automatisée : elle ne remplace pas une relecture humaine.
+
+## Architecture
+
+Monorepo npm :
+
+```text
+packages/engine   Moteur TypeScript pur, sans dépendance au DOM ni à Angular : utilisable sous Node et en Worker
+  src/            scan (ZIP), fit / tcx (parseurs), rules/, profiles (une destination = un profil),
+                  pipeline, batching, naming, report / csv, process (orchestrateur), sinks (mémoire, OPFS)
+apps/web          Application Angular 22 (standalone, signals, zoneless) + Web Worker
+  src/app/        parcours en 4 étapes, i18n à chargement différé, service worker et manifeste
+  e2e/            Playwright : parcours, sécurité, hors ligne, accessibilité, clavier, responsive, visuel
+security/         Source unique des en-têtes HTTP (CSP, HSTS, cache…)
+scripts/          Post-build (CSP, _headers, service worker), serveur de prévisualisation, garde-fous
 ```
 
-## Démarrage
+Choix structurants :
 
-Prérequis : Node 22+.
+- **Moteur séparé de l'interface** : testable sans navigateur, réutilisable, et exécutable sous Node pour valider un export.
+- **Profils de destination** (`profiles.ts`) : ajouter une plateforme, c'est déclarer ses règles, son préfixe d'archive et
+  sa taille de lot, sans toucher au pipeline.
+- **Règles composables** : une règle par fichier (`FileRule`) ou sur l'ensemble (`SetRule`), un test par règle.
+- **Une seule source pour les en-têtes** : `security/headers.mjs` alimente le build, le serveur de test, `_headers` et les e2e.
+- **Aucune ressource tierce** : ni police ni CDN (polices système), CSS global (compatible `style-src 'self'`).
+
+Dépendances runtime : Angular (4 paquets), `rxjs`, `tslib`, [`@zip.js/zip.js`](https://gildas-lormeau.github.io/zip.js/)
+et le [SDK FIT officiel de Garmin](https://developer.garmin.com/fit/overview/).
+
+## Démarrage rapide
+
+Prérequis : **Node 22** (voir `.nvmrc`).
 
 ```bash
 npm ci
-npm run build            # build de production + CSP injectée, _headers, Caddyfile.snippet
-npm run serve:dist -w @watch-relay/web   # sert le build avec les vrais en-têtes sur http://localhost:4300
+npm start -w @watch-relay/web                     # développement (http://localhost:4200)
+
+npm run build                                      # build de production + CSP + _headers + service worker
+npm run serve:dist -w @watch-relay/web             # sert le build avec les vrais en-têtes (http://localhost:4300)
 ```
 
-Pour le développement : `npm start -w @watch-relay/web`.
+## Qualité et tests
 
-## Qualité
+| Commande                 | Rôle                                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`           | ESLint (typescript-eslint `strictTypeChecked`) + Prettier                                                               |
+| `npm run typecheck`      | TypeScript strict                                                                                                       |
+| `npm test`               | Vitest : moteur (dont tests de propriétés et fuzzing fast-check) et interface                                           |
+| `npm run e2e`            | Playwright sur le **build de production** servi avec les en-têtes réels : Chromium, Firefox, WebKit, Pixel 7, iPhone 15 |
+| `npm run lighthouse`     | Lighthouse CI mobile et bureau : Performance ≥ 95, Accessibilité 100, Best Practices 100, SEO ≥ 95                      |
+| `npm run check:licenses` | Licences des dépendances runtime                                                                                        |
+| `npm run sbom`           | SBOM CycloneDX                                                                                                          |
 
-| Commande                 | Rôle                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `npm run lint`           | ESLint (typescript-eslint strict) + Prettier                                          |
-| `npm run typecheck`      | TypeScript strict                                                                     |
-| `npm test`               | Vitest (moteur, dont tests de propriétés fast-check, et UI)                           |
-| `npm run e2e`            | Playwright sur le build de production : Chromium, Firefox, WebKit, Pixel 7, iPhone 15 |
-| `npm run check:licenses` | licences des dépendances runtime                                                      |
-| `npm run sbom`           | SBOM CycloneDX                                                                        |
+Les e2e couvrent notamment : le parcours dans les deux sens, l'absence de requête sortante, la CSP et Trusted Types,
+le fonctionnement hors ligne, **axe-core** (0 violation WCAG 2.2 AA sur chaque écran, FR/EN, clair/sombre),
+la navigation au clavier, l'absence de défilement horizontal et les cibles tactiles ≥ 44 px de 320 à 1280 px, et la
+régression visuelle (références Linux/Chromium ; `npm run e2e:update -w @watch-relay/web` pour les régénérer).
 
-La CI (GitHub Actions) exécute lint, typecheck, tests, audit des dépendances, licences, SBOM, e2e et
-CodeQL. Dependabot suit les dépendances.
+**Intégration continue** (GitHub Actions) : lint, typecheck, tests, audit, licences, SBOM, e2e, Lighthouse, CodeQL,
+Semgrep, ZAP baseline. Les commits suivent les [Conventional Commits](https://www.conventionalcommits.org/)
+(vérifiés par commitlint).
 
-## Données de test
+## Valider sur un vrai export
 
-Aucune donnée réelle dans le dépôt. Les fichiers `.fit` n'existent que sous `fixtures/` et sont
-**synthétiques** (générés avec l'encodeur officiel). Un hook de pré-commit refuse tout `.fit` ailleurs.
-
-## Déploiement (Netlify)
-
-Le site est statique : `netlify.toml` suffit (commande `npm run build`, dossier publié `apps/web/dist/web/browser`,
-Node 22, post-traitement Netlify désactivé pour ne pas modifier les fichiers au hash ni le service worker).
-
-1. Netlify → _Add new site_ → _Import an existing project_ → ce dépôt. Les réglages sont lus dans `netlify.toml`.
-2. Les en-têtes de sécurité (CSP stricte, HSTS, COOP/COEP, `no-cache` sur le HTML et `sw.js`…) sont écrits dans
-   `_headers` par le build, à partir de `security/headers.mjs` ; rien à configurer dans l'interface.
-3. Une fois le domaine HTTPS en place : mesurer Mozilla Observatory et securityheaders.com, renouveler
-   `security.txt` (champ `Expires`) et y ajouter `Canonical`, puis envisager la soumission HSTS preload (engage
-   tout le domaine : à valider avant).
-
-Sur les _deploy previews_, la barre Netlify pour collaborateurs peut être bloquée par la CSP : c'est voulu.
-Un autre hébergeur derrière Caddy reste possible : `node scripts/postbuild-security.mjs <dossier> --caddy` ajoute
-`Caddyfile.snippet`.
-
-## Tester avec un vrai export
-
-Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré par git). Pour passer le vôtre dans le
-moteur, sous Node, sans rien envoyer nulle part :
+Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré ; un hook et la CI refusent les `.fit`,
+`.tcx`, `.gpx` et `.zip` hors `fixtures/`). Pour passer un export dans le moteur, sous Node, sans rien envoyer :
 
 ```bash
-npm run inspect:export -- local-data/export-garmin.zip                       # vers COROS
-npm run inspect:export -- local-data/export-coros.zip --target garmin       # vers Garmin
-npm run inspect:export -- local-data/export-garmin.zip --out local-data/sortie   # écrit les ZIP pour un import manuel
+npm run inspect:export -- local-data/export-garmin.zip                          # vers COROS
+npm run inspect:export -- local-data/export-coros.zip --target garmin           # vers Garmin
+npm run inspect:export -- local-data/export-garmin.zip --out local-data/sortie  # écrit les ZIP pour un import manuel
 ```
 
-Le rapport est anonyme (aucun nom de fichier ni donnée d'activité) : nombre d'activités, motifs d'exclusion, sports,
-années, durée et pic de mémoire. Il peut être partagé tel quel pour valider les règles. L'option `--out` produit les
-archives à importer à la main dans COROS Training Hub ou Garmin Connect, pour confirmer qu'elles sont acceptées.
+Le rapport est **anonyme** : aucun nom de fichier ni donnée d'activité, seulement des comptes, des motifs d'exclusion,
+des sports, des années, la durée et le pic de mémoire.
+
+## Déploiement
+
+Site statique : aucune fonction, aucune base de données. Le dépôt est prêt pour **Netlify** (`netlify.toml`) :
+
+- commande `npm run build`, dossier publié `apps/web/dist/web/browser`, Node 22 ;
+- le build écrit `_headers` (CSP, HSTS, COOP/COEP, `no-cache` sur le HTML et `sw.js`) à partir de `security/headers.mjs` ;
+- le post-traitement Netlify est désactivé pour ne pas altérer les fichiers au hash ni le service worker.
+
+Un autre hébergement statique convient : `node scripts/postbuild-security.mjs <dossier> --caddy` génère un extrait
+Caddy équivalent. Après mise en ligne, vérifier les en-têtes sur toutes les réponses (y compris le worker) et mesurer
+Mozilla Observatory et securityheaders.com.
+
+## État du projet et limites connues
+
+Le moteur, l'application (parcours, i18n, PWA, pages d'information), le durcissement et les tests sont en place.
+Ce qui reste à valider, par honnêteté :
+
+- **Règles COROS provisoires** : la liste des sports acceptés par COROS doit être confirmée par des imports réels.
+- **Export COROS** : son contenu exact n'est pas documenté ; le moteur lit n'importe quelle structure, mais cela doit
+  être confirmé sur un vrai export. Les limites Garmin (nombre de fichiers par import, sports acceptés) ne sont pas
+  toutes documentées.
+- **Appareils réels** : OPFS n'a pas été vérifié sur un vrai iPhone ; en repli mémoire, un export de plusieurs Go peut
+  faire échouer l'onglet. Les tests sur appareils physiques restent à faire.
+- **Pas de délai maximal strict par fichier** : le décodage est synchrone ; des plafonds de mémoire et d'entrée limitent
+  le risque sans l'éliminer.
+- **Accessibilité** : les contrôles automatisés ne remplacent pas un test avec lecteur d'écran (VoiceOver, NVDA).
+- Les captures de référence visuelles sont produites sous Linux : les régénérer depuis la CI si les polices diffèrent.
 
 ## Contribuer
 
-Commits en [Conventional Commits](https://www.conventionalcommits.org/) ; les hooks Husky lancent
-Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les commits ni les PR
-(vérifié par hook et en CI).
+Les contributions sont bienvenues, en particulier **des retours d'imports réels** (règles acceptées ou refusées par
+COROS et Garmin Connect) via une issue, sous forme de rapport anonyme (`inspect:export`).
 
-## État d'avancement
-
-Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier, tests responsive et régression visuelle, Lighthouse CI. À venir : lecteurs d'écran et tests sur
-appareils réels.
-
-Limites connues : liste des sports COROS provisoire ; format exact de l'export COROS et limites de Garmin (nombre de fichiers par import, sports acceptés) non vérifiés sur des exports réels ; pas de délai maximal strict par fichier ; OPFS non
-vérifié sur un vrai iPhone (repli mémoire possible sur très gros exports) ; en-têtes HTTP à vérifier sur le site déployé.
+1. `npm ci` (les hooks Husky lancent Prettier, ESLint et commitlint).
+2. Une règle ou un comportement = un test. Les changements visuels demandent de régénérer les références.
+3. `npm run lint && npm run typecheck && npm test && npm run e2e` doivent passer.
+4. Commits en Conventional Commits ; aucune donnée personnelle ni export réel dans le dépôt.
 
 ## Sécurité
 
-Signalement d'une faille : voir [`SECURITY.md`](SECURITY.md) (contact : julien.dudek@gmail.com).
+Pour signaler une vulnérabilité, **n'ouvrez pas d'issue publique** : voir [`SECURITY.md`](SECURITY.md)
+(engagements : accusé de réception sous 7 jours, réponse sous 90 jours). Le contact est aussi publié dans
+`/.well-known/security.txt`.
 
-## Avertissement
+## Licence
 
-Projet indépendant, non affilié à Garmin ni à COROS. « Garmin » et « COROS » sont des marques de leurs
-propriétaires respectifs.
+[MIT](LICENSE) © 2026 Julien Dudek. Le SDK FIT de Garmin est utilisé selon sa propre licence.
