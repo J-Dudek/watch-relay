@@ -9,6 +9,7 @@
     "test": "ng test --watch=false",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "e2e": "playwright test",
+    "e2e:update": "playwright test e2e/visual.spec.ts --project=chromium --update-snapshots",
     "serve:dist": "node ../../scripts/serve-dist.mjs dist/web/browser"
   },
   "private": true,

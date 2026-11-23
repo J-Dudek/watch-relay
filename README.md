@@ -25,16 +25,17 @@ Un fichier corrompu n'interrompt jamais le traitement des autres.
 
 ## Garanties
 
-| Garantie               | Comment elle est tenue                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| Zéro donnée sortante   | test e2e : aucune requête cross-origin ni non-GET pendant le traitement                                 |
-| Sécurité du navigateur | CSP stricte, Trusted Types, HSTS, COOP/COEP, Permissions-Policy                                         |
-| Archives hostiles      | extraction en streaming avec limites (ratio 100:1, profondeur 3, nombre et taille), zip slip neutralisé |
-| Fichiers forgés        | CRC FIT vérifié, TCX sans DTD/entités (XXE, billion laughs), CSV protégé contre l'injection de formule  |
-| Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible            |
-| Accessibilité          | axe-core (WCAG 2.2 AA) : 0 violation sur chaque écran, FR/EN, clair/sombre, 5 profils d'appareil        |
-| Hors ligne             | service worker sans dépendance, précache du build ; test e2e en mode hors ligne sur 5 profils           |
-| Pas de trace           | stockage temporaire vidé au démarrage et à « Recommencer »                                              |
+| Garantie               | Comment elle est tenue                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Zéro donnée sortante   | test e2e : aucune requête cross-origin ni non-GET pendant le traitement                                                                                            |
+| Sécurité du navigateur | CSP stricte, Trusted Types, HSTS, COOP/COEP, Permissions-Policy                                                                                                    |
+| Archives hostiles      | extraction en streaming avec limites (ratio 100:1, profondeur 3, nombre et taille), zip slip neutralisé                                                            |
+| Fichiers forgés        | CRC FIT vérifié, TCX sans DTD/entités (XXE, billion laughs), CSV protégé contre l'injection de formule                                                             |
+| Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible                                                                       |
+| Accessibilité          | axe-core (WCAG 2.2 AA) : 0 violation sur chaque écran, FR/EN, clair/sombre, 5 profils d'appareil                                                                   |
+| Responsive et visuel   | pas de défilement horizontal ni cible < 44 px de 320 à 1280 px ; captures de référence sur 3 tailles (`npm run e2e:update -w @watch-relay/web` pour les régénérer) |
+| Hors ligne             | service worker sans dépendance, précache du build ; test e2e en mode hors ligne sur 5 profils                                                                      |
+| Pas de trace           | stockage temporaire vidé au démarrage et à « Recommencer »                                                                                                         |
 
 ## Structure
 
@@ -85,7 +86,7 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier. À venir : lecteurs d'écran et tests sur
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier, tests responsive et régression visuelle. À venir : lecteurs d'écran et tests sur
 appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non

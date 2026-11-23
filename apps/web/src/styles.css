@@ -331,6 +331,9 @@ code {
   gap: 0.25rem 1.25rem;
 }
 .footer-nav a {
+  min-width: 44px;
+  justify-content: center;
+  padding-inline: 0.5rem;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
