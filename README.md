@@ -88,6 +88,21 @@ CodeQL. Dependabot suit les dépendances.
 Aucune donnée réelle dans le dépôt. Les fichiers `.fit` n'existent que sous `fixtures/` et sont
 **synthétiques** (générés avec l'encodeur officiel). Un hook de pré-commit refuse tout `.fit` ailleurs.
 
+## Tester avec un vrai export
+
+Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré par git). Pour passer le vôtre dans le
+moteur, sous Node, sans rien envoyer nulle part :
+
+```bash
+npm run inspect:export -- local-data/export-garmin.zip                       # vers COROS
+npm run inspect:export -- local-data/export-coros.zip --target garmin       # vers Garmin
+npm run inspect:export -- local-data/export-garmin.zip --out local-data/sortie   # écrit les ZIP pour un import manuel
+```
+
+Le rapport est anonyme (aucun nom de fichier ni donnée d'activité) : nombre d'activités, motifs d'exclusion, sports,
+années, durée et pic de mémoire. Il peut être partagé tel quel pour valider les règles. L'option `--out` produit les
+archives à importer à la main dans COROS Training Hub ou Garmin Connect, pour confirmer qu'elles sont acceptées.
+
 ## Contribuer
 
 Commits en [Conventional Commits](https://www.conventionalcommits.org/) ; les hooks Husky lancent

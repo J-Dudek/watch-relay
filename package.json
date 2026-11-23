@@ -21,7 +21,8 @@
     "e2e": "npm run e2e -w @watch-relay/web",
     "check:licenses": "node scripts/check-licenses.mjs",
     "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json",
-    "lighthouse": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs"
+    "lighthouse": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs",
+    "inspect:export": "node scripts/inspect-export.mjs"
   },
   "lint-staged": {
     "*.{ts,mjs,js,json,md,yml}": "prettier --write",
