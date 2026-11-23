@@ -8,3 +8,5 @@ coverage/
 *.fit
 !fixtures/**/*.fit
 .env*
+test-results/
+playwright-report/

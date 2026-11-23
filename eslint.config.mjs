@@ -3,7 +3,16 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '.idea/**', '.angular/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '.idea/**',
+      '**/.angular/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
@@ -25,6 +34,12 @@ export default tseslint.config(
           message: 'Interdit (T2.5).',
         },
       ],
+    },
+  },
+  {
+    files: ['apps/web/e2e/**/*.ts', 'apps/web/playwright.config.ts'],
+    languageOptions: {
+      parserOptions: { projectService: false, project: './apps/web/tsconfig.e2e.json' },
     },
   },
   {
