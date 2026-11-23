@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.angular/
+coverage/
+.stryker-tmp/
+# Exports réels : jamais dans le repo (T4.3)
+/local-data/
+*.fit
+!fixtures/**/*.fit
+.env*
