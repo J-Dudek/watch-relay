@@ -28,10 +28,10 @@ describe('I18n', () => {
     expect(detectLocale([])).toBe('fr');
   });
 
-  it('chaque motif de rejet a un titre et une action dans les deux langues', () => {
+  it('chaque motif de rejet a un titre et une action dans les deux langues', async () => {
     const i18n = TestBed.inject(I18n);
     for (const locale of ['fr', 'en'] as const) {
-      i18n.set(locale);
+      await i18n.set(locale);
       for (const reason of [
         'TOO_SMALL',
         'TOO_LARGE',
@@ -46,12 +46,12 @@ describe('I18n', () => {
     }
   });
 
-  it('met à jour <html lang> et le titre', () => {
+  it('met à jour <html lang> et le titre', async () => {
     const i18n = TestBed.inject(I18n);
-    i18n.set('en');
+    await i18n.set('en');
     expect(document.documentElement.lang).toBe('en');
     expect(document.title).toContain('Garmin ⇄ COROS');
-    i18n.set('fr');
+    await i18n.set('fr');
     expect(document.documentElement.lang).toBe('fr');
   });
 });

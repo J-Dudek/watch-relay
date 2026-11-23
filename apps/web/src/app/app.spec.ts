@@ -1,5 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { I18n } from './i18n';
 import { App } from './app';
+
+/** Le rendu suppose les textes chargés (en production : initialiseur d'application). */
+async function setup() {
+  await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+  await TestBed.inject(I18n).init();
+  return TestBed.createComponent(App);
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -7,19 +15,21 @@ describe('App', () => {
   });
 
   it('bascule en anglais et revient', async () => {
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     el.querySelector<HTMLButtonElement>('.header-top button')?.click();
-    await fixture.whenStable();
+    // Le changement de langue charge le chunk de textes : on attend qu'il soit affiché.
+    for (let i = 0; i < 100 && !el.textContent.includes('Get your Garmin export'); i++) {
+      await new Promise((r) => setTimeout(r, 20));
+      await fixture.whenStable();
+    }
     expect(el.querySelector('h2')?.textContent).toContain('Get your Garmin export');
     expect(el.textContent).toContain('not affiliated with Garmin or COROS');
   });
 
   it('affiche le parcours en 4 étapes et démarre sur le guide Garmin', async () => {
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.stepper li')).toHaveLength(4);
@@ -28,8 +38,7 @@ describe('App', () => {
   });
 
   it('mentionne la non-affiliation', async () => {
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const fixture = await setup();
     await fixture.whenStable();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'non affilié à Garmin ni à COROS',
@@ -37,8 +46,7 @@ describe('App', () => {
   });
 
   it('affiche la FAQ (chunk chargé à la demande) via le hash et revient à l’outil', async () => {
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const until = async (check: () => boolean): Promise<void> => {
@@ -61,8 +69,7 @@ describe('App', () => {
   });
 
   it('propose les deux sens de transfert, Garmin → COROS par défaut', async () => {
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
     const buttons = [...el.querySelectorAll<HTMLButtonElement>('.direction button')];

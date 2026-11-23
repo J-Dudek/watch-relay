@@ -34,7 +34,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
           class="btn btn-small"
           [attr.lang]="i18n.locale() === 'fr' ? 'en' : 'fr'"
           [attr.aria-label]="t().languageSwitchLabel"
-          (click)="i18n.toggle()"
+          (click)="toggle()"
         >
           {{ t().languageSwitch }}
         </button>
@@ -116,6 +116,10 @@ export class App {
     effect(() => {
       if (this.processing.status() === 'idle' && this.step() >= 2) this.step.set(1);
     });
+  }
+
+  protected toggle(): void {
+    void this.i18n.toggle();
   }
 
   protected go(step: number): void {

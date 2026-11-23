@@ -1,17 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { I18n } from '../i18n';
-import type { PagesMessages, Section } from '../pages-content';
+import type { PagesMessages, Section } from '../pages-types';
 
 export type InfoPageId = 'faq' | 'privacy' | 'legal';
 
 /**
- * Le contenu (FAQ, confidentialité, mentions légales) est un chunk séparé, chargé à la première
- * consultation : il n'alourdit pas le chargement initial. Il est précaché par le service worker,
- * donc disponible hors ligne.
+ * Le contenu (FAQ, confidentialité, mentions légales) est un chunk par langue, chargé à la première
+ * consultation : il n'alourdit pas le chargement initial. Précaché par le service worker.
  */
-let contentModule: Promise<typeof import('../pages-content')> | undefined;
-const loadContent = (): Promise<typeof import('../pages-content')> =>
-  (contentModule ??= import('../pages-content'));
+const LOADERS: Record<'fr' | 'en', () => Promise<PagesMessages>> = {
+  fr: () => import('../pages-fr').then((m) => m.PAGES_FR),
+  en: () => import('../pages-en').then((m) => m.PAGES_EN),
+};
 
 @Component({
   selector: 'app-info-page',
@@ -48,11 +56,10 @@ export class InfoPage {
   readonly page = input.required<InfoPageId>();
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
-  private readonly loaded = signal<typeof import('../pages-content') | null>(null);
+  private readonly loaded = signal<{ pages: PagesMessages } | null>(null);
 
   protected readonly content = computed<PagesMessages | null>(() => {
-    const m = this.loaded();
-    return m ? (this.i18n.locale() === 'fr' ? m.PAGES_FR : m.PAGES_EN) : null;
+    return this.loaded()?.pages ?? null; // l'ancienne langue reste affichée pendant le chargement
   });
   protected readonly title = computed(() => this.content()?.[this.page()].title ?? '');
   protected readonly sections = computed<readonly Section[]>(() => {
@@ -61,8 +68,12 @@ export class InfoPage {
   });
 
   constructor() {
-    void loadContent().then((m) => {
-      this.loaded.set(m);
+    // Recharge quand la langue change (la précédente reste affichée le temps du chargement).
+    effect(() => {
+      const locale = this.i18n.locale();
+      void LOADERS[locale]().then((pages) => {
+        this.loaded.set({ pages });
+      });
     });
   }
 }
