@@ -3,6 +3,7 @@ import type { ArchiveSink } from './sink.js';
 /** Sous-ensemble structurel de l'API OPFS (testable sans navigateur). */
 export interface SyncAccessHandleLike {
   write(buffer: Uint8Array, options?: { at: number }): number;
+  truncate(size: number): void;
   flush(): void;
   close(): void;
 }
@@ -25,6 +26,7 @@ export function createOpfsSink(dir: DirectoryLike): ArchiveSink {
     async open(name) {
       const file = await dir.getFileHandle(name, { create: true });
       const handle = await file.createSyncAccessHandle();
+      handle.truncate(0); // jamais d'octets résiduels d'une session précédente
       let position = 0;
       let open = true;
       const closeHandle = (): void => {

@@ -16,6 +16,7 @@ function fakeDir(maxWrite = Infinity): { dir: DirectoryLike; files: Map<string, 
               expect(opts?.at).toBe(parts.slice(0, -1).reduce((s, p) => s + p.byteLength, 0));
               return n;
             },
+            truncate() {},
             flush() {},
             close() {},
           }),

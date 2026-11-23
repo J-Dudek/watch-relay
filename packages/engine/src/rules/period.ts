@@ -8,6 +8,13 @@ export interface Period {
 }
 
 export function createPeriodRule({ from, to }: Period): FileRule {
+  // NaN rendrait toutes les comparaisons fausses : la règle ne ferait rien, sans erreur.
+  if (
+    (from !== undefined && !Number.isFinite(from)) ||
+    (to !== undefined && !Number.isFinite(to))
+  ) {
+    throw new RangeError('Période invalide : bornes non finies.');
+  }
   return {
     id: 'period',
     check: (candidate) => {

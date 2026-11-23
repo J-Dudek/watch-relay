@@ -10,7 +10,7 @@ export const CSP_DIRECTIVES = {
   'img-src': ["'self'", 'data:'],
   'font-src': ["'self'"],
   'connect-src': ["'self'"],
-  'worker-src': ["'self'", 'blob:'],
+  'worker-src': ["'self'"],
   'manifest-src': ["'self'"],
   'base-uri': ["'none'"],
   'form-action': ["'none'"],
@@ -81,4 +81,17 @@ export function buildHeaders({ upgradeInsecure = true } = {}) {
     'Cross-Origin-Embedder-Policy': 'require-corp',
     'Cross-Origin-Resource-Policy': 'same-origin',
   };
+}
+
+/**
+ * Politique de cache : le HTML, le service worker et le manifeste sont toujours revalidés (une
+ * correction de sécurité doit atteindre les utilisateurs) ; les fichiers au hash sont immuables.
+ */
+export const HASHED_ASSET = /-[A-Za-z0-9]{8}\.(?:js|css)$/;
+export const NO_CACHE_PATHS = ['/', '/index.html', '/sw.js', '/manifest.webmanifest'];
+
+export function cacheControlFor(pathname) {
+  if (NO_CACHE_PATHS.includes(pathname)) return 'no-cache';
+  if (HASHED_ASSET.test(pathname)) return 'public, max-age=31536000, immutable';
+  return 'public, max-age=3600';
 }

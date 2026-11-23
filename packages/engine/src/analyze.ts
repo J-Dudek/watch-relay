@@ -11,7 +11,29 @@ export type AnalyzeOutcome =
  * devient un rejet `CORRUPTED` et n'interrompt jamais le lot.
  * NB : un vrai timeout dur suppose de pouvoir tuer le worker (T1.21) ; ici on isole les erreurs.
  */
+/**
+ * Le décodeur FIT garde tous les messages en mémoire (~40 o par enregistrement) : un FIT valide de
+ * 80 Mo a coûté ~3 Go à l'analyse. Au-delà de ce seuil on refuse d'analyser (aucun FIT d'activité réel
+ * n'en approche : quelques Mo même pour 24 h à 1 Hz).
+ */
+export const MAX_FIT_ANALYZE_BYTES = 32 * 1024 * 1024;
+
 export function analyzeFile(id: string, format: ActivityFormat, data: Uint8Array): AnalyzeOutcome {
+  if (format === 'fit' && data.byteLength > MAX_FIT_ANALYZE_BYTES) {
+    return {
+      ok: false,
+      rejection: {
+        candidate: {
+          id,
+          format,
+          size: data.byteLength,
+          meta: { sport: 'unknown', startTime: 0 },
+        },
+        reason: 'TOO_LARGE',
+        detail: 'FIT trop volumineux pour être analysé en toute sécurité',
+      },
+    };
+  }
   try {
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);
     return { ok: true, candidate: { id, format, size: data.byteLength, meta } };

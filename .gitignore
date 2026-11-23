@@ -7,6 +7,12 @@ coverage/
 /local-data/
 *.fit
 !fixtures/**/*.fit
+*.tcx
+*.gpx
+*.zip
+!fixtures/**/*.tcx
+!fixtures/**/*.gpx
+!fixtures/**/*.zip
 .env*
 test-results/
 playwright-report/

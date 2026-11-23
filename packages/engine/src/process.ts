@@ -8,6 +8,7 @@ import { DEFAULT_LIMITS, type ScanLimits } from './limits.js';
 import { createDuplicateRule } from './rules/duplicate.js';
 import { createPeriodRule, type Period } from './rules/period.js';
 import { PROFILES } from './profiles.js';
+import { createBatchFitRule } from './rules/size.js';
 import { scanArchive } from './scan.js';
 import type { ArchiveSink, ArchiveTarget } from './sink.js';
 import type { Candidate, FileRule, Rejection, Target } from './types.js';
@@ -47,12 +48,20 @@ export interface ProcessResult {
 }
 
 /** Identifiant unique et déterministe d'une entrée (identique aux deux passes). */
-function makeIdAllocator(): (path: string) => string {
+export function makeIdAllocator(): (path: string) => string {
   const seen = new Map<string, number>();
+  const used = new Set<string>();
   return (path) => {
-    const n = (seen.get(path) ?? 0) + 1;
+    // Garantit l'unicité même si un vrai nom d'entrée ressemble à un id généré (« a », « a », « a#2 »).
+    let n = seen.get(path) ?? 0;
+    let id: string;
+    do {
+      n++;
+      id = n === 1 ? path : `${path}#${String(n)}`;
+    } while (used.has(id));
     seen.set(path, n);
-    return n === 1 ? path : `${path}#${String(n)}`;
+    used.add(id);
+    return id;
   };
 }
 
@@ -86,7 +95,7 @@ export async function processArchive(
     let bytesRead = 0;
     const idFor = makeIdAllocator();
 
-    for await (const event of scanArchive(input, limits)) {
+    for await (const event of scanArchive(input, limits, signal)) {
       throwIfAborted(signal);
       const id = idFor(event.path);
       if (event.kind === 'activity') {
@@ -103,6 +112,7 @@ export async function processArchive(
 
     const fileRules: FileRule[] = [
       ...profile.fileRules(options),
+      createBatchFitRule(maxBatch),
       ...(options.period ? [createPeriodRule(options.period)] : []),
     ];
     const { kept, rejected } = runPipeline(candidates, fileRules, [createDuplicateRule()]);
@@ -127,13 +137,17 @@ export async function processArchive(
     let written = 0;
     const idFor2 = makeIdAllocator();
     if (kept.length > 0) {
-      for await (const event of scanArchive(input, limits)) {
+      for await (const event of scanArchive(input, limits, signal)) {
         throwIfAborted(signal);
         const id = idFor2(event.path);
         if (event.kind !== 'activity') continue;
         const candidate = byId.get(id);
         const index = batchOf.get(id);
         if (!candidate || index === undefined) continue;
+        // Le fichier source ne doit pas avoir changé entre les deux passes.
+        if (event.data.byteLength !== candidate.size || event.format !== candidate.format) {
+          throw new Error('Le fichier source a changé pendant le traitement.');
+        }
         const taken = takenNames[index] as Set<string>;
         await (writers[index] as ZipWriter<unknown>).add(
           entryName(candidate, taken),

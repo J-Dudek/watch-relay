@@ -18,9 +18,22 @@ const HEAD_BYTES = 512;
 const RATIO_FLOOR = 64 * 1024;
 
 class EntryAbort extends Error {}
+/** Activité plus grosse que `maxFileSize` (reconnue dès les premiers octets). */
+class EntryTooLarge extends Error {}
+/** Contenu ni ZIP ni activité (reconnu dès les premiers octets : on n'en lit pas davantage). */
+class EntryOther extends Error {}
+
+const abortError = (): DOMException => new DOMException('Traitement annulé', 'AbortError');
+const isAbort = (e: unknown): boolean => e instanceof DOMException && e.name === 'AbortError';
+
+/** Longueur maximale d'un chemin d'affichage (les noms d'entrée peuvent faire 64 Ko). */
+const MAX_PATH = 512;
+/** Taille maximale admise du répertoire central, par entrée autorisée (nom moyen ≤ ~200 o). */
+export const CENTRAL_DIRECTORY_BYTES_PER_ENTRY = 256;
 
 interface State {
   readonly limits: ScanLimits;
+  readonly signal?: AbortSignal;
   totalBytes: number;
   entries: number;
   /** Erreur de limite levée dans un flux (zip.js peut l'envelopper). */
@@ -37,9 +50,13 @@ const isZip = (b: Uint8Array): boolean =>
 async function extract(entry: FileEntry, maxBytes: number, state: State): Promise<Blob> {
   const chunks: Uint8Array<ArrayBuffer>[] = [];
   let written = 0;
+  let limit = maxBytes;
+  let classified = false;
+  let stop: Error | undefined;
   const ratioCap = Math.max(RATIO_FLOOR, entry.compressedSize * state.limits.maxRatio);
   const sink = new WritableStream<Uint8Array<ArrayBuffer>>({
     write(chunk) {
+      if (state.signal?.aborted) throw abortError();
       written += chunk.byteLength;
       state.totalBytes += chunk.byteLength;
       if (state.totalBytes > state.limits.maxTotalUncompressed) {
@@ -49,17 +66,65 @@ async function extract(entry: FileEntry, maxBytes: number, state: State): Promis
         );
         throw state.fatal;
       }
-      if (written > maxBytes || written > ratioCap) throw new EntryAbort();
+      if (written > ratioCap) throw (stop = new EntryAbort());
       chunks.push(chunk);
+      // Dès les premiers octets, on connaît le type : on borne la mémoire selon celui-ci au lieu
+      // de matérialiser jusqu'à 2 Go de contenu quelconque avant de l'identifier.
+      if (!classified && written >= HEAD_BYTES) {
+        classified = true;
+        const head = new Uint8Array(HEAD_BYTES);
+        let at = 0;
+        for (const c of chunks) {
+          if (at >= HEAD_BYTES) break;
+          head.set(c.subarray(0, HEAD_BYTES - at), at);
+          at += Math.min(c.byteLength, HEAD_BYTES - at);
+        }
+        if (isZip(head)) limit = state.limits.maxNestedZipSize;
+        else if (detectFormat(head)) limit = state.limits.maxFileSize;
+        else throw (stop = new EntryOther());
+      }
+      if (written > limit) {
+        throw (stop = limit === state.limits.maxFileSize ? new EntryTooLarge() : new EntryAbort());
+      }
     },
   });
   try {
     await entry.getData(sink);
   } catch (e) {
     if (state.fatal) throw state.fatal;
-    throw e;
+    if (state.signal?.aborted) throw abortError();
+    throw stop ?? e;
   }
   return new Blob(chunks);
+}
+
+/**
+ * Contrôle le répertoire central AVANT `getEntries()`, qui construit tous les objets d'entrée en
+ * mémoire : un ZIP de 54 Mo déclarant 1 M d'entrées provoquait un « out of memory ». On lit
+ * l'EOCD (et son équivalent zip64) et on refuse les nombres et tailles déraisonnables.
+ */
+async function checkCentralDirectory(blob: Blob, limits: ScanLimits): Promise<void> {
+  const EOCD = 0x06054b50;
+  const tail = new DataView(await blob.slice(Math.max(0, blob.size - 65_557)).arrayBuffer());
+  let at = tail.byteLength - 22;
+  while (at >= 0 && tail.getUint32(at, true) !== EOCD) at--;
+  if (at < 0) return; // pas d'EOCD : zip.js signalera l'archive illisible
+  let entries = tail.getUint16(at + 10, true);
+  let size = tail.getUint32(at + 12, true);
+
+  if (at >= 20 && tail.getUint32(at - 20, true) === 0x07064b50) {
+    const offset = Number(tail.getBigUint64(at - 20 + 8, true));
+    if (Number.isSafeInteger(offset) && offset + 56 <= blob.size) {
+      const rec = new DataView(await blob.slice(offset, offset + 56).arrayBuffer());
+      if (rec.getUint32(0, true) === 0x06064b50) {
+        entries = Number(rec.getBigUint64(32, true));
+        size = Number(rec.getBigUint64(40, true));
+      }
+    }
+  }
+  if (entries > limits.maxEntries || size > limits.maxEntries * CENTRAL_DIRECTORY_BYTES_PER_ENTRY) {
+    throw new LimitError('TOO_MANY_ENTRIES', "Trop de fichiers dans l'archive.");
+  }
 }
 
 async function* walk(
@@ -71,6 +136,7 @@ async function* walk(
   if (depth > state.limits.maxDepth) {
     throw new LimitError('TOO_DEEP', 'Archives imbriquées trop profondément.');
   }
+  await checkCentralDirectory(blob, state.limits);
   const reader = new ZipReader(new BlobReader(blob));
   try {
     let entries: Awaited<ReturnType<typeof reader.getEntries>>;
@@ -85,7 +151,8 @@ async function* walk(
       throw e instanceof LimitError ? e : new ArchiveError();
     }
     for (const entry of entries) {
-      const path = prefix + entry.filename; // affichage uniquement, jamais utilisé pour écrire
+      // Affichage uniquement, jamais utilisé pour écrire ; borné (un nom d'entrée peut faire 64 Ko).
+      const path = (prefix + entry.filename).slice(0, MAX_PATH);
       if (entry.directory) continue;
       if (++state.entries > state.limits.maxEntries) {
         throw new LimitError('TOO_MANY_ENTRIES', "Trop de fichiers dans l'archive.");
@@ -97,7 +164,15 @@ async function* walk(
         if (entry.uncompressedSize > cap) throw new EntryAbort();
         data = await extract(entry, cap, state);
       } catch (e) {
-        if (e instanceof LimitError) throw e;
+        if (e instanceof LimitError || isAbort(e)) throw e;
+        if (e instanceof EntryOther) {
+          yield { kind: 'ignored', path, note: 'pas une activité' };
+          continue;
+        }
+        if (e instanceof EntryTooLarge) {
+          yield { kind: 'ignored', path, note: 'TOO_LARGE' };
+          continue;
+        }
         yield {
           kind: 'ignored',
           path,
@@ -115,7 +190,7 @@ async function* walk(
         try {
           yield* walk(data, `${path}!/`, depth + 1, state);
         } catch (e) {
-          if (e instanceof LimitError) throw e;
+          if (e instanceof LimitError || isAbort(e)) throw e;
           yield { kind: 'error', path, note: 'archive imbriquée illisible' };
         }
         continue;
@@ -138,9 +213,10 @@ async function* walk(
 export function scanArchive(
   input: Blob,
   limits: ScanLimits = DEFAULT_LIMITS,
+  signal?: AbortSignal,
 ): AsyncGenerator<ScanEvent> {
   if (input.size > limits.maxInputSize) {
     throw new LimitError('INPUT_TOO_LARGE', 'Le fichier déposé est trop volumineux.');
   }
-  return walk(input, '', 1, { limits, totalBytes: 0, entries: 0 });
+  return walk(input, '', 1, { limits, ...(signal ? { signal } : {}), totalBytes: 0, entries: 0 });
 }

@@ -27,6 +27,8 @@ export function installTrustedTypesPolicy(): void {
     },
     createScriptURL: (input) => {
       const url = new URL(input, location.href);
+      if (url.protocol !== 'https:' && url.protocol !== 'http:')
+        throw new TypeError('Schéma d’URL de script interdit');
       if (url.origin !== location.origin) throw new TypeError('URL de script externe interdite');
       return url.href;
     },

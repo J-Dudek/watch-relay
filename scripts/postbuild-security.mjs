@@ -3,7 +3,7 @@
 // de poser les en-têtes, T2.9) et génère `_headers` et `Caddyfile.snippet` pour les poser en vrai.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildCsp, buildHeaders } from '../security/headers.mjs';
+import { HASHED_ASSET, NO_CACHE_PATHS, buildCsp, buildHeaders } from '../security/headers.mjs';
 
 const dist = process.argv[2] ?? 'apps/web/dist/web/browser';
 const indexPath = join(dist, 'index.html');
@@ -31,11 +31,16 @@ if (!html.includes('http-equiv="Content-Security-Policy"')) {
 
 const headers = buildHeaders();
 const lines = Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`);
-writeFileSync(join(dist, '_headers'), `/*\n${lines.join('\n')}\n`);
+const noCacheBlocks = NO_CACHE_PATHS.map((p) => `${p}\n  Cache-Control: no-cache\n`).join('\n');
+// `_headers` ne sait pas cibler les fichiers au hash : ils restent revalidables (sûr) ;
+// le Caddyfile, lui, les marque immuables.
+writeFileSync(join(dist, '_headers'), `/*\n${lines.join('\n')}\n\n${noCacheBlocks}`);
 writeFileSync(
   join(dist, 'Caddyfile.snippet'),
   `header {\n${Object.entries(headers)
     .map(([k, v]) => `\t${k} "${v}"`)
-    .join('\n')}\n}\n`,
+    .join('\n')}\n}\n\n` +
+    `@revalidate path ${NO_CACHE_PATHS.join(' ')}\nheader @revalidate Cache-Control "no-cache"\n\n` +
+    `@hashed path_regexp hashed ${HASHED_ASSET.source}\nheader @hashed Cache-Control "public, max-age=31536000, immutable"\n`,
 );
 console.log(`✓ CSP injectée (meta), _headers et Caddyfile.snippet générés dans ${dist}`);

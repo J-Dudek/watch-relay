@@ -6,10 +6,11 @@ test('parcours nominal sans aucune requête sortante (T2.11)', async ({ page }) 
   const external: string[] = [];
   const suspicious: string[] = [];
   let processing = false;
-  page.on('request', (req) => {
+  // Au niveau du contexte : voit aussi les requêtes du service worker.
+  page.context().on('request', (req) => {
     const url = req.url();
     if (url.startsWith('blob:') || url.startsWith('data:')) return;
-    if (!url.startsWith(origin)) external.push(url);
+    if (new URL(url).origin !== origin) external.push(url);
     // Pendant le traitement, seul le chargement du code du worker (GET same-origin) est toléré.
     if (processing && (req.method() !== 'GET' || req.postData() !== null))
       suspicious.push(`${req.method()} ${url}`);

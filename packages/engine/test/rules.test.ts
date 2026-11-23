@@ -40,6 +40,10 @@ describe('règle de période', () => {
     expect(rule.check(cand({ startTime: 999 }))?.reason).toBe('OUT_OF_RANGE');
     expect(rule.check(cand({ startTime: 2001 }))?.reason).toBe('OUT_OF_RANGE');
   });
+  it('refuse des bornes non finies (NaN rendrait la règle inopérante)', () => {
+    expect(() => createPeriodRule({ from: Number.NaN })).toThrow(RangeError);
+    expect(() => createPeriodRule({ to: Infinity })).toThrow(RangeError);
+  });
   it('bornes optionnelles', () => {
     expect(createPeriodRule({}).check(cand())).toBeNull();
   });
@@ -51,10 +55,18 @@ describe('dédoublonnage', () => {
     const r = rule.check([
       cand({ id: 'a', size: 100, startTime: 10_000 }),
       cand({ id: 'b', size: 300, startTime: 11_500 }),
-      cand({ id: 'c', size: 200, startTime: 9_000 }),
+      cand({ id: 'c', size: 200, startTime: 10_800 }),
     ]);
     expect(r.map((x) => x.candidate.id).sort()).toEqual(['a', 'c']);
     expect(r.every((x) => x.reason === 'DUPLICATE' && x.detail === 'b')).toBe(true);
+  });
+  it('ne chaîne pas : A, B à +2 s et C à +4 s ne forment pas un seul groupe', () => {
+    const r = rule.check([
+      cand({ id: 'a', size: 100, startTime: 10_000 }),
+      cand({ id: 'b', size: 100, startTime: 12_000 }),
+      cand({ id: 'c', size: 100, startTime: 14_000 }),
+    ]);
+    expect(r.map((x) => x.candidate.id)).not.toContain('c');
   });
   it('ne confond pas deux sports ni deux instants éloignés', () => {
     expect(

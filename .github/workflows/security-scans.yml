@@ -13,7 +13,7 @@ jobs:
   # T2.15 : Semgrep (règles JS/TS + OWASP Top 10). Aucune télémétrie.
   semgrep:
     runs-on: ubuntu-latest
-    container: semgrep/semgrep:latest
+    container: semgrep/semgrep@sha256:67518c174185a2043fdbed16c70631b79209499b3671178e7194379b48295a0d # latest du 2026-11-23
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: >
@@ -38,7 +38,7 @@ jobs:
       - run: mkdir -p zap-out && chmod 777 zap-out && cp zap-rules.conf zap-out/rules.conf
       - run: >
           docker run --rm --network host -v "$PWD/zap-out:/zap/wrk:rw"
-          ghcr.io/zaproxy/zaproxy:stable
+          ghcr.io/zaproxy/zaproxy@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
           zap-baseline.py -t http://localhost:4302 -c rules.conf -r zap-report.html -J zap-report.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

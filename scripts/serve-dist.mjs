@@ -4,7 +4,7 @@
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import { buildHeaders } from '../security/headers.mjs';
+import { buildHeaders, cacheControlFor } from '../security/headers.mjs';
 
 const root = resolve(process.argv[2] ?? 'apps/web/dist/web/browser');
 const port = Number(process.env.PORT ?? 4300);
@@ -27,7 +27,14 @@ const TYPES = {
 
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
-  let file = normalize(join(root, decodeURIComponent(url.pathname)));
+  let pathname;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    res.writeHead(400, { ...headers, 'Content-Type': 'text/plain' }).end('Bad request');
+    return;
+  }
+  let file = normalize(join(root, pathname));
   if (file !== root && !file.startsWith(root + sep)) {
     res.writeHead(403).end();
     return;
@@ -39,9 +46,15 @@ createServer((req, res) => {
   }
   res.writeHead(200, {
     ...headers,
+    'Cache-Control': cacheControlFor(pathname === '' ? '/' : pathname),
     'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream',
   });
   createReadStream(file).pipe(res);
-}).listen(port, () => {
-  console.log(`Prévisualisation : http://localhost:${String(port)} (${root})`);
-});
+})
+  .on('error', (err) => {
+    console.error('Erreur du serveur :', err.message);
+    process.exitCode = 1;
+  })
+  .listen(port, () => {
+    console.log(`Prévisualisation : http://localhost:${String(port)} (${root})`);
+  });

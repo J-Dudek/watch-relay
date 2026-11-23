@@ -32,7 +32,12 @@ const PRECACHE = ${JSON.stringify(['./', ...files], null, 2)};
 self.addEventListener('install', (event) => {
   // Pas de skipWaiting : la nouvelle version s'active quand tous les onglets sont fermés,
   // pour ne jamais mélanger des fichiers de deux builds pendant un traitement.
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)));
+  // cache: 'reload' contourne le cache HTTP : on ne précache jamais un fichier périmé.
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' })))),
+  );
 });
 
 self.addEventListener('activate', (event) => {

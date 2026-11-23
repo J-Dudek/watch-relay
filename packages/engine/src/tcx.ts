@@ -12,16 +12,18 @@ export function parseTcx(bytes: Uint8Array): ActivityMeta {
   const text = new TextDecoder('utf-8').decode(bytes.subarray(0, SCAN_BYTES));
   if (/<!\s*(DOCTYPE|ENTITY)/i.test(text)) throw new ParseError('TCX avec DTD refusé');
 
-  const sportRaw = /<Activity\s[^>]*\bSport="([^"]{1,40})"/.exec(text)?.[1];
+  // Toutes les répétitions sont bornées et sans ambiguïté (pas de `\s*` autour d'un groupe qui
+  // accepte aussi des espaces) : temps linéaire, même sur 64 Ko d'espaces (ReDoS, revue T2.22).
+  const sportRaw = /<Activity\s[^>]{0,500}?\bSport="([^"]{1,40})"/.exec(text)?.[1];
   const timeRaw =
-    /<Id>\s*([^<]{1,40}?)\s*<\/Id>/.exec(text)?.[1] ??
-    /<Lap\s[^>]*\bStartTime="([^"]{1,40})"/.exec(text)?.[1];
+    /<Id>([^<]{1,80})<\/Id>/.exec(text)?.[1]?.trim() ??
+    /<Lap\s[^>]{0,500}?\bStartTime="([^"]{1,40})"/.exec(text)?.[1];
   if (!sportRaw || !timeRaw) throw new ParseError('TCX incomplet');
 
   const startTime = Date.parse(timeRaw);
   if (Number.isNaN(startTime)) throw new ParseError('Date TCX invalide');
   return {
-    sport: SPORTS[sportRaw.toLowerCase()] ?? sportRaw.toLowerCase(),
+    sport: SPORTS[sportRaw.toLowerCase()] ?? cleanSport(sportRaw),
     startTime,
     points: countTrackpoints(bytes),
   };
@@ -39,4 +41,13 @@ function countTrackpoints(bytes: Uint8Array): number {
     if (j === needle.length) count++;
   }
   return count;
+}
+
+/** Le sport vient d'un fichier non fiable : on ne garde que lettres, chiffres, `_`, `-` et espaces. */
+function cleanSport(raw: string): string {
+  const cleaned = raw
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_ -]/gu, '')
+    .trim();
+  return cleaned === '' ? 'unknown' : cleaned;
 }

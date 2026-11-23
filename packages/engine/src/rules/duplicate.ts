@@ -25,11 +25,12 @@ export function createDuplicateRule(toleranceMs: number = DUPLICATE_TOLERANCE_MS
       };
 
       for (const c of sorted) {
-        const prev = group.at(-1);
+        // Comparé au PREMIER du groupe : pas de chaînage (A, B à +2 s, C à +4 s : C n'est pas un doublon de A).
+        const first = group[0];
         const sameCluster =
-          prev !== undefined &&
-          prev.meta.sport === c.meta.sport &&
-          c.meta.startTime - prev.meta.startTime <= toleranceMs;
+          first !== undefined &&
+          first.meta.sport === c.meta.sport &&
+          c.meta.startTime - first.meta.startTime <= toleranceMs;
         if (!sameCluster) {
           flush();
           group = [];

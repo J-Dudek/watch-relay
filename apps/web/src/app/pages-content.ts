@@ -98,7 +98,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Tes fichiers d’activité',
         p: [
-          'Le fichier d’export que tu choisis est lu localement. Les fichiers extraits et les ZIP générés sont conservés temporairement dans le stockage privé de ton navigateur (ou en mémoire) le temps de la session, puis supprimés quand tu cliques sur « Recommencer » ou au prochain lancement. Rien n’est envoyé sur Internet.',
+          'Le fichier d’export que tu choisis est lu localement. Les fichiers extraits et les ZIP générés sont conservés temporairement dans le stockage privé de ton navigateur (ou en mémoire) le temps de la session, puis supprimés quand tu cliques sur « Recommencer » ou « Terminer », à la fermeture de l’onglet (au mieux) et, en tout cas, au prochain lancement : si le navigateur est fermé brutalement, ils peuvent subsister jusque-là sur ton appareil. Rien n’est envoyé sur Internet.',
         ],
       },
       {
@@ -248,7 +248,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Your activity files',
         p: [
-          'The export file you choose is read locally. Extracted files and generated ZIPs are kept temporarily in your browser’s private storage (or in memory) for the duration of the session, then deleted when you click “Start over” or at the next launch. Nothing is sent over the Internet.',
+          'The export file you choose is read locally. Extracted files and generated ZIPs are kept temporarily in your browser’s private storage (or in memory) for the duration of the session, then deleted when you click “Start over” or “Finish”, when the tab is closed (best effort) and, in any case, at the next launch: if the browser is killed abruptly, they may remain on your device until then. Nothing is sent over the Internet.',
         ],
       },
       {

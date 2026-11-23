@@ -38,6 +38,16 @@ export class ProcessingService {
     return p?.phase === 'write' && p.total ? Math.round((p.processed / p.total) * 100) : null;
   });
 
+  constructor() {
+    // Fermeture de l'onglet : purge au mieux (la page peut mourir avant la fin, d'où aussi le
+    // nettoyage au démarrage du worker). `persisted` = page mise en cache arrière/avant : on garde.
+    addEventListener('pagehide', (event) => {
+      if (event.persisted) return;
+      this.worker?.terminate();
+      void this.clearStorage();
+    });
+  }
+
   private worker: Worker | null = null;
   private wakeLock: WakeLockSentinel | null = null;
   private readonly guard = (event: BeforeUnloadEvent): void => {
@@ -72,9 +82,10 @@ export class ProcessingService {
 
   /** Revient à l'accueil et libère le stockage temporaire (T1.24). */
   reset(): void {
-    void this.clearStorage();
+    // Le worker d'abord : il détient les poignées d'écriture OPFS, sans quoi la purge échoue.
     this.worker?.terminate();
     this.worker = null;
+    void this.clearStorage();
     this.release();
     this.status.set('idle');
     this.progress.set(null);
@@ -122,6 +133,7 @@ export class ProcessingService {
     this.status.set('error');
     this.worker?.terminate();
     this.worker = null;
+    void this.clearStorage(); // aucun résidu sur disque après un échec
     this.release();
   }
 
