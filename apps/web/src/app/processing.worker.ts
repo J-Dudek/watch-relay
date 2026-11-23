@@ -85,6 +85,9 @@ async function start(
 }
 
 addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
+  // Worker dédié : seul le document qui l'a créé peut lui écrire, et `origin` y est vide. Tout message
+  // portant une origine vient d'ailleurs : on l'ignore (contrôle d'origine explicite).
+  if (event.origin !== '') return;
   const request = event.data;
   if (request.type === 'start') void start(request.file, request.options);
   else if (request.type === 'cancel') controller?.abort();

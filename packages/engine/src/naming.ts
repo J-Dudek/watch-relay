@@ -10,11 +10,18 @@ function utcStamp(ms: number): string {
 
 /** Ne garde que [a-z0-9_] : ni `/`, ni `..`, ni caractères de contrôle (T1.18). */
 function safeSport(sport: string): string {
+  // Bornage d'abord (un nom de sport n'a pas à dépasser quelques dizaines de caractères), puis
+  // retrait des « _ » de bord SANS expression régulière (CodeQL : `^_+|_+$` est polynomiale).
   const s = sport
+    .slice(0, 200)
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  return s === '' ? 'unknown' : s.slice(0, 40);
+    .replace(/[^a-z0-9]+/g, '_');
+  let start = 0;
+  let end = s.length;
+  while (start < end && s[start] === '_') start++;
+  while (end > start && s[end - 1] === '_') end--;
+  const trimmed = s.slice(start, end);
+  return trimmed === '' ? 'unknown' : trimmed.slice(0, 40);
 }
 
 /**

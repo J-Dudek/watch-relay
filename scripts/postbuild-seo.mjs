@@ -4,7 +4,7 @@
 // URL du site : SITE_URL, sinon `URL` fourni par Netlify. Sans URL, pas de sitemap ni de canonical
 // (une URL absolue est obligatoire) : le build le signale et continue.
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   ROUTES,
@@ -47,8 +47,13 @@ try {
 if (siteUrl && production) {
   writeFileSync(join(dist, 'sitemap.xml'), buildSitemap(siteUrl, lastmod));
   const sec = join(dist, '.well-known/security.txt');
-  if (existsSync(sec) && !readFileSync(sec, 'utf8').includes('Canonical:')) {
-    appendFileSync(sec, `Canonical: ${siteUrl}/.well-known/security.txt\n`);
+  // Lecture directe (pas de vérification d'existence préalable : course entre le test et l'usage).
+  try {
+    if (!readFileSync(sec, 'utf8').includes('Canonical:')) {
+      appendFileSync(sec, `Canonical: ${siteUrl}/.well-known/security.txt\n`);
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
   }
   console.log(`✓ SEO : ${String(ROUTES.length)} pages, sitemap.xml, robots.txt (${siteUrl})`);
 } else if (!siteUrl) {

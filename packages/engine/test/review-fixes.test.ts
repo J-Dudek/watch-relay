@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_FIT_ANALYZE_BYTES,
   analyzeFile,
+  entryName,
   createBatchFitRule,
   makeIdAllocator,
   createMemorySink,
@@ -104,5 +105,31 @@ describe('annulation', () => {
 
   it('LimitError reste distinct de l’annulation', () => {
     expect(new LimitError('TOO_DEEP', 'x')).not.toHaveProperty('name', 'AbortError');
+  });
+});
+
+describe('nommage : sport hostile', () => {
+  it('une très longue suite de « _ » est traitée en temps linéaire et donne un nom sûr', () => {
+    const evil = '_'.repeat(200_000) + '!';
+    const t = performance.now();
+    const name = entryName(
+      { id: 'x', format: 'fit', size: 1, meta: { sport: evil, startTime: 0 } },
+      new Set(),
+    );
+    expect(performance.now() - t).toBeLessThan(200);
+    expect(name).toMatch(/^[0-9T-]+_unknown\.fit$/);
+  });
+
+  it.each([
+    ['__running__', 'running'],
+    ['Trail Running!', 'trail_running'],
+    ['../../etc/passwd', 'etc_passwd'],
+    ['', 'unknown'],
+  ])('%s → %s', (sport, expected) => {
+    const name = entryName(
+      { id: 'x', format: 'tcx', size: 1, meta: { sport, startTime: 0 } },
+      new Set(),
+    );
+    expect(name).toContain(`_${expected}.tcx`);
   });
 });
