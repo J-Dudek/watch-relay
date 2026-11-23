@@ -27,6 +27,19 @@ describe('FIT qui n’est pas une activité', () => {
     },
   );
 
+  // Types récents que le SDK décode en nombre (constatés sur un vrai export) : sleep, hrv_status, metrics.
+  it.each([49, 68, 44])('type numérique %i (inconnu du SDK) : santé, pas corrompu', (type) => {
+    expect(analyzeFile('x', 'fit', makeFitOfType(type))).toMatchObject({
+      skipped: { kind: 'health' },
+    });
+  });
+
+  it('type numérique inconnu : autre fichier valide', () => {
+    expect(analyzeFile('x', 'fit', makeFitOfType(41))).toMatchObject({
+      skipped: { kind: 'other' },
+    });
+  });
+
   it('un FIT « activity » sans session reste CORRUPTED', () => {
     expect(analyzeFile('x', 'fit', makeFitOfType('activity'))).toMatchObject({
       rejection: { reason: 'CORRUPTED' },

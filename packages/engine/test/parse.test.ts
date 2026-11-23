@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeFile, parseFit, parseTcx } from '../src/index.js';
+import { analyzeFile, createSportRule, parseFit, parseTcx } from '../src/index.js';
 import { makeFit } from './fixtures.js';
 
 describe('parseFit', () => {
@@ -57,5 +57,23 @@ describe('analyzeFile', () => {
   it('un fichier valide donne un candidat', () => {
     const r = analyzeFile('x', 'fit', makeFit());
     expect(r.ok && r.candidate.meta.sport).toBe('running');
+  });
+});
+
+describe('noms de sports composés', () => {
+  it.each([
+    ['alpineSkiing', 'alpine_skiing'],
+    ['crossCountrySkiing', 'cross_country_skiing'],
+    ['fitnessEquipment', 'fitness_equipment'],
+    ['standUpPaddleboarding', 'stand_up_paddleboarding'],
+    ['running', 'running'],
+  ])('%s → %s (la liste des sports COROS est en snake_case)', (fit, expected) => {
+    expect(parseFit(makeFit({ sport: fit })).sport).toBe(expected);
+  });
+
+  it('un ski alpin n’est plus écarté comme sport inconnu', () => {
+    const rule = createSportRule();
+    const meta = parseFit(makeFit({ sport: 'alpineSkiing' }));
+    expect(rule.check({ id: 'x', format: 'fit', size: 50_000, meta })).toBeNull();
   });
 });

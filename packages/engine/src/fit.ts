@@ -18,6 +18,11 @@ const HEALTH_FIT_TYPES = new Set([
   'weight',
   'bloodPressure',
 ]);
+/**
+ * Types récents, inconnus du SDK (le décodeur les rend sous forme de nombre) : 44 `metrics`, 49 `sleep`,
+ * 68 `hrv_status`. Constatés dans un vrai export Garmin ; correspondance issue du profil FIT, à confirmer.
+ */
+const HEALTH_FIT_TYPE_NUMBERS = new Set([44, 49, 68]);
 
 /**
  * Fichier FIT valide mais qui n'est pas une activité (suivi quotidien, poids, réglages, parcours…) :
@@ -30,6 +35,15 @@ export class NotActivityError extends Error {
     this.name = 'NotActivityError';
     this.kind = kind;
   }
+}
+
+/**
+ * Le SDK rend les énumérations en camelCase (`alpineSkiing`) ; la liste des sports et les noms de
+ * fichiers sont en snake_case (`alpine_skiing`). Sans cette conversion, tout sport composé était
+ * écarté à tort (constaté sur un vrai export : ski alpin, ski de fond).
+ */
+export function snakeCase(value: string | undefined): string | undefined {
+  return value?.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
 
 const SESSION_MESG = 18;
@@ -56,9 +70,16 @@ export function parseFit(bytes: Uint8Array): ActivityMeta {
   }
   if (!session) {
     // Sans session : un fichier de santé ou de configuration valide n'est pas « corrompu ».
-    const fitType = typeof fileId?.type === 'string' ? fileId.type : undefined;
-    if (fitType !== undefined && fitType !== 'activity') {
-      throw new NotActivityError(HEALTH_FIT_TYPES.has(fitType) ? 'health' : 'other', fitType);
+    // CRC valide + `file_id` d'un type autre qu'« activity » : un fichier légitime qui n'est pas une
+    // activité. Le type peut être un nombre quand le SDK ne connaît pas encore la valeur.
+    const raw = fileId?.type;
+    if (raw !== undefined && raw !== 'activity') {
+      const isHealth =
+        typeof raw === 'string'
+          ? HEALTH_FIT_TYPES.has(raw)
+          : typeof raw === 'number' && HEALTH_FIT_TYPE_NUMBERS.has(raw);
+      const label = typeof raw === 'string' || typeof raw === 'number' ? String(raw) : 'inconnu';
+      throw new NotActivityError(isHealth ? 'health' : 'other', label);
     }
     throw new ParseError('Aucune session dans le FIT');
   }
@@ -68,7 +89,7 @@ export function parseFit(bytes: Uint8Array): ActivityMeta {
     throw new ParseError('Date absente');
   const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
   const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
-  const sport = str(session.sport)?.toLowerCase() ?? 'generic';
+  const sport = snakeCase(str(session.sport)) ?? 'generic';
   const subSport = str(session.subSport);
   const durationS = num(session.totalElapsedTime);
   const distanceM = num(session.totalDistance);

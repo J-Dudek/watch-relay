@@ -73,7 +73,7 @@ export async function makeZipWithRawName(hostile: string, content: Uint8Array): 
 }
 
 /** FIT valide sans session, d'un type donné (ex. `monitoringDaily`, `settings`) : pas une activité. */
-export function makeFitOfType(type: string): Uint8Array {
+export function makeFitOfType(type: string | number): Uint8Array {
   const enc = new Encoder();
   enc.onMesg(mesgNum('FILE_ID'), <Mesg>{
     type,
