@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { I18n } from './i18n';
+import { Router } from './router';
 import { App } from './app';
 
 /** Le rendu suppose les textes chargés (en production : initialiseur d'application). */
@@ -56,13 +57,13 @@ describe('App', () => {
       }
     };
     try {
-      location.hash = '#/faq';
+      TestBed.inject(Router).navigate('faq');
       await until(
         () => el.querySelector('h2')?.textContent.includes('Questions fréquentes') === true,
       );
       expect(el.querySelector('h2')?.textContent).toContain('Questions fréquentes');
     } finally {
-      location.hash = '#/';
+      TestBed.inject(Router).navigate('home');
     }
     await until(() => el.querySelector('h2')?.textContent.includes('Récupérer') === true);
     expect(el.querySelector('h2')?.textContent).toContain('Récupérer ton export Garmin');

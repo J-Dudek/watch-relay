@@ -88,10 +88,18 @@ export function buildHeaders({ upgradeInsecure = true } = {}) {
  * correction de sécurité doit atteindre les utilisateurs) ; les fichiers au hash sont immuables.
  */
 export const HASHED_ASSET = /-[A-Za-z0-9]{8}\.(?:js|css)$/;
-export const NO_CACHE_PATHS = ['/', '/index.html', '/sw.js', '/manifest.webmanifest'];
+export const NO_CACHE_PATHS = [
+  '/',
+  '/index.html',
+  '/faq',
+  '/privacy',
+  '/legal',
+  '/sw.js',
+  '/manifest.webmanifest',
+];
 
 export function cacheControlFor(pathname) {
-  if (NO_CACHE_PATHS.includes(pathname)) return 'no-cache';
+  if (NO_CACHE_PATHS.includes(pathname) || pathname.endsWith('.html')) return 'no-cache';
   if (HASHED_ASSET.test(pathname)) return 'public, max-age=31536000, immutable';
   return 'public, max-age=3600';
 }

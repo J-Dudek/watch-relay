@@ -8,7 +8,7 @@ export type Screen = (typeof SCREENS)[number];
 
 export async function openScreen(page: Page, screen: Screen): Promise<void> {
   if (screen === 'faq' || screen === 'legal') {
-    await page.goto(`/#/${screen}`);
+    await page.goto(`/${screen}`);
     await expect(page.locator('main h2')).toBeVisible();
     return;
   }

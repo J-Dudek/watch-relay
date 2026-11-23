@@ -26,7 +26,7 @@ test('après la première visite, l’app fonctionne hors ligne (T3.16)', async 
   await expect(page.getByText('activité(s) prête(s)')).toBeVisible({ timeout: 30_000 });
 
   // Les pages d'information aussi.
-  await page.goto('/#/faq');
+  await page.goto('/faq');
   await expect(page.getByRole('heading', { name: 'Questions fréquentes' })).toBeVisible();
 });
 

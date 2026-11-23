@@ -28,6 +28,7 @@ importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou éca
 - [Design system](#design-system)
 - [Démarrage rapide](#démarrage-rapide)
 - [Qualité et tests](#qualité-et-tests)
+- [Référencement (SEO)](#référencement-seo)
 - [Valider sur un vrai export](#valider-sur-un-vrai-export)
 - [Déploiement](#déploiement)
 - [État du projet et limites connues](#état-du-projet-et-limites-connues)
@@ -174,6 +175,29 @@ régression visuelle (références Linux/Chromium ; `npm run e2e:update -w @watc
 **Intégration continue** (GitHub Actions) : lint, typecheck, tests, audit, licences, SBOM, e2e, Lighthouse, CodeQL,
 Semgrep, ZAP baseline. Les commits suivent les [Conventional Commits](https://www.conventionalcommits.org/)
 (vérifiés par commitlint).
+
+## Référencement (SEO)
+
+Le site est une application, mais chaque page a une **vraie URL** indexable (`/`, `/faq`, `/privacy`, `/legal`), pas un
+fragment `#`. Le build (`scripts/postbuild-seo.mjs`) produit :
+
+- un **fichier HTML par page** avec ses propres `<title>`, description, `canonical`, Open Graph et Twitter Card, et un
+  contenu `<noscript>` lisible sans JavaScript ; l'accueil porte un bloc **JSON-LD** `WebApplication` ;
+- **`sitemap.xml`** (URL absolues, `lastmod` = date du dernier commit) et **`robots.txt`** qui le référence ;
+- **`_redirects`** (chaque page servie par son fichier, URL inchangée) et **`404.html`** : une adresse inconnue renvoie une
+  vraie 404 en `noindex`, pas une « soft 404 » ;
+- le `Canonical` de `/.well-known/security.txt` ;
+- hors production (aperçus de déploiement, branches), `robots.txt` interdit tout et `X-Robots-Tag: noindex` est ajouté.
+
+L'**URL du site** vient de `SITE_URL`, sinon de la variable `URL` que Netlify fournit au build (domaine principal). Sans
+URL absolue, le build l'indique et ne génère ni sitemap ni canonical. Pour la forcer : variable d'environnement
+`SITE_URL=https://mon-domaine.tld` dans Netlify (_Site configuration → Environment variables_).
+
+La navigation interne utilise l'History API (pas de rechargement : un traitement en cours est conservé) et les anciens liens
+`/#/faq` sont redirigés. Le titre de l'onglet suit la page et la langue. Limite assumée : la langue se choisit côté client,
+donc les moteurs de recherche voient la version française (pas d'URL ni de `hreflang` par langue).
+
+Tests : `scripts/seo.test.mjs` (`npm run test:scripts`) pour les fonctions pures, `e2e/seo.spec.ts` sur le build réel.
 
 ## Valider sur un vrai export
 

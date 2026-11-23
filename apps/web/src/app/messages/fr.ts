@@ -2,9 +2,10 @@ import type { RejectReason } from '@watch-relay/engine';
 
 /** Source de vérité : le français. `en` doit avoir exactement la même forme (vérifié par le compilateur). */
 export const fr = {
-  htmlTitle: 'Migration Garmin ⇄ COROS',
+  htmlTitle: 'Migration Garmin ⇄ COROS – transfert d’activités, 100 % local',
+  siteName: 'Migration Garmin ⇄ COROS',
   htmlDescription:
-    'Prépare ton historique d’activités Garmin pour COROS, ou l’inverse. Tout se passe dans ton navigateur : aucune donnée n’est envoyée.',
+    'Prépare ton historique d’activités Garmin pour COROS, ou l’inverse. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
   title: 'Migration Garmin → COROS',
   tagline: '100 % sur ton appareil : aucune donnée n’est envoyée, aucun compte requis.',
   direction: {

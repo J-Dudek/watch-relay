@@ -11,7 +11,9 @@ import { I18n } from '../i18n';
 import { withRetry } from '../retry';
 import type { PagesMessages, Section } from '../pages-types';
 
-export type InfoPageId = 'faq' | 'privacy' | 'legal';
+export type { InfoPageId } from '../router';
+import type { InfoPageId } from '../router';
+import { Router } from '../router';
 
 /**
  * Le contenu (FAQ, confidentialité, mentions légales) est un chunk par langue, chargé à la première
@@ -53,12 +55,15 @@ const LOADERS: Record<'fr' | 'en', () => Promise<PagesMessages>> = {
       <p role="status" class="j6n-muted">{{ t().loading }}</p>
     }
     <div class="actions">
-      <a class="j6n-btn j6n-btn--secondary" href="#/">{{ t().pagesNav.backToTool }}</a>
+      <a class="j6n-btn j6n-btn--secondary" href="/" (click)="router.link($event, 'home')">{{
+        t().pagesNav.backToTool
+      }}</a>
     </div>
   `,
 })
 export class InfoPage {
   readonly page = input.required<InfoPageId>();
+  protected readonly router = inject(Router);
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
   private readonly loaded = signal<{ pages: PagesMessages } | null>(null);

@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   // On teste ce qui sera livré : build de production + en-têtes de sécurité.
   webServer: {
-    command: `npm run build && PORT=${String(PORT)} npm run serve:dist`,
+    command: `SITE_URL=https://watch-relay.example npm run build && PORT=${String(PORT)} npm run serve:dist`,
     url: `http://localhost:${String(PORT)}`,
     reuseExistingServer: !process.env['CI'],
     timeout: 180_000,

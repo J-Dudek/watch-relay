@@ -7,20 +7,17 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { I18n } from './i18n';
 import { ProcessingService } from './processing.service';
 import { THEME_MODES, applyTheme, readTheme, storeTheme, type ThemeMode } from './theme';
 import { AnalyzeStep } from './steps/analyze-step';
 import { DropStep } from './steps/drop-step';
-import { InfoPage, type InfoPageId } from './steps/info-page';
+import { InfoPage } from './steps/info-page';
+import { Router } from './router';
 import { GuideStep } from './steps/guide-step';
 import { ImportStep } from './steps/import-step';
-
-function routeFromHash(hash: string): 'home' | InfoPageId {
-  const id = hash.replace(/^#\/?/, '');
-  return id === 'faq' || id === 'privacy' || id === 'legal' ? id : 'home';
-}
 
 @Component({
   selector: 'app-root',
@@ -110,9 +107,9 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
 
     <footer class="j6n-footer j6n-mt-6 j6n-py-5 app-footer">
       <nav [attr.aria-label]="t().pagesNav.label" class="footer-nav">
-        <a href="#/faq">{{ t().pagesNav.faq }}</a>
-        <a href="#/privacy">{{ t().pagesNav.privacy }}</a>
-        <a href="#/legal">{{ t().pagesNav.legal }}</a>
+        <a href="/faq" (click)="router.link($event, 'faq')">{{ t().pagesNav.faq }}</a>
+        <a href="/privacy" (click)="router.link($event, 'privacy')">{{ t().pagesNav.privacy }}</a>
+        <a href="/legal" (click)="router.link($event, 'legal')">{{ t().pagesNav.legal }}</a>
       </nav>
       <p>{{ t().footer }}</p>
       <p class="signature">
@@ -131,21 +128,36 @@ export class App {
   protected readonly flow = this.i18n.flow;
   private readonly injector = inject(Injector);
   protected readonly step = signal(0);
-  protected readonly route = signal<'home' | InfoPageId>(routeFromHash(location.hash));
+  protected readonly router = inject(Router);
   protected readonly infoPage = computed(() => {
-    const r = this.route();
+    const r = this.router.route();
     return r === 'home' ? null : r;
   });
   private readonly processing = inject(ProcessingService);
 
   constructor() {
     this.i18n.applyToDocument();
-    // Navigation par hash : l'état du traitement vit dans ProcessingService et survit au changement de page.
-    addEventListener('hashchange', () => {
-      this.route.set(routeFromHash(location.hash));
-      scrollTo(0, 0);
-      // Le <main> est recréé par le changement de page : on attend le prochain rendu.
-      afterNextRender(() => document.getElementById('main')?.focus(), { injector: this.injector });
+    // Changement de page (pas au chargement) : haut de page et focus sur le contenu.
+    let first = true;
+    effect(() => {
+      this.router.route();
+      if (first) {
+        first = false;
+        return;
+      }
+      untracked(() => {
+        scrollTo(0, 0);
+        // Le <main> est recréé par le changement de page : on attend le prochain rendu.
+        afterNextRender(() => document.getElementById('main')?.focus(), {
+          injector: this.injector,
+        });
+      });
+    });
+    // Titre propre à la page, dans la langue active.
+    effect(() => {
+      const route = this.router.route();
+      const t = this.t();
+      document.title = route === 'home' ? t.htmlTitle : `${t.pagesNav[route]} — ${t.siteName}`;
     });
     // Retour automatique à l'étape de dépôt si l'analyse est réinitialisée.
     effect(() => {

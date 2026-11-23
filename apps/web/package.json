@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build && node ../../scripts/postbuild-security.mjs dist/web/browser && node ../../scripts/postbuild-pwa.mjs dist/web/browser",
+    "build": "ng build && node ../../scripts/postbuild-security.mjs dist/web/browser && node ../../scripts/postbuild-seo.mjs dist/web/browser && node ../../scripts/postbuild-pwa.mjs dist/web/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.worker.json --noEmit",

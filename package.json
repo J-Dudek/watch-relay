@@ -22,7 +22,8 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json",
     "lighthouse": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs",
-    "inspect:export": "node scripts/inspect-export.mjs"
+    "inspect:export": "node scripts/inspect-export.mjs",
+    "test:scripts": "node --test scripts/"
   },
   "lint-staged": {
     "*.{ts,mjs,js,json,md,yml}": "prettier --write",

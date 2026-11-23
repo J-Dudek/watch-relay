@@ -48,6 +48,10 @@ def main() -> None:
     on_black(logo, 180, 0.9).save(ICONS / "apple-touch-icon.png", optimize=True)
     on_black(logo, 32).save(ICONS / "favicon-32.png", optimize=True)
     on_black(logo, 256).save(ROOT / "apps/web/public/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
+    # Image de partage (Open Graph / Twitter) : 1200 × 630, logo centré sur fond noir.
+    og = Image.new("RGB", (1200, 630), (0, 0, 0))
+    og.paste(logo.resize((630, 630), Image.LANCZOS), (285, 0))
+    og.save(ROOT / "apps/web/public/og-image.png", optimize=True)
     print("✓ logo et icônes générés")
 
 

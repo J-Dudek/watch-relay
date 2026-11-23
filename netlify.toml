@@ -13,5 +13,9 @@
 
 # Désactive le post-traitement Netlify (minification, réécriture des chemins, optimisation d'images) :
 # il modifierait les fichiers au hash et le service worker, et pourrait injecter du code que la CSP bloque.
+# Référencement : l'URL du site (sitemap, canonical, Open Graph) est lue dans `SITE_URL`, sinon dans la variable
+# `URL` que Netlify fournit au build. Pour imposer un domaine : variable d'environnement SITE_URL dans l'interface.
+# Les aperçus de déploiement sont automatiquement en noindex (contexte != production).
+
 [build.processing]
   skip_processing = true

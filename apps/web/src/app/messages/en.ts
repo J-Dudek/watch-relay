@@ -1,9 +1,10 @@
 import type { Base, FlowMessages, Messages } from './fr';
 
 const en: Base = {
-  htmlTitle: 'Garmin ⇄ COROS migration',
+  htmlTitle: 'Garmin ⇄ COROS migration – activity transfer, 100% local',
+  siteName: 'Garmin ⇄ COROS migration',
   htmlDescription:
-    'Prepare your Garmin activity history for COROS, or the other way round. Everything happens in your browser: no data is sent anywhere.',
+    'Prepare your Garmin activity history for COROS, or the other way round. Everything happens in your browser: no data is sent, no account required.',
   title: 'Garmin → COROS migration',
   tagline: '100% on your device: no data is sent, no account required.',
   direction: {

@@ -152,7 +152,7 @@ test('le sélecteur de langue s’utilise au clavier', async ({ page }) => {
 });
 
 test('le skiplink amène au contenu sans changer de page', async ({ page }) => {
-  await page.goto('/#/faq');
+  await page.goto('/faq');
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
   await expect(page.locator('#main')).toBeFocused();

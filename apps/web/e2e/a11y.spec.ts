@@ -86,7 +86,7 @@ for (const scheme of SCHEMES) {
 
       for (const id of ['faq', 'privacy', 'legal']) {
         test(`page ${id}`, async ({ page }) => {
-          await page.goto(`/#/${id}`);
+          await page.goto(`/${id}`);
           await expect(page.locator('main h2')).toBeVisible();
           await audit(page, id);
         });

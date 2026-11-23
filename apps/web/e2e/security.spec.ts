@@ -36,7 +36,8 @@ test('la CSP respecte le PLAN T2.6', async ({ request }) => {
 test('aucun style, script ni gestionnaire inline dans la page livrée', async ({ request }) => {
   const html = await (await request.get('/')).text();
   expect(html).not.toMatch(/<style[\s>]/i);
-  expect(html).not.toMatch(/<script(?![^>]*\ssrc=)[^>]*>/i);
+  // Seul le bloc de données JSON-LD (non exécutable) est autorisé en ligne.
+  expect(html).not.toMatch(/<script(?![^>]*\ssrc=)(?![^>]*application\/ld\+json)[^>]*>/i);
   expect(html).not.toMatch(/\son[a-z]+=/i);
 });
 
