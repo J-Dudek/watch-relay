@@ -13,6 +13,8 @@ export interface ScanLimits {
   readonly maxFileSize: number;
   /** Taille max d'un ZIP imbriqué extrait. */
   readonly maxNestedZipSize: number;
+  /** Taille max d'un fichier JSON de santé lu pour l'extraction CSV. */
+  readonly maxHealthFileSize: number;
 }
 
 const GB = 1024 ** 3;
@@ -26,6 +28,7 @@ export const DEFAULT_LIMITS: ScanLimits = {
   maxDepth: 3,
   maxFileSize: 200 * MB,
   maxNestedZipSize: 2 * GB,
+  maxHealthFileSize: 64 * MB,
 };
 
 export type LimitCode = 'INPUT_TOO_LARGE' | 'TOTAL_TOO_LARGE' | 'TOO_MANY_ENTRIES' | 'TOO_DEEP';

@@ -29,7 +29,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'What about my health data (sleep, steps, resting heart rate…)?',
         a: [
-          'The tool only transfers activities. Health data in your Garmin export is recognised and reported during the analysis, but not included: to my knowledge, COROS Training Hub only imports activities (FIT or TCX). It is neither modified nor deleted: it stays in your export and on your Garmin account.',
+          'The tool only transfers activities: to my knowledge, COROS Training Hub only imports activities (FIT or TCX). Health data in your Garmin export is recognised and reported during the analysis. If you tick “Also extract my health data to CSV” before uploading your file, the tool converts it into readable CSV files (one per category: sleep, daily activity…) in a separate file, for your personal archive. Extraction happens on your device and is off by default. Nothing is modified or deleted: everything stays in your export and on your Garmin account.',
         ],
       },
       {

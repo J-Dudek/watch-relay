@@ -10,6 +10,8 @@ export const WORK_DIR = 'watch-relay-out';
 /** Contrat typé partagé entre l'interface et le worker (T1.21). */
 export interface StartOptions {
   readonly period?: Period;
+  /** Extraire aussi les données de santé en CSV (archive à part). */
+  readonly healthExport?: boolean;
   /** Plateforme de destination (défaut : `coros`). */
   readonly target?: Target;
 }
@@ -20,6 +22,8 @@ export type WorkerRequest =
   | { readonly type: 'cleanup' };
 
 export interface ArchiveInfo {
+  /** `health` : CSV de santé, à part du circuit d'import. */
+  readonly kind?: 'health';
   readonly name: string;
   readonly size: number;
   readonly fileCount: number;

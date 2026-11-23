@@ -18,6 +18,18 @@ import { I18n } from '../i18n';
     <h2>{{ d.title }}</h2>
     <p>{{ d.intro }}</p>
 
+    @if (target() === 'coros') {
+      <label class="check health-option">
+        <input
+          type="checkbox"
+          [checked]="processing.healthExport()"
+          (change)="processing.healthExport.set(!processing.healthExport())"
+        />
+        {{ d.healthOption }}
+      </label>
+      <p class="note">{{ d.healthHint }}</p>
+    }
+
     <label
       class="drop"
       [class.drop-over]="over()"
@@ -47,7 +59,8 @@ import { I18n } from '../i18n';
   `,
 })
 export class DropStep {
-  private readonly processing = inject(ProcessingService);
+  protected readonly processing = inject(ProcessingService);
+  protected readonly target = this.processing.target;
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
   protected readonly flow = this.i18n.flow;

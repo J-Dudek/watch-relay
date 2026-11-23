@@ -17,6 +17,7 @@ async function currentStop(page: Page): Promise<Stop> {
     // voisine (boutons radio du sélecteur de thème).
     let target: HTMLElement = el;
     if (el.matches('input[type=file]')) target = el.closest('label') ?? el;
+    else if (el.matches('input[type=checkbox]')) target = el.closest('label') ?? el;
     else if (el.matches('input[type=radio]'))
       target = el.nextElementSibling instanceof HTMLElement ? el.nextElementSibling : el;
     const s = getComputedStyle(target);
@@ -84,11 +85,19 @@ test('parcours complet au clavier, du guide à l’import', async ({ page }) => 
   // Le focus est replacé sur la zone principale (pas perdu sur un bouton disparu).
   await expect(page.locator('#main')).toBeFocused();
 
-  // Étape 2 : le champ fichier est atteignable et activable au clavier.
-  await page.keyboard.press('Tab');
-  const stop = await currentStop(page);
+  // Étape 2 : l'option santé (case à cocher) puis le champ fichier. Safari ne place pas les cases à
+  // cocher dans l'ordre de tabulation par défaut : on accepte qu'elle soit sautée, jamais le contraire.
+  const stop = await (async () => {
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('Tab');
+      const current = await currentStop(page);
+      expect(current.visible, `focus invisible sur « ${current.name} »`).toBe(true);
+      if (current.name === 'file') return current;
+      expect(current.name).toBe('checkbox');
+    }
+    throw new Error('le champ fichier n’est pas atteint au clavier');
+  })();
   expect(stop.name).toBe('file');
-  expect(stop.visible, 'la zone de dépôt doit montrer le focus').toBe(true);
   const chooser = page.waitForEvent('filechooser');
   await page.keyboard.press('Space');
   await (

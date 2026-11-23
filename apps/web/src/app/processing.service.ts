@@ -25,6 +25,8 @@ export const MAX_INPUT_BYTES = 10 * 1024 ** 3;
 export class ProcessingService {
   /** Destination de l'import : COROS (Garmin → COROS) ou Garmin (COROS → Garmin). */
   readonly target = signal<Target>('coros');
+  /** Extraire aussi les données de santé en CSV (opt-in : données sensibles, lues sur demande). */
+  readonly healthExport = signal(false);
   readonly status = signal<Status>('idle');
   readonly progress = signal<ProcessProgress | null>(null);
   readonly report = signal<Report | null>(null);
@@ -73,7 +75,14 @@ export class ProcessingService {
         message: 'Worker crashed',
       });
     };
-    this.send({ type: 'start', file, options: { target: this.target() } });
+    this.send({
+      type: 'start',
+      file,
+      options: {
+        target: this.target(),
+        healthExport: this.healthExport() && this.target() === 'coros',
+      },
+    });
   }
 
   cancel(): void {

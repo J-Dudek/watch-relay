@@ -49,6 +49,7 @@ async function start(
       signal: controller.signal,
       ...(options?.period ? { period: options.period } : {}),
       ...(options?.target ? { target: options.target } : {}),
+      ...(options?.healthExport ? { healthExport: true } : {}),
       onProgress(progress) {
         const now = performance.now();
         if (now - last < 250 && progress.processed !== progress.total) return;
@@ -61,6 +62,7 @@ async function start(
       report,
       storage: dir ? 'opfs' : 'memory',
       archives: archives.map((a) => ({
+        ...(a.kind ? { kind: a.kind } : {}),
         name: a.name,
         size: a.blob.size,
         fileCount: a.fileCount,

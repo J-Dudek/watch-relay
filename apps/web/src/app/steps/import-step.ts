@@ -27,34 +27,54 @@ import { ProcessingService } from '../processing.service';
       </p>
     }
 
-    <h3>{{ i.yourFiles }}</h3>
-    <ul class="files">
-      @for (a of archives(); track a.name) {
+    @if (activityArchives().length > 0) {
+      <h3>{{ i.yourFiles }}</h3>
+      <ul class="files">
+        @for (a of activityArchives(); track a.name) {
+          <li class="file">
+            <div>
+              <strong>{{ a.name }}</strong><br />
+              <span class="j6n-muted">{{ i.activities(a.fileCount) }} · {{ size(a.size) }}</span>
+            </div>
+            <div class="file-actions">
+              <button type="button" class="j6n-btn" (click)="save(a)">
+                {{ i.download }}
+              </button>
+              @if (mobile && canShare()) {
+                <button type="button" class="j6n-btn j6n-btn--secondary" (click)="share(a)">
+                  {{ i.shareTo }}
+                </button>
+              }
+              <label class="check">
+                <input type="checkbox" [checked]="isDone(a.name)" (change)="toggle(a.name)" />
+                {{ i.imported }}
+              </label>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (healthArchive(); as h) {
+      <h3>{{ i.healthTitle }}</h3>
+      <p class="note">{{ i.healthHint }}</p>
+      <ul class="files">
         <li class="file">
           <div>
-            <strong>{{ a.name }}</strong><br />
-            <span class="j6n-muted">{{ i.activities(a.fileCount) }} · {{ size(a.size) }}</span>
+            <strong>{{ h.name }}</strong><br />
+            <span class="j6n-muted">{{ i.healthFiles(h.fileCount) }} · {{ size(h.size) }}</span>
           </div>
           <div class="file-actions">
-            <button type="button" class="j6n-btn" (click)="save(a)">
+            <button type="button" class="j6n-btn j6n-btn--secondary" (click)="save(h)">
               {{ i.download }}
             </button>
-            @if (mobile && canShare()) {
-              <button type="button" class="j6n-btn j6n-btn--secondary" (click)="share(a)">
-                {{ i.shareTo }}
-              </button>
-            }
-            <label class="check">
-              <input type="checkbox" [checked]="isDone(a.name)" (change)="toggle(a.name)" />
-              {{ i.imported }}
-            </label>
           </div>
         </li>
-      }
-    </ul>
+      </ul>
+    }
 
     <div class="actions">
-      @if (!mobile && archives().length > 1) {
+      @if (!mobile && activityArchives().length > 1) {
         <button type="button" class="j6n-btn j6n-btn--secondary" (click)="saveAll()">
           {{ i.downloadAll }}
         </button>
@@ -79,7 +99,7 @@ import { ProcessingService } from '../processing.service';
       </li>
       <li>{{ i.h4 }}</li>
     </ol>
-    <p class="j6n-muted">{{ i.progress(doneCount(), archives().length) }}</p>
+    <p class="j6n-muted">{{ i.progress(doneCount(), activityArchives().length) }}</p>
 
     <div class="actions">
       <button type="button" class="j6n-btn j6n-btn--secondary" (click)="back.emit()">
@@ -99,6 +119,13 @@ export class ImportStep {
   readonly back = output();
   readonly restart = output();
   protected readonly archives = this.processing.archives;
+  /** Archives à importer (les CSV de santé sont à part). */
+  protected readonly activityArchives = computed(() =>
+    this.archives().filter((a) => a.kind !== 'health'),
+  );
+  protected readonly healthArchive = computed(() =>
+    this.archives().find((a) => a.kind === 'health'),
+  );
   protected readonly mobile = isMobileDevice();
   protected readonly size = (n: number): string => formatBytes(n, this.t());
   private readonly done = signal<ReadonlySet<string>>(new Set());
@@ -124,7 +151,7 @@ export class ImportStep {
 
   /** Téléchargements espacés : les navigateurs bloquent les rafales. */
   protected async saveAll(): Promise<void> {
-    for (const a of this.archives()) {
+    for (const a of this.activityArchives()) {
       download(a.blob, a.name);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }

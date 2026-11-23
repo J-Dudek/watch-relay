@@ -29,7 +29,7 @@ export const PAGES_FR: PagesMessages = {
       {
         q: 'Et mes données de santé (sommeil, pas, fréquence cardiaque au repos…) ?',
         a: [
-          'L’outil ne transfère que les activités. Les données de santé de ton export Garmin sont reconnues et signalées à l’analyse, mais pas incluses : à ma connaissance, COROS Training Hub n’importe que des activités (FIT ou TCX). Elles ne sont ni modifiées ni supprimées : elles restent dans ton export et sur ton compte Garmin.',
+          'L’outil ne transfère que les activités : à ma connaissance, COROS Training Hub n’importe que des activités (FIT ou TCX). Les données de santé de ton export Garmin sont reconnues et signalées à l’analyse. Si tu coches « Extraire aussi mes données de santé en CSV » avant de déposer ton fichier, l’outil les convertit en CSV lisibles (un par catégorie : sommeil, activité quotidienne…) dans un fichier à part, pour ton archive personnelle. L’extraction se fait sur ton appareil et n’est pas activée par défaut. Rien n’est modifié ni supprimé : tout reste dans ton export et sur ton compte Garmin.',
         ],
       },
       {

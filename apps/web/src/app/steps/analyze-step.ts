@@ -53,7 +53,9 @@ import type { RejectReason } from '@watch-relay/engine';
             {{ a.rejected }} · <strong>{{ r.ignored.length }}</strong> {{ a.ignored }}
           </p>
 
-          @if (r.health > 0) {
+          @if (r.healthExport; as h) {
+            <p class="j6n-callout" role="note">{{ a.healthExported(h.rows, h.files) }}</p>
+          } @else if (r.health > 0) {
             <p class="j6n-callout" role="note">{{ a.health(r.health) }}</p>
           }
 
@@ -98,7 +100,7 @@ import type { RejectReason } from '@watch-relay/engine';
           <button type="button" class="j6n-btn j6n-btn--secondary" (click)="restart.emit()">
             {{ t().restart }}
           </button>
-          @if ((report()?.kept ?? 0) > 0) {
+          @if ((report()?.kept ?? 0) > 0 || report()?.healthExport) {
             <button type="button" class="j6n-btn" (click)="next.emit()">
               {{ a.continue }}
             </button>

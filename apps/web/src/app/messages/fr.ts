@@ -48,6 +48,9 @@ export const fr = {
   drop: {
     title: '2. Déposer le fichier',
     intro: 'Le fichier reste sur ton appareil : rien n’est envoyé sur Internet.',
+    healthOption: 'Extraire aussi mes données de santé en CSV',
+    healthHint:
+      'Sommeil, pas, fréquence cardiaque au repos… dans un fichier à part, non importable dans COROS. Donnée sensible : elle reste sur ton appareil.',
     choose: 'Choisir le fichier ZIP Garmin',
     orDrag: 'ou le glisser-déposer ici',
     notZip: 'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de Garmin, sans la décompresser.',
@@ -67,6 +70,8 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    healthExported: (rows: number, files: number) =>
+      `Données de santé extraites : ${String(rows)} ligne(s) issues de ${String(files)} fichier(s), dans un CSV à part (non importables dans COROS).`,
     nothing:
       'Aucune activité importable n’a été trouvée. Vérifie que tu as déposé l’export Garmin complet.',
     breakdown: 'Répartition par sport et par année',
@@ -118,6 +123,10 @@ export const fr = {
     mobileShare:
       'Envoie les ZIP vers Fichiers ou Drive pour les récupérer ensuite sur ton ordinateur.',
     yourFiles: 'Tes fichiers',
+    healthTitle: 'Tes données de santé (CSV)',
+    healthHint:
+      'Un CSV par catégorie (sommeil, activité quotidienne…), pour archive personnelle : COROS ne sait pas les importer. Ce sont des données sensibles : ne les partage pas.',
+    healthFiles: (n: number) => `${String(n)} fichier(s) CSV`,
     activities: (n: number) => `${String(n)} activité(s)`,
     download: 'Télécharger',
     shareTo: 'Envoyer vers…',

@@ -1,5 +1,6 @@
 import { BlobReader, ZipReader, type FileEntry } from '@zip.js/zip.js';
 import { detectFormat } from './detect.js';
+import { isHealthJsonPath } from './health-export.js';
 import { ArchiveError, DEFAULT_LIMITS, LimitError, type ScanLimits } from './limits.js';
 import type { ActivityFormat } from './types.js';
 
@@ -10,6 +11,8 @@ export type ScanEvent =
       readonly format: ActivityFormat;
       readonly data: Uint8Array;
     }
+  /** JSON de santé (si `collectHealth`) : contenu fourni pour l'extraction CSV. */
+  | { readonly kind: 'health'; readonly path: string; readonly data: Uint8Array }
   | { readonly kind: 'ignored'; readonly path: string; readonly note: string }
   | { readonly kind: 'error'; readonly path: string; readonly note: string };
 
@@ -31,8 +34,14 @@ const MAX_PATH = 512;
 /** Taille maximale admise du répertoire central, par entrée autorisée (nom moyen ≤ ~200 o). */
 export const CENTRAL_DIRECTORY_BYTES_PER_ENTRY = 256;
 
+export interface ScanOptions {
+  /** Fournit aussi le contenu des JSON de santé (événements `health`), pour l'extraction CSV. */
+  readonly collectHealth?: boolean;
+}
+
 interface State {
   readonly limits: ScanLimits;
+  readonly collectHealth: boolean;
   readonly signal?: AbortSignal;
   totalBytes: number;
   entries: number;
@@ -47,7 +56,12 @@ const isZip = (b: Uint8Array): boolean =>
  * Extrait une entrée en flux en comptant les octets réellement produits :
  * les tailles déclarées dans l'en-tête ZIP ne sont jamais crues (T2.1).
  */
-async function extract(entry: FileEntry, maxBytes: number, state: State): Promise<Blob> {
+async function extract(
+  entry: FileEntry,
+  maxBytes: number,
+  state: State,
+  keepOther: boolean,
+): Promise<Blob> {
   const chunks: Uint8Array<ArrayBuffer>[] = [];
   let written = 0;
   let limit = maxBytes;
@@ -81,6 +95,7 @@ async function extract(entry: FileEntry, maxBytes: number, state: State): Promis
         }
         if (isZip(head)) limit = state.limits.maxNestedZipSize;
         else if (detectFormat(head)) limit = state.limits.maxFileSize;
+        else if (keepOther) limit = state.limits.maxHealthFileSize;
         else throw (stop = new EntryOther());
       }
       if (written > limit) {
@@ -162,7 +177,7 @@ async function* walk(
       let data: Blob;
       try {
         if (entry.uncompressedSize > cap) throw new EntryAbort();
-        data = await extract(entry, cap, state);
+        data = await extract(entry, cap, state, state.collectHealth && isHealthJsonPath(path));
       } catch (e) {
         if (e instanceof LimitError || isAbort(e)) throw e;
         if (e instanceof EntryOther) {
@@ -197,8 +212,11 @@ async function* walk(
       }
 
       const format = detectFormat(head);
-      if (!format) yield { kind: 'ignored', path, note: 'pas une activité' };
-      else if (data.size > limits.maxFileSize) yield { kind: 'ignored', path, note: 'TOO_LARGE' };
+      if (!format) {
+        if (state.collectHealth && isHealthJsonPath(path)) {
+          yield { kind: 'health', path, data: new Uint8Array(await data.arrayBuffer()) };
+        } else yield { kind: 'ignored', path, note: 'pas une activité' };
+      } else if (data.size > limits.maxFileSize) yield { kind: 'ignored', path, note: 'TOO_LARGE' };
       else yield { kind: 'activity', path, format, data: new Uint8Array(await data.arrayBuffer()) };
     }
   } finally {
@@ -214,9 +232,16 @@ export function scanArchive(
   input: Blob,
   limits: ScanLimits = DEFAULT_LIMITS,
   signal?: AbortSignal,
+  options: ScanOptions = {},
 ): AsyncGenerator<ScanEvent> {
   if (input.size > limits.maxInputSize) {
     throw new LimitError('INPUT_TOO_LARGE', 'Le fichier déposé est trop volumineux.');
   }
-  return walk(input, '', 1, { limits, ...(signal ? { signal } : {}), totalBytes: 0, entries: 0 });
+  return walk(input, '', 1, {
+    limits,
+    collectHealth: options.collectHealth ?? false,
+    ...(signal ? { signal } : {}),
+    totalBytes: 0,
+    entries: 0,
+  });
 }

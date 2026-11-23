@@ -47,6 +47,9 @@ const en: Base = {
   drop: {
     title: '2. Upload the file',
     intro: 'The file stays on your device: nothing is sent over the Internet.',
+    healthOption: 'Also extract my health data to CSV',
+    healthHint:
+      'Sleep, steps, resting heart rate… in a separate file that COROS cannot import. Sensitive data: it stays on your device.',
     choose: 'Choose the Garmin ZIP file',
     orDrag: 'or drag and drop it here',
     notZip:
@@ -67,6 +70,8 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    healthExported: (rows: number, files: number) =>
+      `Health data extracted: ${String(rows)} row(s) from ${String(files)} file(s), in a separate CSV (not importable into COROS).`,
     nothing: 'No importable activity was found. Make sure you uploaded the complete Garmin export.',
     breakdown: 'Breakdown by sport and by year',
     continue: 'Continue',
@@ -116,6 +121,10 @@ const en: Base = {
     mobileStrong: 'the COROS import must be done from a computer',
     mobileShare: 'Send the ZIPs to Files or Drive so you can pick them up on your computer.',
     yourFiles: 'Your files',
+    healthTitle: 'Your health data (CSV)',
+    healthHint:
+      'One CSV per category (sleep, daily activity…), for a personal archive: COROS cannot import them. This is sensitive data: do not share it.',
+    healthFiles: (n: number) => `${String(n)} CSV file(s)`,
     activities: (n: number) => `${String(n)} activity(ies)`,
     download: 'Download',
     shareTo: 'Send to…',

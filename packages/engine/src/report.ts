@@ -1,3 +1,4 @@
+import type { HealthExportStats } from './health-export.js';
 import type { Candidate, RejectReason, Rejection } from './types.js';
 
 export interface IgnoredEntry {
@@ -14,6 +15,8 @@ export interface Report {
   readonly ignored: readonly IgnoredEntry[];
   /** Nombre de fichiers de santé reconnus parmi les ignorés (non importables par cet outil). */
   readonly health: number;
+  /** Présent si l'extraction CSV des données de santé a produit des lignes. */
+  readonly healthExport?: HealthExportStats;
   readonly rejectedByReason: Readonly<Partial<Record<RejectReason, number>>>;
   readonly bySport: Readonly<Record<string, number>>;
   readonly byYear: Readonly<Record<string, number>>;

@@ -1,5 +1,6 @@
-import { Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
+import { TextReader, Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
+import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
 import { runPipeline } from './pipeline.js';
@@ -33,11 +34,18 @@ export interface ProcessOptions {
   /** Seuils de taille par fichier (défaut : règles COROS 20 Ko – 200 Mo). */
   readonly minFileSize?: number;
   readonly maxFileSize?: number;
+  /**
+   * Extrait aussi les données de santé (JSON) en CSV, dans une archive à part (non importable). Désactivé
+   * par défaut : ces données sont sensibles et ne sont lues que sur demande explicite.
+   */
+  readonly healthExport?: boolean;
   readonly signal?: AbortSignal;
   readonly onProgress?: (progress: ProcessProgress) => void;
 }
 
 export interface OutputArchive {
+  /** `health` : archive de CSV de santé, hors du circuit d'import. */
+  readonly kind?: 'health';
   readonly name: string;
   readonly blob: Blob;
   readonly fileCount: number;
@@ -96,10 +104,17 @@ export async function processArchive(
     let bytesRead = 0;
     const idFor = makeIdAllocator();
 
-    for await (const event of scanArchive(input, limits, signal)) {
+    const collector = options.healthExport ? new HealthCollector() : undefined;
+
+    for await (const event of scanArchive(input, limits, signal, {
+      collectHealth: collector !== undefined,
+    })) {
       throwIfAborted(signal);
       const id = idFor(event.path);
-      if (event.kind === 'activity') {
+      if (event.kind === 'health') {
+        collector?.add(event.path, event.data);
+        ignored.push({ path: event.path, note: 'données de santé', kind: 'health' });
+      } else if (event.kind === 'activity') {
         const outcome = analyzeFile(id, event.format, event.data);
         if (outcome.ok) candidates.push(outcome.candidate);
         else if ('skipped' in outcome) {
@@ -176,8 +191,27 @@ export async function processArchive(
       const blob = await (targets[i] as ArchiveTarget).close();
       archives.push({ name: names[i] as string, blob, fileCount: counts[i] ?? 0 });
     }
+    // Archive de santé : après les lots d'activités, hors du circuit d'import.
+    let healthExport: HealthExportStats | undefined;
+    if (collector?.hasData) {
+      healthExport = collector.stats();
+      const target = await sink.open('garmin-sante.zip');
+      targets.push(target);
+      const writer = new ZipWriter(target.writable);
+      const csvFiles = collector.toCsvFiles();
+      for (const file of csvFiles) {
+        await writer.add(file.name, new TextReader(file.content));
+      }
+      await writer.close();
+      archives.push({
+        kind: 'health',
+        name: 'garmin-sante.zip',
+        blob: await target.close(),
+        fileCount: csvFiles.length,
+      });
+    }
     done = true;
-    return { report, archives };
+    return { report: healthExport ? { ...report, healthExport } : report, archives };
   } finally {
     if (!done) await Promise.allSettled(targets.map((t) => t.discard())); // T1.23
   }
