@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -91,6 +93,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
 export class App {
   protected readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
+  private readonly injector = inject(Injector);
   protected readonly step = signal(0);
   protected readonly route = signal<'home' | InfoPageId>(routeFromHash(location.hash));
   protected readonly infoPage = computed(() => {
@@ -105,7 +108,8 @@ export class App {
     addEventListener('hashchange', () => {
       this.route.set(routeFromHash(location.hash));
       scrollTo(0, 0);
-      queueMicrotask(() => document.getElementById('main')?.focus());
+      // Le <main> est recréé par le changement de page : on attend le prochain rendu.
+      afterNextRender(() => document.getElementById('main')?.focus(), { injector: this.injector });
     });
     // Retour automatique à l'étape de dépôt si l'analyse est réinitialisée.
     effect(() => {

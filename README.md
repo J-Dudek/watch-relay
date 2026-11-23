@@ -85,7 +85,7 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe). À venir : tests clavier, lecteurs d'écran et sur
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe) et de navigation au clavier. À venir : lecteurs d'écran et tests sur
 appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non
