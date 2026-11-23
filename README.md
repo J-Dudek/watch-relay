@@ -85,7 +85,7 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). À venir : i18n FR/EN, PWA hors ligne, FAQ et mentions légales, tests d'accessibilité et sur
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). À venir : PWA hors ligne, FAQ et mentions légales, tests d'accessibilité et sur
 appareils réels. Détails dans [`PLAN.md`](PLAN.md).
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non

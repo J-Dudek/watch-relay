@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
-import { REJECT_MESSAGES, formatBytes } from '../format';
+import { formatBytes } from '../format';
+import { I18n } from '../i18n';
 import { ProcessingService } from '../processing.service';
 import type { RejectReason } from '@watch-relay/engine';
 
@@ -9,54 +10,50 @@ import type { RejectReason } from '@watch-relay/engine';
   imports: [KeyValuePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2>3. Analyse</h2>
+    @let a = t().analyze;
+    <h2>{{ a.title }}</h2>
 
     @switch (processing.status()) {
       @case ('running') {
         <p>
-          Analyse de <strong>{{ processing.fileName() }}</strong>…
+          {{ a.analyzing }} <strong>{{ processing.fileName() }}</strong>…
         </p>
         <progress
           class="bar"
           max="100"
           [value]="processing.percent()"
-          aria-label="Progression"
+          [attr.aria-label]="a.progress"
         ></progress>
         @if (processing.progress(); as p) {
           <p role="status" aria-live="polite">
-            {{ p.processed }} fichier(s) {{ p.phase === 'analyze' ? 'analysé(s)' : 'écrit(s)' }} ·
-            {{ bytes(p.bytesRead) }} lus
+            {{ a.processed(p.processed, p.phase, bytes(p.bytesRead)) }}
           </p>
         }
-        <p class="note">
-          Garde cet onglet ouvert. Tu peux couper ton wifi : tout se passe sur ton appareil.
-        </p>
+        <p class="note">{{ a.keepOpen }}</p>
         <div class="actions">
-          <button type="button" class="btn" (click)="processing.cancel()">Annuler</button>
+          <button type="button" class="btn" (click)="processing.cancel()">{{ a.cancel }}</button>
         </div>
       }
       @case ('error') {
         @if (processing.failure(); as f) {
-          <p class="alert alert-error" role="alert">{{ errorText(f.code, f.message) }}</p>
+          <p class="alert alert-error" role="alert">{{ errorText(f.code) }}</p>
         }
         <div class="actions">
           <button type="button" class="btn btn-primary" (click)="restart.emit()">
-            Recommencer
+            {{ t().restart }}
           </button>
         </div>
       }
       @case ('done') {
         @if (report(); as r) {
           <p class="summary">
-            <strong>{{ r.kept }}</strong> activité(s) prête(s) ·
-            <strong>{{ rejectedTotal() }}</strong> écartée(s) ·
-            <strong>{{ r.ignored.length }}</strong> fichier(s) ignoré(s)
+            <strong>{{ r.kept }}</strong> {{ a.ready }} · <strong>{{ rejectedTotal() }}</strong>
+            {{ a.rejected }} · <strong>{{ r.ignored.length }}</strong> {{ a.ignored }}
           </p>
 
           @if (r.kept === 0) {
             <p class="alert alert-warn" role="alert">
-              Aucune activité importable n’a été trouvée. Vérifie que tu as déposé l’export Garmin
-              complet.
+              {{ a.nothing }}
             </p>
           }
 
@@ -69,7 +66,7 @@ import type { RejectReason } from '@watch-relay/engine';
 
           @if (r.kept > 0) {
             <details class="detail">
-              <summary>Répartition par sport et par année</summary>
+              <summary>{{ a.breakdown }}</summary>
               <div class="cols">
                 <ul>
                   @for (s of r.bySport | keyvalue; track s.key) {
@@ -86,9 +83,11 @@ import type { RejectReason } from '@watch-relay/engine';
           }
         }
         <div class="actions">
-          <button type="button" class="btn" (click)="restart.emit()">Recommencer</button>
+          <button type="button" class="btn" (click)="restart.emit()">{{ t().restart }}</button>
           @if ((report()?.kept ?? 0) > 0) {
-            <button type="button" class="btn btn-primary" (click)="next.emit()">Continuer</button>
+            <button type="button" class="btn btn-primary" (click)="next.emit()">
+              {{ a.continue }}
+            </button>
           }
         </div>
       }
@@ -97,10 +96,12 @@ import type { RejectReason } from '@watch-relay/engine';
 })
 export class AnalyzeStep {
   protected readonly processing = inject(ProcessingService);
+  private readonly i18n = inject(I18n);
+  protected readonly t = this.i18n.t;
   readonly next = output();
   readonly restart = output();
   protected readonly report = this.processing.report;
-  protected readonly bytes = formatBytes;
+  protected readonly bytes = (n: number): string => formatBytes(n, this.t());
 
   protected readonly rejectedTotal = computed(() =>
     Object.values(this.report()?.rejectedByReason ?? {}).reduce((a, b) => a + b, 0),
@@ -108,22 +109,23 @@ export class AnalyzeStep {
 
   protected readonly reasons = computed(() =>
     (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
-      ([reason, count]) => ({ reason, count, ...REJECT_MESSAGES[reason] }),
+      ([reason, count]) => ({ reason, count, ...this.t().reject[reason] }),
     ),
   );
 
-  protected errorText(code: string, message: string): string {
+  protected errorText(code: string): string {
+    const e = this.t().errors;
     switch (code) {
       case 'ABORTED':
-        return 'Analyse annulée. Aucun fichier n’a été conservé.';
+        return e.ABORTED;
       case 'INPUT_TOO_LARGE':
-        return 'Ce fichier est trop volumineux pour être traité ici.';
+        return e.INPUT_TOO_LARGE;
       case 'TOTAL_TOO_LARGE':
       case 'TOO_MANY_ENTRIES':
       case 'TOO_DEEP':
-        return 'Cette archive dépasse les limites de sécurité (taille, nombre de fichiers ou imbrication). Elle n’a pas été traitée.';
+        return e.LIMITS;
       default:
-        return message;
+        return e.UNKNOWN;
     }
   }
 }

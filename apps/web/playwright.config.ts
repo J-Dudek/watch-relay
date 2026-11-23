@@ -8,7 +8,11 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,
   reporter: 'list',
-  use: { baseURL: `http://localhost:${String(PORT)}`, trace: 'retain-on-failure' },
+  use: {
+    baseURL: `http://localhost:${String(PORT)}`,
+    trace: 'retain-on-failure',
+    locale: 'fr-FR',
+  },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

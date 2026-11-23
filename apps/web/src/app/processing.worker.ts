@@ -68,11 +68,11 @@ async function start(
   } catch (e) {
     if (dir) await clearDirectory(dir);
     if (e instanceof DOMException && e.name === 'AbortError') {
-      post({ type: 'error', code: 'ABORTED', message: 'Traitement annulé' });
+      post({ type: 'error', code: 'ABORTED', message: 'Aborted' });
     } else if (e instanceof LimitError) {
       post({ type: 'error', code: e.code, message: e.message });
     } else {
-      post({ type: 'error', code: 'UNKNOWN', message: 'Le fichier n’a pas pu être traité.' });
+      post({ type: 'error', code: 'UNKNOWN', message: 'Processing failed' });
     }
   } finally {
     controller = null;

@@ -1,43 +1,15 @@
-import type { RejectReason } from '@watch-relay/engine';
+import type { Messages } from './i18n';
 
-export function formatBytes(bytes: number): string {
-  const units = ['o', 'Ko', 'Mo', 'Go'];
+export function formatBytes(bytes: number, m: Pick<Messages, 'units' | 'numberLocale'>): string {
+  const units = m.units;
   let value = bytes;
   let i = 0;
   while (value >= 1024 && i < units.length - 1) {
     value /= 1024;
     i++;
   }
-  return `${value.toLocaleString('fr-FR', { maximumFractionDigits: i === 0 ? 0 : 1 })} ${units[i] ?? 'o'}`;
+  return `${value.toLocaleString(m.numberLocale, { maximumFractionDigits: i === 0 ? 0 : 1 })} ${units[i] ?? 'o'}`;
 }
-
-/** Libellés en langage clair, chacun avec une action possible (T3.7). */
-export const REJECT_MESSAGES: Record<RejectReason, { title: string; hint: string }> = {
-  TOO_SMALL: {
-    title: 'Fichiers trop petits',
-    hint: 'COROS refuse les fichiers de moins de 20 Ko, considérés comme vides. Rien à faire.',
-  },
-  TOO_LARGE: {
-    title: 'Fichiers trop volumineux',
-    hint: 'COROS refuse les fichiers de plus de 200 Mo. Ces activités doivent être ajoutées autrement.',
-  },
-  UNSUPPORTED_SPORT: {
-    title: 'Sports non pris en charge',
-    hint: 'COROS ferait échouer l’import du ZIP entier : on les écarte pour protéger les autres.',
-  },
-  DUPLICATE: {
-    title: 'Doublons',
-    hint: 'La même activité apparaissait plusieurs fois : la version la plus complète est conservée.',
-  },
-  CORRUPTED: {
-    title: 'Fichiers illisibles',
-    hint: 'Ces fichiers sont abîmés (téléchargement interrompu ?). Tu peux redemander un export à Garmin.',
-  },
-  OUT_OF_RANGE: {
-    title: 'Hors de la période choisie',
-    hint: 'Ces activités sont en dehors des dates demandées.',
-  },
-};
 
 export function isMobileDevice(): boolean {
   const nav = navigator as Navigator & { userAgentData?: { mobile: boolean } };

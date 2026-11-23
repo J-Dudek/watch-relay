@@ -57,7 +57,7 @@ export class ProcessingService {
     worker.onerror = () => {
       this.fail({
         code: 'UNKNOWN',
-        message: 'Le traitement s’est interrompu de façon inattendue.',
+        message: 'Worker crashed',
       });
     };
     this.send({ type: 'start', file });

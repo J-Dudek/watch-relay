@@ -308,3 +308,14 @@ code {
     scroll-behavior: auto !important;
   }
 }
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.btn-small {
+  padding: 0.25rem 0.8rem;
+  flex-shrink: 0;
+}

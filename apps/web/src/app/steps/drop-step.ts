@@ -1,13 +1,22 @@
-import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { MAX_INPUT_BYTES, ProcessingService } from '../processing.service';
 import { formatBytes } from '../format';
+import { I18n } from '../i18n';
 
 @Component({
   selector: 'app-drop-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2>2. Déposer le fichier</h2>
-    <p>Le fichier reste sur ton appareil : rien n’est envoyé sur Internet.</p>
+    @let d = t().drop;
+    <h2>{{ d.title }}</h2>
+    <p>{{ d.intro }}</p>
 
     <label
       class="drop"
@@ -22,25 +31,37 @@ import { formatBytes } from '../format';
         accept=".zip,application/zip"
         (change)="onPick($event)"
       />
-      <span class="drop-title">Choisir le fichier ZIP Garmin</span>
-      <span class="drop-sub">ou le glisser-déposer ici</span>
+      <span class="drop-title">{{ d.choose }}</span>
+      <span class="drop-sub">{{ d.orDrag }}</span>
     </label>
 
-    @if (error(); as message) {
+    @if (errorText(); as message) {
       <p class="alert alert-error" role="alert">{{ message }}</p>
     }
 
     <div class="actions">
-      <button type="button" class="btn" (click)="back.emit()">Retour</button>
+      <button type="button" class="btn" (click)="back.emit()">{{ t().back }}</button>
     </div>
   `,
 })
 export class DropStep {
   private readonly processing = inject(ProcessingService);
+  private readonly i18n = inject(I18n);
+  protected readonly t = this.i18n.t;
   readonly back = output();
   readonly started = output();
   protected readonly over = signal(false);
-  protected readonly error = signal<string | null>(null);
+  private readonly error = signal<{ kind: 'notZip' } | { kind: 'tooLarge'; size: number } | null>(
+    null,
+  );
+  protected readonly errorText = computed(() => {
+    const e = this.error();
+    const t = this.t();
+    if (!e) return null;
+    return e.kind === 'notZip'
+      ? t.drop.notZip
+      : t.drop.tooLarge(formatBytes(e.size, t), formatBytes(MAX_INPUT_BYTES, t));
+  });
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -61,13 +82,9 @@ export class DropStep {
 
   private accept(file: File): void {
     if (!/\.zip$/i.test(file.name)) {
-      this.error.set(
-        'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de Garmin, sans la décompresser.',
-      );
+      this.error.set({ kind: 'notZip' });
     } else if (file.size > MAX_INPUT_BYTES) {
-      this.error.set(
-        `Ce fichier est trop volumineux (${formatBytes(file.size)}). La limite est de ${formatBytes(MAX_INPUT_BYTES)}.`,
-      );
+      this.error.set({ kind: 'tooLarge', size: file.size });
     } else {
       this.error.set(null);
       this.processing.start(file);

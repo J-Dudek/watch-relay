@@ -8,40 +8,43 @@ import {
 } from '@angular/core';
 import { reportToCsv, type ArchiveInfo } from '@watch-relay/engine';
 import { download, formatBytes, isMobileDevice } from '../format';
+import { I18n } from '../i18n';
 import { ProcessingService } from '../processing.service';
 
 @Component({
   selector: 'app-import-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2>4. Importer dans COROS</h2>
+    @let i = t().import;
+    <h2>{{ i.title }}</h2>
 
     @if (mobile) {
       <p class="alert alert-warn" role="note">
-        Tu peux préparer les fichiers ici, mais
-        <strong>l’import COROS se fait depuis un ordinateur</strong>.
+        {{ i.mobileBefore }} <strong>{{ i.mobileStrong }}</strong>.
         @if (canShare()) {
-          Envoie les ZIP vers Fichiers ou Drive pour les récupérer ensuite sur ton ordinateur.
+          {{ i.mobileShare }}
         }
       </p>
     }
 
-    <h3>Tes fichiers</h3>
+    <h3>{{ i.yourFiles }}</h3>
     <ul class="files">
       @for (a of archives(); track a.name) {
         <li class="file">
           <div>
             <strong>{{ a.name }}</strong><br />
-            <span class="muted">{{ a.fileCount }} activité(s) · {{ size(a.size) }}</span>
+            <span class="muted">{{ i.activities(a.fileCount) }} · {{ size(a.size) }}</span>
           </div>
           <div class="file-actions">
-            <button type="button" class="btn btn-primary" (click)="save(a)">Télécharger</button>
+            <button type="button" class="btn btn-primary" (click)="save(a)">
+              {{ i.download }}
+            </button>
             @if (mobile && canShare()) {
-              <button type="button" class="btn" (click)="share(a)">Envoyer vers…</button>
+              <button type="button" class="btn" (click)="share(a)">{{ i.shareTo }}</button>
             }
             <label class="check">
               <input type="checkbox" [checked]="isDone(a.name)" (change)="toggle(a.name)" />
-              Importé
+              {{ i.imported }}
             </label>
           </div>
         </li>
@@ -50,40 +53,42 @@ import { ProcessingService } from '../processing.service';
 
     <div class="actions">
       @if (!mobile && archives().length > 1) {
-        <button type="button" class="btn" (click)="saveAll()">Tout télécharger</button>
+        <button type="button" class="btn" (click)="saveAll()">{{ i.downloadAll }}</button>
       }
-      <button type="button" class="btn" (click)="saveCsv()">Rapport (CSV)</button>
+      <button type="button" class="btn" (click)="saveCsv()">{{ i.csv }}</button>
     </div>
 
-    <h3>Importer dans COROS Training Hub</h3>
+    <h3>{{ i.howTo }}</h3>
     <ol class="steps">
       <li>
-        Depuis un ordinateur, ouvre
-        <a href="https://t.coros.com" target="_blank" rel="noopener noreferrer">t.coros.com</a> et
-        connecte-toi.
+        {{ i.h1Before }}
+        <a href="https://t.coros.com" target="_blank" rel="noopener noreferrer">t.coros.com</a>
+        {{ i.h1After }}
       </li>
-      <li>Va dans <strong>Activity List</strong>, puis <strong>Import Data</strong>.</li>
       <li>
-        Sélectionne un ZIP, lance l’import et attends la confirmation. Fais-le
-        <strong>un ZIP à la fois</strong>.
+        {{ i.h2Before }} <strong>Activity List</strong>{{ i.h2Mid }} <strong>Import Data</strong>.
       </li>
-      <li>Coche « Importé » ci-dessus pour suivre ta progression.</li>
+      <li>
+        {{ i.h3Before }} <strong>{{ i.h3Strong }}</strong>.
+      </li>
+      <li>{{ i.h4 }}</li>
     </ol>
-    <p class="muted">{{ doneCount() }} / {{ archives().length }} archive(s) importée(s)</p>
+    <p class="muted">{{ i.progress(doneCount(), archives().length) }}</p>
 
     <div class="actions">
-      <button type="button" class="btn" (click)="back.emit()">Retour</button>
-      <button type="button" class="btn" (click)="restart.emit()">Terminer</button>
+      <button type="button" class="btn" (click)="back.emit()">{{ t().back }}</button>
+      <button type="button" class="btn" (click)="restart.emit()">{{ i.finish }}</button>
     </div>
   `,
 })
 export class ImportStep {
   private readonly processing = inject(ProcessingService);
+  protected readonly t = inject(I18n).t;
   readonly back = output();
   readonly restart = output();
   protected readonly archives = this.processing.archives;
   protected readonly mobile = isMobileDevice();
-  protected readonly size = formatBytes;
+  protected readonly size = (n: number): string => formatBytes(n, this.t());
   private readonly done = signal<ReadonlySet<string>>(new Set());
   protected readonly doneCount = computed(() => this.done().size);
   protected readonly canShare = signal(
@@ -127,7 +132,7 @@ export class ImportStep {
     if (report)
       download(
         new Blob([reportToCsv(report)], { type: 'text/csv;charset=utf-8' }),
-        'rapport-import.csv',
+        this.t().import.csvFileName,
       );
   }
 }
