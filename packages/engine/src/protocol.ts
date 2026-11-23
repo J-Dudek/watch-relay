@@ -24,7 +24,7 @@ export interface ArchiveInfo {
   readonly blob: Blob;
 }
 
-export type ErrorCode = LimitCode | 'ABORTED' | 'UNKNOWN';
+export type ErrorCode = LimitCode | 'INVALID_ARCHIVE' | 'ABORTED' | 'UNKNOWN';
 
 export type WorkerResponse =
   | { readonly type: 'progress'; readonly progress: ProcessProgress }

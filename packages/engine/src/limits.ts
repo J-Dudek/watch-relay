@@ -39,3 +39,12 @@ export class LimitError extends Error {
     this.code = code;
   }
 }
+
+/** Le fichier déposé n'est pas une archive ZIP lisible (absent, tronqué, corrompu). */
+export class ArchiveError extends Error {
+  readonly code = 'INVALID_ARCHIVE' as const;
+  constructor(message = "Le fichier n'est pas une archive ZIP lisible.") {
+    super(message);
+    this.name = 'ArchiveError';
+  }
+}

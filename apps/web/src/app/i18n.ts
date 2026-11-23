@@ -65,6 +65,8 @@ const fr = {
   errors: {
     ABORTED: 'Analyse annulée. Aucun fichier n’a été conservé.',
     INPUT_TOO_LARGE: 'Ce fichier est trop volumineux pour être traité ici.',
+    INVALID_ARCHIVE:
+      'Ce fichier n’est pas une archive ZIP lisible (abîmé ou incomplet ?). Télécharge de nouveau ton export Garmin.',
     LIMITS:
       'Cette archive dépasse les limites de sécurité (taille, nombre de fichiers ou imbrication). Elle n’a pas été traitée.',
     UNKNOWN: 'Le fichier n’a pas pu être traité.',
@@ -186,6 +188,8 @@ const en: Messages = {
   errors: {
     ABORTED: 'Analysis cancelled. No file was kept.',
     INPUT_TOO_LARGE: 'This file is too large to be processed here.',
+    INVALID_ARCHIVE:
+      'This file is not a readable ZIP archive (damaged or incomplete?). Download your Garmin export again.',
     LIMITS:
       'This archive exceeds the safety limits (size, number of files or nesting). It was not processed.',
     UNKNOWN: 'The file could not be processed.',

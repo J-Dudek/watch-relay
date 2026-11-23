@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_LIMITS, LimitError, scanArchive, type ScanEvent } from '../src/index.js';
+import {
+  ArchiveError,
+  DEFAULT_LIMITS,
+  LimitError,
+  scanArchive,
+  type ScanEvent,
+} from '../src/index.js';
 import { blobBytes, makeFit, makeZip, makeZipWithRawName } from './fixtures.js';
 
 async function collect(blob: Blob, limits = DEFAULT_LIMITS): Promise<ScanEvent[]> {
@@ -108,5 +114,10 @@ describe('scanArchive', () => {
     );
     expect(events.find((e) => e.path === 'bad.zip')?.kind).toBe('error');
     expect(events.some((e) => e.kind === 'activity')).toBe(true);
+  });
+
+  it('un fichier qui n’est pas un ZIP lève une ArchiveError typée', async () => {
+    await expect(collect(new Blob(['pas un zip']))).rejects.toBeInstanceOf(ArchiveError);
+    await expect(collect(new Blob([]))).rejects.toBeInstanceOf(ArchiveError);
   });
 });

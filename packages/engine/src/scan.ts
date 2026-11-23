@@ -1,6 +1,6 @@
 import { BlobReader, ZipReader, type FileEntry } from '@zip.js/zip.js';
 import { detectFormat } from './detect.js';
-import { DEFAULT_LIMITS, LimitError, type ScanLimits } from './limits.js';
+import { ArchiveError, DEFAULT_LIMITS, LimitError, type ScanLimits } from './limits.js';
 import type { ActivityFormat } from './types.js';
 
 export type ScanEvent =
@@ -73,11 +73,18 @@ async function* walk(
   }
   const reader = new ZipReader(new BlobReader(blob));
   try {
-    for (const entry of await reader.getEntries({
-      // Les noms ne servent qu'à l'affichage, jamais de chemin d'écriture (T2.2) :
-      // on traite le contenu même si le nom est hostile (`../`).
-      filenameValidation: 'tolerant',
-    })) {
+    let entries: Awaited<ReturnType<typeof reader.getEntries>>;
+    try {
+      entries = await reader.getEntries({
+        // Les noms ne servent qu'à l'affichage, jamais de chemin d'écriture (T2.2) :
+        // on traite le contenu même si le nom est hostile (`../`).
+        filenameValidation: 'tolerant',
+      });
+    } catch (e) {
+      // Archive illisible : erreur typée (pas l'exception brute de la bibliothèque).
+      throw e instanceof LimitError ? e : new ArchiveError();
+    }
+    for (const entry of entries) {
       const path = prefix + entry.filename; // affichage uniquement, jamais utilisé pour écrire
       if (entry.directory) continue;
       if (++state.entries > state.limits.maxEntries) {
@@ -126,7 +133,7 @@ async function* walk(
 
 /**
  * Parcourt récursivement une archive (T1.1, T1.2) et émet les fichiers d'activité détectés
- * par leur contenu. Lève `LimitError` si une limite de sécurité est franchie.
+ * par leur contenu. Lève `LimitError` si une limite de sécurité est franchie, `ArchiveError` si l'archive est illisible.
  */
 export function scanArchive(
   input: Blob,

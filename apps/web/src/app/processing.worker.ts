@@ -4,6 +4,7 @@ import {
   configureZipForWorker,
   createMemorySink,
   createOpfsSink,
+  ArchiveError,
   LimitError,
   processArchive,
   WORK_DIR,
@@ -69,7 +70,7 @@ async function start(
     if (dir) await clearDirectory(dir);
     if (e instanceof DOMException && e.name === 'AbortError') {
       post({ type: 'error', code: 'ABORTED', message: 'Aborted' });
-    } else if (e instanceof LimitError) {
+    } else if (e instanceof LimitError || e instanceof ArchiveError) {
       post({ type: 'error', code: e.code, message: e.message });
     } else {
       post({ type: 'error', code: 'UNKNOWN', message: 'Processing failed' });

@@ -120,6 +120,8 @@ export class AnalyzeStep {
         return e.ABORTED;
       case 'INPUT_TOO_LARGE':
         return e.INPUT_TOO_LARGE;
+      case 'INVALID_ARCHIVE':
+        return e.INVALID_ARCHIVE;
       case 'TOTAL_TOO_LARGE':
       case 'TOO_MANY_ENTRIES':
       case 'TOO_DEEP':

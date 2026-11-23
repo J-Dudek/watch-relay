@@ -14,3 +14,5 @@ sbom.cdx.json
 /PLAN.md
 /docs/
 .lighthouseci
+.zap
+zap-out
