@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Après `ng build` : injecte la CSP en <meta> (filet de sécurité si l'hébergeur ne permet pas
-// de poser les en-têtes, T2.9) et génère `_headers` et `Caddyfile.snippet` pour les poser en vrai.
+// de poser les en-têtes, T2.9) et génère `_headers` (Netlify) ; `--caddy` ajoute `Caddyfile.snippet`.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { HASHED_ASSET, NO_CACHE_PATHS, buildCsp, buildHeaders } from '../security/headers.mjs';
@@ -35,12 +35,14 @@ const noCacheBlocks = NO_CACHE_PATHS.map((p) => `${p}\n  Cache-Control: no-cache
 // `_headers` ne sait pas cibler les fichiers au hash : ils restent revalidables (sûr) ;
 // le Caddyfile, lui, les marque immuables.
 writeFileSync(join(dist, '_headers'), `/*\n${lines.join('\n')}\n\n${noCacheBlocks}`);
-writeFileSync(
-  join(dist, 'Caddyfile.snippet'),
-  `header {\n${Object.entries(headers)
-    .map(([k, v]) => `\t${k} "${v}"`)
-    .join('\n')}\n}\n\n` +
-    `@revalidate path ${NO_CACHE_PATHS.join(' ')}\nheader @revalidate Cache-Control "no-cache"\n\n` +
-    `@hashed path_regexp hashed ${HASHED_ASSET.source}\nheader @hashed Cache-Control "public, max-age=31536000, immutable"\n`,
-);
-console.log(`✓ CSP injectée (meta), _headers et Caddyfile.snippet générés dans ${dist}`);
+// Reverse proxy Caddy (hébergement alternatif) : seulement sur demande, pour ne pas publier ce fichier.
+if (process.argv.includes('--caddy'))
+  writeFileSync(
+    join(dist, 'Caddyfile.snippet'),
+    `header {\n${Object.entries(headers)
+      .map(([k, v]) => `\t${k} "${v}"`)
+      .join('\n')}\n}\n\n` +
+      `@revalidate path ${NO_CACHE_PATHS.join(' ')}\nheader @revalidate Cache-Control "no-cache"\n\n` +
+      `@hashed path_regexp hashed ${HASHED_ASSET.source}\nheader @hashed Cache-Control "public, max-age=31536000, immutable"\n`,
+  );
+console.log(`✓ CSP injectée (meta) et _headers générés dans ${dist}`);

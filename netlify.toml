@@ -1,0 +1,17 @@
+# Déploiement Netlify (site 100 % statique : aucune fonction, aucun formulaire, aucune base).
+# Les en-têtes de sécurité NE sont PAS dupliqués ici : `npm run build` génère `_headers` dans le dossier
+# publié à partir de la source unique `security/headers.mjs` (CSP, HSTS, COOP/COEP, cache…).
+
+[build]
+  command = "npm run build"
+  publish = "apps/web/dist/web/browser"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Les hooks Husky n'ont rien à faire sur le serveur de build.
+  HUSKY = "0"
+
+# Désactive le post-traitement Netlify (minification, réécriture des chemins, optimisation d'images) :
+# il modifierait les fichiers au hash et le service worker, et pourrait injecter du code que la CSP bloque.
+[build.processing]
+  skip_processing = true

@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { buildCsp, buildHeaders } from '../../../security/headers.mjs';
@@ -118,4 +118,16 @@ test('revalidation du HTML et du service worker, fichiers au hash immuables', as
 test('un pourcentage mal formé donne 400 sans faire tomber le serveur', async ({ request }) => {
   expect((await request.get('/%E0%A4%A')).status()).toBe(400);
   expect((await request.get('/')).status()).toBe(200);
+});
+
+test('le fichier _headers livré à Netlify reprend exactement la source des en-têtes', () => {
+  const file = readFileSync(join(process.cwd(), 'dist/web/browser/_headers'), 'utf8');
+  for (const [name, value] of Object.entries(buildHeaders())) {
+    expect(file, `en-tête ${name} absent de _headers`).toContain(`  ${name}: ${value}`);
+  }
+  expect(file).toMatch(/\/sw\.js\n {2}Cache-Control: no-cache/);
+});
+
+test('Caddyfile.snippet n’est pas publié par défaut', () => {
+  expect(existsSync(join(process.cwd(), 'dist/web/browser/Caddyfile.snippet'))).toBe(false);
 });

@@ -88,6 +88,22 @@ CodeQL. Dependabot suit les dépendances.
 Aucune donnée réelle dans le dépôt. Les fichiers `.fit` n'existent que sous `fixtures/` et sont
 **synthétiques** (générés avec l'encodeur officiel). Un hook de pré-commit refuse tout `.fit` ailleurs.
 
+## Déploiement (Netlify)
+
+Le site est statique : `netlify.toml` suffit (commande `npm run build`, dossier publié `apps/web/dist/web/browser`,
+Node 22, post-traitement Netlify désactivé pour ne pas modifier les fichiers au hash ni le service worker).
+
+1. Netlify → _Add new site_ → _Import an existing project_ → ce dépôt. Les réglages sont lus dans `netlify.toml`.
+2. Les en-têtes de sécurité (CSP stricte, HSTS, COOP/COEP, `no-cache` sur le HTML et `sw.js`…) sont écrits dans
+   `_headers` par le build, à partir de `security/headers.mjs` ; rien à configurer dans l'interface.
+3. Une fois le domaine HTTPS en place : mesurer Mozilla Observatory et securityheaders.com, renouveler
+   `security.txt` (champ `Expires`) et y ajouter `Canonical`, puis envisager la soumission HSTS preload (engage
+   tout le domaine : à valider avant).
+
+Sur les _deploy previews_, la barre Netlify pour collaborateurs peut être bloquée par la CSP : c'est voulu.
+Un autre hébergeur derrière Caddy reste possible : `node scripts/postbuild-security.mjs <dossier> --caddy` ajoute
+`Caddyfile.snippet`.
+
 ## Tester avec un vrai export
 
 Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré par git). Pour passer le vôtre dans le
@@ -116,8 +132,7 @@ partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur m�
 appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; format exact de l'export COROS et limites de Garmin (nombre de fichiers par import, sports acceptés) non vérifiés sur des exports réels ; pas de délai maximal strict par fichier ; OPFS non
-vérifié sur un vrai iPhone (repli mémoire possible sur très gros exports) ; en-têtes HTTP à confirmer sur
-l'hébergement.
+vérifié sur un vrai iPhone (repli mémoire possible sur très gros exports) ; en-têtes HTTP à vérifier sur le site déployé.
 
 ## Sécurité
 

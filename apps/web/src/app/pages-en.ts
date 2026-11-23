@@ -95,7 +95,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Hosting server logs',
         p: [
-          'Like any website, the server delivering the tool’s pages may record usual technical information (IP address, date, requested page, browser type) for security and proper operation. These logs contain nothing of what you process in the tool and are not used for any other purpose.',
+          'Like any website, the host (Netlify) delivering the tool’s pages may record usual technical information (IP address, date, requested page, browser type) for security and proper operation. These logs contain nothing of what you process in the tool and are not used for any other purpose.',
         ],
       },
       {
@@ -116,7 +116,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Hosting',
         p: [
-          'Static site hosted on an Appwrite instance operated by the publisher. No database or server function is used.',
+          'Static site hosted by Netlify, Inc. (United States, netlify.com). No database or server function is used.',
         ],
       },
       {

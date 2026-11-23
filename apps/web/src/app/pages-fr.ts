@@ -95,7 +95,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Journaux du serveur d’hébergement',
         p: [
-          'Comme tout site web, le serveur qui livre les pages de l’outil peut enregistrer des informations techniques usuelles (adresse IP, date, page demandée, type de navigateur) à des fins de sécurité et de bon fonctionnement. Ces journaux ne contiennent rien de ce que tu traites dans l’outil, et ne sont pas utilisés à d’autres fins.',
+          'Comme tout site web, l’hébergeur (Netlify) qui livre les pages de l’outil peut enregistrer des informations techniques usuelles (adresse IP, date, page demandée, type de navigateur) à des fins de sécurité et de bon fonctionnement. Ces journaux ne contiennent rien de ce que tu traites dans l’outil, et ne sont pas utilisés à d’autres fins.',
         ],
       },
       {
@@ -116,7 +116,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Hébergement',
         p: [
-          'Site statique hébergé sur une instance Appwrite exploitée par l’éditeur. Aucune base de données ni fonction serveur n’est utilisée.',
+          'Site statique hébergé par Netlify, Inc. (États-Unis, netlify.com). Aucune base de données ni fonction serveur n’est utilisée.',
         ],
       },
       {
