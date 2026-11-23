@@ -1,5 +1,6 @@
 import { Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
+import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
 import { runPipeline } from './pipeline.js';
 import { splitIntoBatches } from './batching.js';
@@ -101,12 +102,22 @@ export async function processArchive(
       if (event.kind === 'activity') {
         const outcome = analyzeFile(id, event.format, event.data);
         if (outcome.ok) candidates.push(outcome.candidate);
-        else rejections.push(outcome.rejection);
+        else if ('skipped' in outcome) {
+          ignored.push({
+            path: event.path,
+            note: outcome.skipped.note,
+            kind: outcome.skipped.kind,
+          });
+        } else rejections.push(outcome.rejection);
         processed++;
         bytesRead += event.data.byteLength;
         onProgress?.({ phase: 'analyze', processed, bytesRead });
       } else {
-        ignored.push({ path: event.path, note: event.note });
+        ignored.push({
+          path: event.path,
+          note: event.note,
+          ...(isHealthPath(event.path) ? { kind: 'health' as const } : {}),
+        });
       }
     }
 

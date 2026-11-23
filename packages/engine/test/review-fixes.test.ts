@@ -90,7 +90,7 @@ describe('FIT surdimensionné', () => {
   it('un FIT au-delà du plafond d’analyse est refusé sans être décodé', () => {
     const out = analyzeFile('x', 'fit', new Uint8Array(MAX_FIT_ANALYZE_BYTES + 1));
     expect(out.ok).toBe(false);
-    if (!out.ok) expect(out.rejection.reason).toBe('TOO_LARGE');
+    if (!out.ok && 'rejection' in out) expect(out.rejection.reason).toBe('TOO_LARGE');
   });
 });
 

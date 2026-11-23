@@ -57,6 +57,7 @@ le contrôle et le découpage.
   on garde le fichier le plus complet).
 - **Découpage** en archives ≤ 180 Mo, en ordre chronologique, nommées de façon lisible
   (`coros-import-01-2019-03_2021-07.zip`).
+- **Données de santé reconnues** : les fichiers de suivi quotidien, de sommeil, etc. sont comptés et signalés (et non traités comme « corrompus »). Ils ne sont pas transférés : COROS n'importe que des activités.
 - **Rapport clair** : motifs d'exclusion en langage simple, répartition par sport et par année, export **CSV**
   (protégé contre l'injection de formule).
 - **Robuste** : un fichier corrompu n'interrompt jamais le lot ; traitement annulable ; progression en direct.

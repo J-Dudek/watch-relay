@@ -65,6 +65,8 @@ export const fr = {
     ready: 'activité(s) prête(s)',
     rejected: 'écartée(s)',
     ignored: 'fichier(s) ignoré(s)',
+    health: (n: number) =>
+      `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
     nothing:
       'Aucune activité importable n’a été trouvée. Vérifie que tu as déposé l’export Garmin complet.',
     breakdown: 'Répartition par sport et par année',

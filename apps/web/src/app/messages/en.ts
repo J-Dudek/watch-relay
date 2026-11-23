@@ -65,6 +65,8 @@ const en: Base = {
     ready: 'activity(ies) ready',
     rejected: 'excluded',
     ignored: 'file(s) ignored',
+    health: (n: number) =>
+      `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
     nothing: 'No importable activity was found. Make sure you uploaded the complete Garmin export.',
     breakdown: 'Breakdown by sport and by year',
     continue: 'Continue',

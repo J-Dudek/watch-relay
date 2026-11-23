@@ -10,6 +10,28 @@ export class ParseError extends Error {
   }
 }
 
+/** Types de fichier FIT qui portent des données de santé (pas des activités). */
+const HEALTH_FIT_TYPES = new Set([
+  'monitoringA',
+  'monitoringB',
+  'monitoringDaily',
+  'weight',
+  'bloodPressure',
+]);
+
+/**
+ * Fichier FIT valide mais qui n'est pas une activité (suivi quotidien, poids, réglages, parcours…) :
+ * ni importable, ni corrompu. `kind: 'health'` pour les données de santé.
+ */
+export class NotActivityError extends Error {
+  readonly kind: 'health' | 'other';
+  constructor(kind: 'health' | 'other', fitType: string) {
+    super(`FIT de type « ${fitType} » : pas une activité`);
+    this.name = 'NotActivityError';
+    this.kind = kind;
+  }
+}
+
 const SESSION_MESG = 18;
 const RECORD_MESG = 20;
 
@@ -32,7 +54,14 @@ export function parseFit(bytes: Uint8Array): ActivityMeta {
   } catch (e) {
     throw e instanceof ParseError ? e : new ParseError('FIT illisible');
   }
-  if (!session) throw new ParseError('Aucune session dans le FIT');
+  if (!session) {
+    // Sans session : un fichier de santé ou de configuration valide n'est pas « corrompu ».
+    const fitType = typeof fileId?.type === 'string' ? fileId.type : undefined;
+    if (fitType !== undefined && fitType !== 'activity') {
+      throw new NotActivityError(HEALTH_FIT_TYPES.has(fitType) ? 'health' : 'other', fitType);
+    }
+    throw new ParseError('Aucune session dans le FIT');
+  }
 
   const start = session.startTime;
   if (!(start instanceof Date) || Number.isNaN(start.getTime()))

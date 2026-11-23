@@ -53,6 +53,10 @@ import type { RejectReason } from '@watch-relay/engine';
             {{ a.rejected }} · <strong>{{ r.ignored.length }}</strong> {{ a.ignored }}
           </p>
 
+          @if (r.health > 0) {
+            <p class="j6n-callout" role="note">{{ a.health(r.health) }}</p>
+          }
+
           @if (r.kept === 0) {
             <p class="j6n-alert j6n-alert--warning" role="alert">
               {{ a.nothing }}

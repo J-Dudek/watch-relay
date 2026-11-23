@@ -27,6 +27,12 @@ export const PAGES_EN: PagesMessages = {
         ],
       },
       {
+        q: 'What about my health data (sleep, steps, resting heart rate…)?',
+        a: [
+          'The tool only transfers activities. Health data in your Garmin export is recognised and reported during the analysis, but not included: to my knowledge, COROS Training Hub only imports activities (FIT or TCX). It is neither modified nor deleted: it stays in your export and on your Garmin account.',
+        ],
+      },
+      {
         q: 'Are my files modified?',
         a: [
           'No. The .fit and .tcx files are copied as-is into the ZIPs: only their name changes (date and sport) for a readable listing. Your original Garmin export is never touched.',

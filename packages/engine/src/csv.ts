@@ -10,6 +10,7 @@ export function csvCell(value: string): string {
 export function reportToCsv(report: Report): string {
   const rows: string[][] = [['statut', 'fichier', 'motif', 'detail']];
   for (const r of report.rejected) rows.push(['rejeté', r.id, r.reason, r.detail ?? '']);
-  for (const i of report.ignored) rows.push(['ignoré', i.path, '', i.note ?? '']);
+  for (const i of report.ignored)
+    rows.push(['ignoré', i.path, i.kind === 'health' ? 'SANTE' : '', i.note ?? '']);
   return '﻿' + rows.map((row) => row.map(csvCell).join(';')).join('\r\n') + '\r\n';
 }

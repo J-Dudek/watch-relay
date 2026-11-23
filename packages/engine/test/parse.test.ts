@@ -52,7 +52,7 @@ describe('analyzeFile', () => {
   it('un fichier corrompu devient un rejet CORRUPTED, sans exception', () => {
     const r = analyzeFile('x', 'fit', new Uint8Array(100));
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.rejection.reason).toBe('CORRUPTED');
+    if (!r.ok && 'rejection' in r) expect(r.rejection.reason).toBe('CORRUPTED');
   });
   it('un fichier valide donne un candidat', () => {
     const r = analyzeFile('x', 'fit', makeFit());

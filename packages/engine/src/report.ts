@@ -4,12 +4,16 @@ export interface IgnoredEntry {
   /** Chemin d'origine, affiché uniquement dans le rapport (jamais utilisé en écriture). */
   readonly path: string;
   readonly note?: string;
+  /** `health` : données de santé reconnues ; `other` : autre fichier valide qui n'est pas une activité. */
+  readonly kind?: 'health' | 'other';
 }
 
 export interface Report {
   readonly kept: number;
   readonly rejected: readonly { id: string; reason: RejectReason; detail?: string }[];
   readonly ignored: readonly IgnoredEntry[];
+  /** Nombre de fichiers de santé reconnus parmi les ignorés (non importables par cet outil). */
+  readonly health: number;
   readonly rejectedByReason: Readonly<Partial<Record<RejectReason, number>>>;
   readonly bySport: Readonly<Record<string, number>>;
   readonly byYear: Readonly<Record<string, number>>;
@@ -38,6 +42,7 @@ export function buildReport(
       ...(r.detail === undefined ? {} : { detail: r.detail }),
     })),
     ignored,
+    health: ignored.filter((i) => i.kind === 'health').length,
     rejectedByReason,
     bySport,
     byYear,

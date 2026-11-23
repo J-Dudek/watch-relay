@@ -95,6 +95,7 @@ try {
   console.log(`\nActivités détectées : ${String(total)}   retenues : ${String(report.kept)}`);
   console.log('Écartées par motif :', JSON.stringify(report.rejectedByReason));
   console.log('Fichiers ignorés (non-activité, par catégorie) :', JSON.stringify(notes));
+  console.log(`Données de santé reconnues (non transférées) : ${String(report.health)}`);
   console.log('Par sport :', JSON.stringify(Object.fromEntries(sorted(report.bySport))));
   console.log('Par année :', JSON.stringify(report.byYear));
   console.log('\nArchives générées :');

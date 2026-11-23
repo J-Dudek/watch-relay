@@ -1,10 +1,15 @@
-import { parseFit, ParseError } from './fit.js';
+import { NotActivityError, parseFit, ParseError } from './fit.js';
 import { parseTcx } from './tcx.js';
 import type { ActivityFormat, Candidate, Rejection } from './types.js';
 
 export type AnalyzeOutcome =
   | { readonly ok: true; readonly candidate: Candidate }
-  | { readonly ok: false; readonly rejection: Rejection };
+  | { readonly ok: false; readonly rejection: Rejection }
+  /** Fichier valide mais qui n'est pas une activité (santé, réglages…) : ni importé, ni en erreur. */
+  | {
+      readonly ok: false;
+      readonly skipped: { readonly kind: 'health' | 'other'; readonly note: string };
+    };
 
 /**
  * Analyse un fichier en isolant toute erreur (T1.8) : un fichier qui plante le parseur
@@ -38,6 +43,9 @@ export function analyzeFile(id: string, format: ActivityFormat, data: Uint8Array
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);
     return { ok: true, candidate: { id, format, size: data.byteLength, meta } };
   } catch (e) {
+    if (e instanceof NotActivityError) {
+      return { ok: false, skipped: { kind: e.kind, note: e.message } };
+    }
     const detail = e instanceof ParseError ? e.message : 'erreur inattendue';
     const placeholder: Candidate = {
       id,

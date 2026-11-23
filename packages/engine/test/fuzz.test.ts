@@ -4,6 +4,7 @@ import {
   ArchiveError,
   DEFAULT_LIMITS,
   LimitError,
+  NotActivityError,
   ParseError,
   analyzeFile,
   parseFit,
@@ -77,7 +78,8 @@ function expectMetaOrParseError(fn: () => unknown): void {
   try {
     timed(fn);
   } catch (e) {
-    expect(e).toBeInstanceOf(ParseError);
+    // Un FIT muté peut devenir un fichier valide d'un autre type (santé, réglages) : erreur typée aussi.
+    expect(e instanceof ParseError || e instanceof NotActivityError).toBe(true);
   }
 }
 
@@ -118,7 +120,7 @@ describe('fuzz FIT', () => {
         fc.constantFrom('fit', 'tcx'),
         (bytes, format) => {
           const out = timed(() => analyzeFile('x', format, bytes));
-          if (!out.ok) expect(out.rejection.reason).toBe('CORRUPTED');
+          if (!out.ok && 'rejection' in out) expect(out.rejection.reason).toBe('CORRUPTED');
         },
       ),
       { numRuns: RUNS },
