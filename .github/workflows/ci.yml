@@ -24,6 +24,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm audit --audit-level=high
+      - run: npm run check:licenses
+      - run: npm run sbom
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
 
   e2e:
     runs-on: ubuntu-latest

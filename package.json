@@ -18,7 +18,9 @@
     "check:signature": "node scripts/check-no-claude-signature.mjs",
     "prepare": "husky",
     "build": "npm run build -w @watch-relay/web",
-    "e2e": "npm run e2e -w @watch-relay/web"
+    "e2e": "npm run e2e -w @watch-relay/web",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json"
   },
   "lint-staged": {
     "*.{ts,mjs,js,json,md,yml}": "prettier --write",
