@@ -24,7 +24,7 @@ watch-relay est une application **100 % côté navigateur** : aucune donnée uti
 
 Hors périmètre : vulnérabilités des services tiers (Garmin, COROS), attaques nécessitant un
 poste déjà compromis, déni de service par un fichier de plusieurs Go sur un appareil limité
-(les limites sont documentées dans `docs/security.md`).
+(limites : profondeur 3, ratio 100:1, 100 000 entrées).
 
 ## Versions prises en charge
 

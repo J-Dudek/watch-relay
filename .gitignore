@@ -11,3 +11,5 @@ coverage/
 test-results/
 playwright-report/
 sbom.cdx.json
+/PLAN.md
+/docs/

@@ -35,4 +35,19 @@ describe('App', () => {
       'non affilié à Garmin ni à COROS',
     );
   });
+
+  it('affiche la FAQ via le hash et revient à l’outil', async () => {
+    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    location.hash = '#/faq';
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    expect(el.querySelector('h2')?.textContent).toContain('Questions fréquentes');
+    location.hash = '#/';
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    expect(el.querySelector('h2')?.textContent).toContain('Récupérer ton export Garmin');
+  });
 });

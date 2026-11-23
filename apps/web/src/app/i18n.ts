@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type { RejectReason } from '@watch-relay/engine';
+import { PAGES_EN, PAGES_FR } from './pages-content';
 
 export type Locale = 'fr' | 'en';
 export const LOCALES: readonly Locale[] = ['fr', 'en'];
@@ -120,6 +121,7 @@ const fr = {
       `${String(done)} / ${String(total)} archive(s) importée(s)`,
     finish: 'Terminer',
   },
+  pages: PAGES_FR,
   units: ['o', 'Ko', 'Mo', 'Go'],
   numberLocale: 'fr-FR',
 };
@@ -239,6 +241,7 @@ const en: Messages = {
       `${String(done)} / ${String(total)} archive(s) imported`,
     finish: 'Finish',
   },
+  pages: PAGES_EN,
   units: ['B', 'KB', 'MB', 'GB'],
   numberLocale: 'en-US',
 };

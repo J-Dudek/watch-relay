@@ -28,7 +28,7 @@ Un fichier corrompu n'interrompt jamais le traitement des autres.
 | Garantie               | Comment elle est tenue                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------------------------- |
 | Zéro donnée sortante   | test e2e : aucune requête cross-origin ni non-GET pendant le traitement                                 |
-| Sécurité du navigateur | CSP stricte, Trusted Types, HSTS, COOP/COEP, Permissions-Policy (voir `docs/security.md`)               |
+| Sécurité du navigateur | CSP stricte, Trusted Types, HSTS, COOP/COEP, Permissions-Policy                                         |
 | Archives hostiles      | extraction en streaming avec limites (ratio 100:1, profondeur 3, nombre et taille), zip slip neutralisé |
 | Fichiers forgés        | CRC FIT vérifié, TCX sans DTD/entités (XXE, billion laughs), CSV protégé contre l'injection de formule  |
 | Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible            |
@@ -41,8 +41,6 @@ packages/engine   moteur TypeScript pur (ZIP, FIT/TCX, règles, découpage, rapp
 apps/web          application Angular 22 (standalone, signals, zoneless) + Web Worker
 security/         source unique des en-têtes HTTP
 scripts/          post-build sécurité, serveur de prévisualisation, garde-fous (licences, signature…)
-docs/             ADR, sécurité, dépendances
-PLAN.md           plan de développement (phases, tâches, jalons)
 ```
 
 ## Démarrage
@@ -85,12 +83,12 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). À venir : PWA hors ligne, FAQ et mentions légales, tests d'accessibilité et sur
-appareils réels. Détails dans [`PLAN.md`](PLAN.md).
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. À venir : PWA hors ligne, tests d'accessibilité et sur
+appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non
 vérifié sur un vrai iPhone (repli mémoire possible sur très gros exports) ; en-têtes HTTP à confirmer sur
-l'hébergement (voir `docs/security.md`).
+l'hébergement.
 
 ## Sécurité
 
