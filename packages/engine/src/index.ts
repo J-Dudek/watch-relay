@@ -10,3 +10,8 @@ export * from './rules/size.js';
 export * from './rules/sport.js';
 export * from './rules/period.js';
 export * from './rules/duplicate.js';
+export * from './limits.js';
+export * from './scan.js';
+export * from './fit.js';
+export * from './tcx.js';
+export * from './analyze.js';
