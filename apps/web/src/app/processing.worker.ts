@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import {
   clearDirectory,
+  configureZipForWorker,
   createMemorySink,
   createOpfsSink,
   LimitError,
@@ -11,6 +12,8 @@ import {
   type WorkerRequest,
   type WorkerResponse,
 } from '@watch-relay/engine';
+
+configureZipForWorker();
 
 let controller: AbortController | null = null;
 

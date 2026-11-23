@@ -1,26 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { makeFit, makeZip, blobBytes } from '../../../packages/engine/test/fixtures';
-
-const day = (d: number): Date => new Date(Date.UTC(2022, 0, d, 8));
-
-async function buildExport(): Promise<Buffer> {
-  const fit = (sport: string, d: number): Uint8Array =>
-    makeFit({ sport, start: day(d), minSize: 40_000 });
-  const inner = await makeZip([
-    ['run1.fit', fit('running', 1)],
-    ['run1-copy.fit', fit('running', 1)],
-    ['golf.fit', fit('golf', 4)],
-    ['wellness.json', '{}'],
-  ]);
-  const outer = await makeZip([
-    ['DI_CONNECT/DI-Connect-Uploaded-Files/UploadedFiles_0.zip', await blobBytes(inner)],
-    ['bike.fit', fit('cycling', 3)],
-  ]);
-  return Buffer.from(await blobBytes(outer));
-}
+import { buildExport, watchViolations } from './helpers';
 
 test('parcours nominal sans aucune requête sortante (T2.11)', async ({ page }) => {
-  const origin = 'http://localhost:4200';
+  const origin = new URL(test.info().project.use.baseURL ?? '').origin;
   const external: string[] = [];
   const suspicious: string[] = [];
   let processing = false;
@@ -33,6 +15,7 @@ test('parcours nominal sans aucune requête sortante (T2.11)', async ({ page }) 
       suspicious.push(`${req.method()} ${url}`);
   });
 
+  const violations = watchViolations(page);
   await page.goto('/');
   await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
 
@@ -57,6 +40,7 @@ test('parcours nominal sans aucune requête sortante (T2.11)', async ({ page }) 
   ]);
   expect(download.suggestedFilename()).toBe('coros-import-01-2022-01_2022-01.zip');
 
+  expect(violations, 'violations CSP / Trusted Types').toEqual([]);
   expect(external, 'requêtes vers un autre domaine').toEqual([]);
   expect(suspicious, 'requêtes non-GET pendant le traitement').toEqual([]);
 });

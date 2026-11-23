@@ -19,3 +19,4 @@ export * from './sink.js';
 export * from './process.js';
 export * from './opfs-sink.js';
 export * from './protocol.js';
+export * from './zip-config.js';

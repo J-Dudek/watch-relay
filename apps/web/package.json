@@ -4,11 +4,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build && node ../../scripts/postbuild-security.mjs dist/web/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "serve:dist": "node ../../scripts/serve-dist.mjs dist/web/browser"
   },
   "private": true,
   "dependencies": {

@@ -1,6 +1,9 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
+import { installTrustedTypesPolicy } from './app/trusted-types';
+
+installTrustedTypesPolicy();
 
 bootstrapApplication(App, appConfig).catch((err: unknown) => {
   console.error(err);
