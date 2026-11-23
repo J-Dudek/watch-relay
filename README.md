@@ -32,6 +32,7 @@ Un fichier corrompu n'interrompt jamais le traitement des autres.
 | Archives hostiles      | extraction en streaming avec limites (ratio 100:1, profondeur 3, nombre et taille), zip slip neutralisé |
 | Fichiers forgés        | CRC FIT vérifié, TCX sans DTD/entités (XXE, billion laughs), CSV protégé contre l'injection de formule  |
 | Gros exports           | traitement dans un Web Worker, stockage temporaire OPFS (repli mémoire), annulation possible            |
+| Accessibilité          | axe-core (WCAG 2.2 AA) : 0 violation sur chaque écran, FR/EN, clair/sombre, 5 profils d'appareil        |
 | Hors ligne             | service worker sans dépendance, précache du build ; test e2e en mode hors ligne sur 5 profils           |
 | Pas de trace           | stockage temporaire vidé au démarrage et à « Recommencer »                                              |
 
@@ -84,7 +85,7 @@ Prettier, ESLint et commitlint. Aucune mention d'outil de génération dans les 
 ## État d'avancement
 
 Fait : moteur (phase 1), application et parcours en 4 étapes, durcissement du site (phase 2, en grande
-partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. À venir : tests d'accessibilité et sur
+partie). Interface bilingue FR/EN (langue du navigateur, repli FR, sélecteur mémorisé). Pages FAQ, confidentialité et mentions légales. Application installable (PWA) et utilisable hors ligne après la première visite. Tests d'accessibilité automatisés (axe). À venir : tests clavier, lecteurs d'écran et sur
 appareils réels.
 
 Limites connues : liste des sports COROS provisoire ; pas de délai maximal strict par fichier ; OPFS non
