@@ -28,6 +28,7 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
   template: `
     <header class="header">
       <div class="header-top">
+        <img class="logo" src="icons/logo-256.png" width="64" height="64" [alt]="t().logoAlt" />
         <h1>{{ flow().title }}</h1>
         <button
           type="button"
@@ -87,6 +88,10 @@ function routeFromHash(hash: string): 'home' | InfoPageId {
         <a href="#/legal">{{ t().pagesNav.legal }}</a>
       </nav>
       <p>{{ t().footer }}</p>
+      <p class="signature">
+        {{ t().signature.before }}
+        <a [href]="t().signature.href" target="_blank" rel="noopener">{{ t().signature.name }}</a>
+      </p>
     </footer>
   `,
 })

@@ -18,6 +18,8 @@ const en: Base = {
   footer:
     'Independent tool, not affiliated with Garmin or COROS. Brand names are used for descriptive purposes only.',
   loading: 'Loading…',
+  logoAlt: 'watch-relay',
+  signature: { before: 'Made by', name: 'J6N', href: 'https://me.byj6n.fr' },
   back: 'Back',
   restart: 'Start over',
   guide: {

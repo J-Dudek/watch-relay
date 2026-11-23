@@ -111,7 +111,7 @@ export const PAGES_EN: PagesMessages = {
     sections: [
       {
         h: 'Publisher',
-        p: [`Julien Dudek, in a personal capacity. Contact: ${CONTACT}.`],
+        p: [`Julien Dudek (J6N, me.byj6n.fr), in a personal capacity. Contact: ${CONTACT}.`],
       },
       {
         h: 'Hosting',

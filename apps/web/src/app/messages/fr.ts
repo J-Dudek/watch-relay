@@ -19,6 +19,8 @@ export const fr = {
   footer:
     'Outil indépendant, non affilié à Garmin ni à COROS. Les noms de marques ne sont utilisés qu’à titre descriptif.',
   loading: 'Chargement…',
+  logoAlt: 'watch-relay',
+  signature: { before: 'Conçu par', name: 'J6N', href: 'https://me.byj6n.fr' },
   back: 'Retour',
   restart: 'Recommencer',
   guide: {

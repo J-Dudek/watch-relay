@@ -54,7 +54,7 @@ test('guide : ordre logique et focus toujours visible', async ({ page }) => {
   );
   // Les liens du pied de page viennent après le contenu.
   expect(names.indexOf('FAQ')).toBeGreaterThan(names.indexOf('J’ai mon fichier'));
-  expect(names.slice(-3)).toEqual(['FAQ', 'Confidentialité', 'Mentions légales']);
+  expect(names.slice(-4)).toEqual(['FAQ', 'Confidentialité', 'Mentions légales', 'J6N']);
   for (const s of stops) expect(s.visible, `focus invisible sur « ${s.name} »`).toBe(true);
 });
 

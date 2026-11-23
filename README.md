@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/watch-relay.png" alt="Logo watch-relay" width="260">
+</p>
+
 # watch-relay
 
 **Migrez l'historique de vos activités entre montres Garmin et COROS, dans les deux sens, sans qu'aucune donnée ne quitte votre navigateur.**
@@ -215,3 +219,7 @@ Pour signaler une vulnérabilité, **n'ouvrez pas d'issue publique** : voir [`SE
 ## Licence
 
 [MIT](LICENSE) © 2026 Julien Dudek. Le SDK FIT de Garmin est utilisé selon sa propre licence.
+
+---
+
+Conçu et maintenu par [**J6N**](https://me.byj6n.fr).
