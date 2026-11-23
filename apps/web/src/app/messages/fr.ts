@@ -5,19 +5,24 @@ export const fr = {
   htmlTitle: 'Migration Garmin ⇄ COROS – transfert d’activités, 100 % local',
   siteName: 'Migration Garmin ⇄ COROS',
   htmlDescription:
-    'Prépare ton historique d’activités Garmin pour COROS, ou l’inverse. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
-  title: 'Migration Garmin → COROS',
+    'Prépare ton historique d’activités entre Garmin, COROS et Polar. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
   tagline: '100 % sur ton appareil : aucune donnée n’est envoyée, aucun compte requis.',
   direction: {
     label: 'Sens du transfert',
-    toCoros: 'Garmin → COROS',
-    toGarmin: 'COROS → Garmin',
+    from: 'Depuis',
+    to: 'Vers',
+    unavailable: 'indisponible',
+    polarNote:
+      'Polar Flow n’importe pas d’historique d’activités : Polar n’est proposé qu’en source.',
   },
+  titleFor: (from: string, to: string) => `Migration ${from} → ${to}`,
+  stepExport: (name: string) => `Export ${name}`,
+  stepImport: (name: string) => `Import ${name}`,
+  stepMiddle: ['Dépôt', 'Analyse'],
   stepsLabel: 'Étapes',
-  steps: ['Export Garmin', 'Dépôt', 'Analyse', 'Import COROS'],
   languageLabel: 'Langue',
   footer:
-    'Outil indépendant, non affilié à Garmin ni à COROS. Les noms de marques ne sont utilisés qu’à titre descriptif.',
+    'Outil indépendant, non affilié à Garmin, COROS ni Polar. Les noms de marques ne sont utilisés qu’à titre descriptif.',
   loading: 'Chargement…',
   logoAlt: 'watch-relay',
   theme: { label: 'Apparence', auto: 'Auto', light: 'Clair', dark: 'Sombre' },
@@ -164,12 +169,24 @@ export const fr = {
 
 export type Base = typeof fr;
 /** Textes qui dépendent du sens du transfert. */
-export type FlowMessages = Pick<Base, 'title' | 'steps' | 'guide' | 'drop' | 'import' | 'reject'>;
-export type Messages = Base & { readonly reverse: FlowMessages };
+/** Textes qui dépendent du couple source → destination (calculés par `I18n.flow`). */
+export interface FlowMessages {
+  readonly title: string;
+  readonly steps: readonly string[];
+  readonly guide: Base['guide'];
+  readonly drop: Base['drop'];
+  readonly import: Base['import'];
+  readonly reject: Base['reject'];
+}
+/** Textes de la destination Garmin et de la source COROS (la destination COROS et la source Garmin sont dans `Base`). */
+export type ReverseMessages = Pick<Base, 'guide' | 'drop' | 'import' | 'reject'>;
+export interface PolarMessages {
+  readonly guide: Base['guide'];
+  readonly drop: Pick<Base['drop'], 'choose' | 'notZip'>;
+}
+export type Messages = Base & { readonly reverse: ReverseMessages; readonly polar: PolarMessages };
 
-const frReverse: FlowMessages = {
-  title: 'Migration COROS → Garmin',
-  steps: ['Export COROS', 'Dépôt', 'Analyse', 'Import Garmin'],
+const frReverse: ReverseMessages = {
   guide: {
     title: '1. Récupérer ton export COROS',
     s1Before: 'Depuis un ordinateur, ouvre',
@@ -226,4 +243,29 @@ const frReverse: FlowMessages = {
   },
 };
 
-export const MESSAGES_FR: Messages = { ...fr, reverse: frReverse };
+/** Polar : source uniquement (Polar Flow n'importe pas d'historique d'activités). */
+const frPolar: PolarMessages = {
+  guide: {
+    title: '1. Récupérer tes séances Polar',
+    s1Before: 'Depuis un ordinateur, ouvre',
+    s1Href: 'https://flow.polar.com',
+    s1Link: 'Polar Flow',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Ouvre une séance dans le Journal, puis le menu',
+    s2Strong: 'Exporter',
+    s3Before: 'Choisis le format',
+    s3Strong: 'TCX (ou FIT)',
+    s4Before: 'Répète pour chaque séance, puis regroupe tous les fichiers dans un seul',
+    s4After: 'à déposer ici.',
+    noteBefore: 'Polar propose aussi un export global au format JSON :',
+    noteStrong: 'pas encore pris en charge',
+    noteAfter: '. Polar Flow n’importe pas d’historique : Polar n’est donc qu’une source.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    choose: 'Choisir le ZIP de séances Polar',
+    notZip: 'Ce fichier n’est pas un ZIP. Regroupe tes séances exportées dans une archive ZIP.',
+  },
+};
+
+export const MESSAGES_FR: Messages = { ...fr, reverse: frReverse, polar: frPolar };

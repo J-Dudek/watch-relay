@@ -30,7 +30,7 @@ describe('App', () => {
       await fixture.whenStable();
     }
     expect(el.querySelector('h2')?.textContent).toContain('Get your Garmin export');
-    expect(el.textContent).toContain('not affiliated with Garmin or COROS');
+    expect(el.textContent).toContain('not affiliated with Garmin, COROS or Polar');
   });
 
   it('affiche le parcours en 4 étapes et démarre sur le guide Garmin', async () => {
@@ -46,7 +46,7 @@ describe('App', () => {
     const fixture = await setup();
     await fixture.whenStable();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'non affilié à Garmin ni à COROS',
+      'non affilié à Garmin, COROS ni Polar',
     );
   });
 
@@ -77,10 +77,15 @@ describe('App', () => {
     const fixture = await setup();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.direction button')];
-    expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
-    buttons[1]?.click();
+    const from = el.querySelector<HTMLSelectElement>('#platform-from');
+    const to = el.querySelector<HTMLSelectElement>('#platform-to');
+    expect([from?.value, to?.value]).toEqual(['garmin', 'coros']);
+    if (from) {
+      from.value = 'coros';
+      from.dispatchEvent(new Event('change'));
+    }
     await fixture.whenStable();
+    expect(to?.value).toBe('garmin');
     expect(el.querySelector('h1')?.textContent).toContain('COROS → Garmin');
     expect(el.querySelector('h2')?.textContent).toContain('export COROS');
   });

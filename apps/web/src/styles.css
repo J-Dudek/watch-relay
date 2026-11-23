@@ -78,13 +78,21 @@ code {
 .direction {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--j6n-space-2);
-  margin-bottom: var(--j6n-space-4);
+  gap: var(--j6n-space-3) var(--j6n-space-5);
+  margin-bottom: var(--j6n-space-2);
 }
-.direction .j6n-btn[aria-pressed='true'] {
-  --_bg: var(--j6n-accent);
-  --_fg: var(--j6n-text-invert);
-  --_bd: transparent;
+.platform-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--j6n-space-1);
+}
+.platform-field label {
+  font-size: var(--j6n-text-xs);
+  color: var(--j6n-text-muted);
+}
+.platform-field .j6n-select {
+  width: auto;
+  min-width: 9rem;
 }
 
 #main:focus {

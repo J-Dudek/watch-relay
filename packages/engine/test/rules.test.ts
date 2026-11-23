@@ -68,6 +68,30 @@ describe('dédoublonnage', () => {
     ]);
     expect(r.map((x) => x.candidate.id)).not.toContain('c');
   });
+  it('un sport « generic » rejoint l’activité de même instant (même séance en TCX, GPX, FIT)', () => {
+    const r = rule.check([
+      cand({
+        id: 'tcx',
+        size: 300,
+        startTime: 10_000,
+        meta: { sport: 'running', startTime: 10_000 },
+      }),
+      cand({
+        id: 'gpx',
+        size: 500,
+        startTime: 10_500,
+        meta: { sport: 'generic', startTime: 10_500 },
+      }),
+    ]);
+    expect(r.map((x) => x.candidate.id)).toEqual(['tcx']); // le plus gros (gpx) est gardé
+  });
+  it('deux sports distincts au même instant restent deux activités', () => {
+    const r = rule.check([
+      cand({ id: 'a', size: 300, meta: { sport: 'running', startTime: 10_000 } }),
+      cand({ id: 'b', size: 300, meta: { sport: 'cycling', startTime: 10_000 } }),
+    ]);
+    expect(r).toEqual([]);
+  });
   it('ne confond pas deux sports ni deux instants éloignés', () => {
     expect(
       rule.check([

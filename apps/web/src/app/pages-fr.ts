@@ -33,6 +33,12 @@ export const PAGES_FR: PagesMessages = {
         ],
       },
       {
+        q: 'Et Polar ?',
+        a: [
+          'Polar est pris en charge comme source : Polar → COROS et Polar → Garmin. Exporte tes séances depuis Polar Flow (menu Exporter d’une séance, format TCX ou FIT), regroupe les fichiers dans un ZIP et dépose-le ici. Si une séance est exportée en plusieurs formats, elle n’est comptée qu’une fois. L’inverse (vers Polar) n’existe pas : à ma connaissance, Polar Flow n’importe pas d’historique d’activités, seulement des itinéraires. L’export global de Polar au format JSON n’est pas encore pris en charge.',
+        ],
+      },
+      {
         q: 'Et mes activités au format GPX ?',
         a: [
           'COROS n’importe que des fichiers FIT ou TCX. Les activités GPX (par exemple celles importées de Strava dans Garmin) sont donc converties en TCX, avec la trace, l’altitude, la fréquence cardiaque et la cadence quand elles existent. Le sport est déduit du fichier ou de son nom ; le format TCX ne connaît que Course, Vélo et Autre, donc une marche ou une randonnée devient « Autre ». Vers Garmin, les GPX sont conservés tels quels.',
@@ -77,7 +83,7 @@ export const PAGES_FR: PagesMessages = {
       {
         q: 'L’outil est-il officiel ? Est-il gratuit ?',
         a: [
-          'C’est un outil indépendant, gratuit, non affilié à Garmin ni à COROS. Aucun compte n’est nécessaire et il n’a besoin d’aucun de tes identifiants.',
+          'C’est un outil indépendant, gratuit, non affilié à Garmin, COROS ni Polar. Aucun compte n’est nécessaire et il n’a besoin d’aucun de tes identifiants.',
         ],
       },
     ],
@@ -134,7 +140,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Non-affiliation et marques',
         p: [
-          'Cet outil est indépendant et n’est affilié, approuvé ni parrainé par Garmin ni par COROS. « Garmin » et « COROS » sont des marques de leurs propriétaires respectifs, utilisées ici uniquement pour décrire la compatibilité de l’outil.',
+          'Cet outil est indépendant et n’est affilié, approuvé ni parrainé par Garmin, COROS ni Polar. « Garmin », « COROS » et « Polar » sont des marques de leurs propriétaires respectifs, utilisées ici uniquement pour décrire la compatibilité de l’outil.',
         ],
       },
       {

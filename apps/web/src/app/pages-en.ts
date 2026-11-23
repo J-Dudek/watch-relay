@@ -33,6 +33,12 @@ export const PAGES_EN: PagesMessages = {
         ],
       },
       {
+        q: 'What about Polar?',
+        a: [
+          'Polar is supported as a source: Polar → COROS and Polar → Garmin. Export your sessions from Polar Flow (a session’s Export menu, TCX or FIT format), put the files in a ZIP and drop it here. If a session is exported in several formats, it is counted once. The reverse (to Polar) does not exist: to my knowledge, Polar Flow does not import activity history, only routes. Polar’s global JSON export is not supported yet.',
+        ],
+      },
+      {
         q: 'What about my GPX activities?',
         a: [
           'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to TCX, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name; the TCX format only knows Running, Biking and Other, so a walk or a hike becomes “Other”. Towards Garmin, GPX files are kept as they are.',
@@ -77,7 +83,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'Is the tool official? Is it free?',
         a: [
-          'It is an independent, free tool, not affiliated with Garmin or COROS. No account is needed and it never asks for any of your credentials.',
+          'It is an independent, free tool, not affiliated with Garmin, COROS or Polar. No account is needed and it never asks for any of your credentials.',
         ],
       },
     ],
@@ -134,7 +140,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Non-affiliation and trademarks',
         p: [
-          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin or COROS. “Garmin” and “COROS” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
+          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin, COROS or Polar. “Garmin”, “COROS” and “Polar” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
         ],
       },
       {

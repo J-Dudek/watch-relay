@@ -89,7 +89,7 @@ test.describe('extraction des données de santé en CSV (opt-in)', () => {
 
   test('absente dans le sens COROS → Garmin', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'COROS → Garmin' }).click();
+    await page.getByLabel('Depuis').selectOption('coros'); // la destination passe à Garmin
     await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
     await expect(
       page.getByRole('checkbox', { name: /Extraire aussi mes données de santé/ }),

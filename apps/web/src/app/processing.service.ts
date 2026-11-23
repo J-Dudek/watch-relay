@@ -11,6 +11,19 @@ import type {
   WorkerResponse,
 } from '@watch-relay/engine';
 
+/** Plateformes : Garmin et COROS en source et en destination ; Polar seulement en source. */
+export type Platform = 'garmin' | 'coros' | 'polar';
+export const PLATFORM_NAMES: Record<Platform, string> = {
+  garmin: 'Garmin',
+  coros: 'COROS',
+  polar: 'Polar',
+};
+
+/** Destinations possibles pour une source donnée (Polar ne peut pas être une destination). */
+export function validTargets(source: Platform): Target[] {
+  return (['coros', 'garmin'] as const).filter((p) => p !== source);
+}
+
 export type Status = 'idle' | 'running' | 'done' | 'error';
 
 export interface Failure {
@@ -23,7 +36,9 @@ export const MAX_INPUT_BYTES = 10 * 1024 ** 3;
 
 @Injectable({ providedIn: 'root' })
 export class ProcessingService {
-  /** Destination de l'import : COROS (Garmin → COROS) ou Garmin (COROS → Garmin). */
+  /** Plateforme d'origine de l'export déposé. */
+  readonly source = signal<Platform>('garmin');
+  /** Destination de l'import : COROS ou Garmin (jamais Polar, qui n'importe pas d'historique). */
   readonly target = signal<Target>('coros');
   /** Extraire aussi les données de santé en CSV (opt-in : données sensibles, lues sur demande). */
   readonly healthExport = signal(false);
@@ -80,7 +95,7 @@ export class ProcessingService {
       file,
       options: {
         target: this.target(),
-        healthExport: this.healthExport() && this.target() === 'coros',
+        healthExport: this.healthExport() && this.source() === 'garmin',
       },
     });
   }

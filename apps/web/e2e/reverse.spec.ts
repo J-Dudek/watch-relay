@@ -5,7 +5,7 @@ import { buildExport } from './helpers';
 // Sens COROS → Garmin : destination Garmin, règles et consignes propres à Garmin.
 test('COROS → Garmin : parcours complet avec les règles Garmin', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'COROS → Garmin' }).click();
+  await page.getByLabel('Depuis').selectOption('coros'); // la destination passe à Garmin
   await expect(page.getByRole('heading', { name: 'Migration COROS → Garmin' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Récupérer ton export COROS/ })).toBeVisible();
   await expect(page.getByRole('link', { name: 'COROS Training Hub' })).toHaveAttribute(
@@ -37,21 +37,21 @@ test('COROS → Garmin : parcours complet avec les règles Garmin', async ({ pag
   await expect(page.getByText(/Garmin n’accepte pas les ZIP/)).toBeVisible();
 });
 
-test('le sens par défaut reste Garmin → COROS', async ({ page }) => {
+test('le sens par défaut reste Garmin → COROS ; Polar est une source seulement', async ({
+  page,
+}) => {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Garmin → COROS' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await expect(page.getByRole('button', { name: 'COROS → Garmin' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
+  await expect(page.getByLabel('Depuis')).toHaveValue('garmin');
+  await expect(page.getByLabel('Vers')).toHaveValue('coros');
+  // Destinations invalides désactivées : la source elle-même et Polar (aucun import d'historique).
+  await expect(page.getByLabel('Vers').locator('option[value=polar]')).toBeDisabled();
+  await expect(page.getByLabel('Vers').locator('option[value=garmin]')).toBeDisabled();
+  await expect(page.getByText(/Polar Flow n’importe pas d’historique/)).toBeVisible();
 });
 
 test('le sens suit la langue', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'COROS → Garmin' }).click();
+  await page.getByLabel('Depuis').selectOption('coros'); // la destination passe à Garmin
   await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
   await expect(page.getByRole('heading', { name: 'COROS → Garmin migration' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Get your COROS export/ })).toBeVisible();
@@ -79,7 +79,7 @@ test('COROS → Garmin : 0 violation d’accessibilité (guide et import)', asyn
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
   await page.goto('/');
-  await page.getByRole('button', { name: 'COROS → Garmin' }).click();
+  await page.getByLabel('Depuis').selectOption('coros'); // la destination passe à Garmin
   expect(await audit(page, tags)).toEqual([]);
 
   await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
