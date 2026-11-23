@@ -1,0 +1,47 @@
+{
+  "name": "watch-relay",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "check:signature": "node scripts/check-no-claude-signature.mjs",
+    "prepare": "husky",
+    "build": "npm run build -w @watch-relay/web",
+    "e2e": "npm run e2e -w @watch-relay/web",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json",
+    "lighthouse": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs",
+    "inspect:export": "node scripts/inspect-export.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs"
+  },
+  "lint-staged": {
+    "*.{ts,mjs,js,json,md,yml}": "prettier --write",
+    "*.{ts,mjs,js}": "eslint --fix"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^10.0.1",
+    "@lhci/cli": "^0.16.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.2",
+    "prettier": "^3.10.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
+  }
+}

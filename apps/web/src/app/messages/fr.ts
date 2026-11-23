@@ -1,0 +1,274 @@
+import type { RejectReason } from '@watch-relay/engine';
+
+/** Source de vérité : le français. `en` doit avoir exactement la même forme (vérifié par le compilateur). */
+export const fr = {
+  htmlTitle: 'Migration Garmin ⇄ COROS – transfert d’activités, 100 % local',
+  siteName: 'Migration Garmin ⇄ COROS',
+  htmlDescription:
+    'Prépare ton historique d’activités entre Garmin, COROS et Polar. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
+  tagline: '100 % sur ton appareil : aucune donnée n’est envoyée, aucun compte requis.',
+  direction: {
+    label: 'Sens du transfert',
+    from: 'Depuis',
+    to: 'Vers',
+    unavailable: 'indisponible',
+    polarNote:
+      'Polar Flow n’importe pas d’historique d’activités : Polar n’est proposé qu’en source.',
+  },
+  titleFor: (from: string, to: string) => `Migration ${from} → ${to}`,
+  stepExport: (name: string) => `Export ${name}`,
+  stepImport: (name: string) => `Import ${name}`,
+  stepMiddle: ['Dépôt', 'Analyse'],
+  stepsLabel: 'Étapes',
+  languageLabel: 'Langue',
+  footer:
+    'Outil indépendant, non affilié à Garmin, COROS ni Polar. Les noms de marques ne sont utilisés qu’à titre descriptif.',
+  loading: 'Chargement…',
+  logoAlt: 'watch-relay',
+  theme: { label: 'Apparence', auto: 'Auto', light: 'Clair', dark: 'Sombre' },
+  skipLink: 'Aller au contenu',
+  stepState: { done: '(terminée)', current: '(en cours)', todo: '(à venir)' },
+  design: { before: 'Design', name: 'design-j6n', href: 'https://design.byj6n.fr' },
+  signature: { before: 'Conçu par', name: 'J6N', href: 'https://me.byj6n.fr' },
+  back: 'Retour',
+  restart: 'Recommencer',
+  guide: {
+    title: '1. Récupérer ton export Garmin',
+    s1Before: 'Ouvre la page',
+    s1Href: 'https://www.garmin.com/account/datamanagement/',
+    s1Link: 'Gestion des données de ton compte Garmin',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Choisis',
+    s2Strong: '« Demander l’exportation de vos données »',
+    s3Before: 'Garmin t’envoie un e-mail avec le lien de téléchargement. Cela peut prendre',
+    s3Strong: 'de quelques minutes à quelques jours',
+    s4Before: 'Télécharge le fichier',
+    s4After: 'reçu, sans le décompresser.',
+    noteBefore: 'L’import dans COROS se fait ensuite',
+    noteStrong: 'depuis un ordinateur',
+    noteAfter: '. Tu peux préparer les fichiers ici, même depuis un téléphone.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    title: '2. Déposer le fichier',
+    intro: 'Le fichier reste sur ton appareil : rien n’est envoyé sur Internet.',
+    healthOption: 'Extraire aussi mes données de santé en CSV',
+    healthHint:
+      'Sommeil, pas, fréquence cardiaque au repos… dans un fichier à part, non importable dans COROS. Donnée sensible : elle reste sur ton appareil.',
+    choose: 'Choisir le fichier ZIP Garmin',
+    orDrag: 'ou le glisser-déposer ici',
+    notZip: 'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de Garmin, sans la décompresser.',
+    tooLarge: (size: string, limit: string) =>
+      `Ce fichier est trop volumineux (${size}). La limite est de ${limit}.`,
+  },
+  analyze: {
+    title: '3. Analyse',
+    analyzing: 'Analyse de',
+    progress: 'Progression',
+    processed: (n: number, phase: 'analyze' | 'write', bytes: string) =>
+      `${String(n)} fichier(s) ${phase === 'analyze' ? 'analysé(s)' : 'écrit(s)'} · ${bytes} lus`,
+    keepOpen: 'Garde cet onglet ouvert. Tu peux couper ton wifi : tout se passe sur ton appareil.',
+    cancel: 'Annuler',
+    ready: 'activité(s) prête(s)',
+    rejected: 'écartée(s)',
+    ignored: 'fichier(s) ignoré(s)',
+    health: (n: number) =>
+      `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    polarConverted: (n: number) =>
+      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
+    gpxConverted: (n: number) =>
+      `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`,
+    healthExported: (rows: number, files: number) =>
+      `Données de santé extraites : ${String(rows)} ligne(s) issues de ${String(files)} fichier(s), dans un CSV à part (non importables dans COROS).`,
+    nothing:
+      'Aucune activité importable n’a été trouvée. Vérifie que tu as déposé l’export Garmin complet.',
+    breakdown: 'Répartition par sport et par année',
+    continue: 'Continuer',
+  },
+  errors: {
+    ABORTED: 'Analyse annulée. Aucun fichier n’a été conservé.',
+    INPUT_TOO_LARGE: 'Ce fichier est trop volumineux pour être traité ici.',
+    INVALID_ARCHIVE:
+      'Ce fichier n’est pas une archive ZIP lisible (abîmé ou incomplet ?). Télécharge de nouveau ton export Garmin.',
+    LIMITS:
+      'Cette archive dépasse les limites de sécurité (taille, nombre de fichiers ou imbrication). Elle n’a pas été traitée.',
+    UNKNOWN: 'Le fichier n’a pas pu être traité.',
+  },
+  reject: {
+    TOO_SMALL: {
+      title: 'Fichiers trop petits',
+      hint: 'COROS refuse les fichiers de moins de 20 Ko, considérés comme vides. Rien à faire.',
+    },
+    TOO_LARGE: {
+      title: 'Fichiers trop volumineux',
+      hint: 'COROS refuse les fichiers de plus de 200 Mo. Ces activités doivent être ajoutées autrement.',
+    },
+    TOO_MANY_POINTS: {
+      title: 'Fichiers trop détaillés',
+      hint: 'Ces fichiers dépassent le nombre de points d’enregistrement accepté par la plateforme.',
+    },
+    UNSUPPORTED_SPORT: {
+      title: 'Sports non pris en charge',
+      hint: 'COROS ferait échouer l’import du ZIP entier : on les écarte pour protéger les autres.',
+    },
+    DUPLICATE: {
+      title: 'Doublons',
+      hint: 'La même activité apparaissait plusieurs fois : la version la plus complète est conservée.',
+    },
+    CORRUPTED: {
+      title: 'Fichiers illisibles',
+      hint: 'Ces fichiers sont abîmés (téléchargement interrompu ?). Tu peux redemander un export à Garmin.',
+    },
+    OUT_OF_RANGE: {
+      title: 'Hors de la période choisie',
+      hint: 'Ces activités sont en dehors des dates demandées.',
+    },
+  } satisfies Record<RejectReason, { title: string; hint: string }>,
+  import: {
+    title: '4. Importer dans COROS',
+    mobileBefore: 'Tu peux préparer les fichiers ici, mais',
+    mobileStrong: 'l’import COROS se fait depuis un ordinateur',
+    mobileShare:
+      'Envoie les ZIP vers Fichiers ou Drive pour les récupérer ensuite sur ton ordinateur.',
+    yourFiles: 'Tes fichiers',
+    healthTitle: 'Tes données de santé (CSV)',
+    healthHint:
+      'Un CSV par catégorie (sommeil, activité quotidienne…), pour archive personnelle : COROS ne sait pas les importer. Ce sont des données sensibles : ne les partage pas.',
+    healthFiles: (n: number) => `${String(n)} fichier(s) CSV`,
+    activities: (n: number) => `${String(n)} activité(s)`,
+    download: 'Télécharger',
+    shareTo: 'Envoyer vers…',
+    imported: 'Importé',
+    downloadAll: 'Tout télécharger',
+    csv: 'Rapport (CSV)',
+    csvFileName: 'rapport-import.csv',
+    howTo: 'Importer dans COROS Training Hub',
+    h1Before: 'Depuis un ordinateur, ouvre',
+    h1Href: 'https://t.coros.com',
+    h1Link: 't.coros.com',
+    h1After: 'et connecte-toi.',
+    h2Before: 'Va dans',
+    h2A: 'Activity List',
+    h2Mid: ', puis',
+    h2B: 'Import Data',
+    h3Before: 'Sélectionne un ZIP, lance l’import et attends la confirmation. Fais-le',
+    h3Strong: 'un ZIP à la fois',
+    h4: 'Coche « Importé » ci-dessus pour suivre ta progression.',
+    progress: (done: number, total: number) =>
+      `${String(done)} / ${String(total)} archive(s) importée(s)`,
+    finish: 'Terminer',
+  },
+  pagesNav: {
+    label: 'Informations',
+    faq: 'FAQ',
+    privacy: 'Confidentialité',
+    legal: 'Mentions légales',
+    backToTool: '← Retour à l’outil',
+  },
+  units: ['o', 'Ko', 'Mo', 'Go'],
+  numberLocale: 'fr-FR',
+};
+
+export type Base = typeof fr;
+/** Textes qui dépendent du sens du transfert. */
+/** Textes qui dépendent du couple source → destination (calculés par `I18n.flow`). */
+export interface FlowMessages {
+  readonly title: string;
+  readonly steps: readonly string[];
+  readonly guide: Base['guide'];
+  readonly drop: Base['drop'];
+  readonly import: Base['import'];
+  readonly reject: Base['reject'];
+}
+/** Textes de la destination Garmin et de la source COROS (la destination COROS et la source Garmin sont dans `Base`). */
+export type ReverseMessages = Pick<Base, 'guide' | 'drop' | 'import' | 'reject'>;
+export interface PolarMessages {
+  readonly guide: Base['guide'];
+  readonly drop: Pick<Base['drop'], 'choose' | 'notZip'>;
+}
+export type Messages = Base & { readonly reverse: ReverseMessages; readonly polar: PolarMessages };
+
+const frReverse: ReverseMessages = {
+  guide: {
+    title: '1. Récupérer ton export COROS',
+    s1Before: 'Depuis un ordinateur, ouvre',
+    s1Href: 'https://t.coros.com',
+    s1Link: 'COROS Training Hub',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Va dans',
+    s2Strong: 'Activity List, puis Export Data',
+    s3Before: 'Saisis ton e-mail et choisis le format',
+    s3Strong: 'FIT (recommandé) ou TCX',
+    s4Before: 'Télécharge le fichier',
+    s4After: 'reçu par e-mail, sans le décompresser.',
+    noteBefore: 'L’import dans Garmin Connect se fait ensuite',
+    noteStrong: 'depuis un ordinateur',
+    noteAfter: '. Tu peux préparer les fichiers ici, même depuis un téléphone.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    ...fr.drop,
+    choose: 'Choisir le fichier ZIP COROS',
+    notZip: 'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de COROS, sans la décompresser.',
+  },
+  import: {
+    ...fr.import,
+    title: '4. Importer dans Garmin Connect',
+    mobileStrong: 'l’import Garmin Connect se fait depuis un ordinateur',
+    howTo: 'Importer dans Garmin Connect',
+    h1Before: 'Depuis un ordinateur, décompresse le ZIP, puis ouvre',
+    h1Href: 'https://connect.garmin.com',
+    h1Link: 'connect.garmin.com',
+    h1After: 'et connecte-toi.',
+    h2Before: 'Clique sur l’icône',
+    h2A: 'nuage',
+    h2Mid: 'en haut à droite, puis',
+    h2B: 'Importer des données',
+    h3Before:
+      'Garmin n’accepte pas les ZIP : sélectionne les fichiers décompressés, par petits groupes si l’import échoue. Fais-le',
+    h3Strong: 'une archive à la fois',
+  },
+  reject: {
+    ...fr.reject,
+    TOO_LARGE: {
+      title: 'Fichiers trop volumineux',
+      hint: 'Garmin refuse les fichiers FIT de plus de 50 Mo et TCX de plus de 25 Mo. Ces activités doivent être ajoutées autrement.',
+    },
+    TOO_MANY_POINTS: {
+      title: 'Fichiers trop détaillés',
+      hint: 'Garmin refuse les fichiers de 99 999 points d’enregistrement ou plus. Ces activités doivent être ajoutées autrement.',
+    },
+    CORRUPTED: {
+      title: 'Fichiers illisibles',
+      hint: 'Ces fichiers sont abîmés (téléchargement interrompu ?). Tu peux refaire un export depuis COROS.',
+    },
+  },
+};
+
+/** Polar : source uniquement (Polar Flow n'importe pas d'historique d'activités). */
+const frPolar: PolarMessages = {
+  guide: {
+    title: '1. Récupérer tes séances Polar',
+    s1Before: 'Depuis un ordinateur, ouvre',
+    s1Href: 'https://flow.polar.com',
+    s1Link: 'Polar Flow',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Ouvre une séance dans le Journal, puis le menu',
+    s2Strong: 'Exporter',
+    s3Before: 'Choisis le format',
+    s3Strong: 'TCX (ou FIT)',
+    s4Before: 'Répète pour chaque séance, puis regroupe tous les fichiers dans un seul',
+    s4After: 'à déposer ici.',
+    noteBefore: 'Polar propose aussi un export global de toutes tes données (JSON) :',
+    noteStrong: 'dépose le ZIP reçu tel quel',
+    noteAfter:
+      ', les séances sont converties en TCX (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    choose: 'Choisir le ZIP de séances Polar',
+    notZip: 'Ce fichier n’est pas un ZIP. Regroupe tes séances exportées dans une archive ZIP.',
+  },
+};
+
+export const MESSAGES_FR: Messages = { ...fr, reverse: frReverse, polar: frPolar };

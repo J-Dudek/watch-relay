@@ -1,0 +1,246 @@
+/*
+ * Styles propres à l'application. Les tokens, la typographie et les composants (boutons, cartes,
+ * alertes, étapes, accordéon, bascule de thème…) viennent de design-j6n (fonts.css + theme.css),
+ * chargés avant ce fichier : ici, seulement la mise en page et les éléments sans équivalent.
+ */
+
+app-root {
+  display: block;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: var(--j6n-space-4);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: var(--j6n-space-4);
+}
+.header-top h1 {
+  flex: 1;
+  margin: 0;
+}
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j6n-space-3);
+  margin-bottom: var(--j6n-space-4);
+}
+.logo {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--j6n-radius-lg);
+  background: #000;
+}
+
+/* La bascule de thème a besoin de cibles ≥ 44 px (WCAG 2.5.8 / projet) */
+/* Sélecteur de langue : largeur du contenu (le thème met les champs à 100 %). */
+.language-select {
+  width: auto;
+  min-width: 8rem;
+}
+
+.header-tools .j6n-segmented label {
+  min-height: 44px;
+}
+
+.j6n-stepper {
+  margin: var(--j6n-space-4) 0;
+}
+
+.steps {
+  padding-left: var(--j6n-space-5);
+}
+.steps li {
+  margin-bottom: var(--j6n-space-2);
+}
+.note {
+  color: var(--j6n-text-muted);
+  font-size: var(--j6n-text-sm);
+}
+code {
+  font-family: var(--j6n-font-mono);
+  font-size: 0.9em;
+  background: var(--j6n-surface-2);
+  padding: 0 0.3em;
+  border-radius: var(--j6n-radius-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-3);
+  margin-top: var(--j6n-space-5);
+}
+.direction {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-3) var(--j6n-space-5);
+  margin-bottom: var(--j6n-space-2);
+}
+.platform-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--j6n-space-1);
+}
+.platform-field label {
+  font-size: var(--j6n-text-xs);
+  color: var(--j6n-text-muted);
+}
+.platform-field .j6n-select {
+  width: auto;
+  min-width: 9rem;
+}
+
+#main:focus {
+  outline: none;
+}
+
+/* Zone de dépôt : le champ fichier est masqué, l'indicateur de focus est porté par la zone. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.drop {
+  display: grid;
+  gap: var(--j6n-space-1);
+  place-items: center;
+  text-align: center;
+  min-height: 11rem;
+  padding: var(--j6n-space-5);
+  border: 2px dashed var(--j6n-border-interactive);
+  border-radius: var(--j6n-radius-lg);
+  cursor: pointer;
+}
+.drop:hover,
+.drop-over,
+.drop:focus-within {
+  border-color: var(--j6n-accent);
+  background: var(--j6n-surface-2);
+}
+.drop:has(input:focus-visible) {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--j6n-ring);
+}
+.drop-title {
+  font-weight: 600;
+  font-size: var(--j6n-text-md);
+}
+.drop-sub {
+  color: var(--j6n-text-muted);
+}
+
+.bar {
+  width: 100%;
+  height: 1rem;
+  accent-color: var(--j6n-accent);
+}
+.summary {
+  font-size: var(--j6n-text-md);
+}
+.cols {
+  display: grid;
+  gap: var(--j6n-space-4);
+  grid-template-columns: 1fr 1fr;
+}
+
+.files {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--j6n-space-3);
+}
+.file {
+  display: grid;
+  gap: var(--j6n-space-3);
+  padding: var(--j6n-space-3);
+  border: 1px solid var(--j6n-border);
+  border-radius: var(--j6n-radius-md);
+  overflow-wrap: anywhere;
+}
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-2);
+  align-items: center;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--j6n-space-2);
+  min-height: 44px;
+}
+.check:has(input:focus-visible) {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--j6n-ring);
+  border-radius: var(--j6n-radius-sm);
+}
+.check input {
+  width: 1.4rem;
+  height: 1.4rem;
+  accent-color: var(--j6n-accent);
+}
+
+.app-footer {
+  color: var(--j6n-text-muted);
+  font-size: var(--j6n-text-sm);
+  text-align: center;
+}
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--j6n-space-1) var(--j6n-space-5);
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: var(--j6n-space-2);
+}
+.signature {
+  margin-top: var(--j6n-space-1);
+}
+.signature a {
+  font-weight: 600;
+}
+
+@media (min-width: 600px) {
+  app-root {
+    padding: var(--j6n-space-6);
+  }
+  .file {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+/* Lien d'évitement : invisible tant qu'il n'a pas le focus (même dans une capture pleine page). */
+.j6n-skiplink:not(:focus) {
+  clip-path: inset(50%);
+}
+
+/* Échelle typographique d'un outil (le thème vise des pages éditoriales : titres plus grands). */
+.header-top h1 {
+  font-size: var(--j6n-text-xl);
+  line-height: var(--j6n-leading-tight);
+}
+main h2 {
+  font-size: var(--j6n-text-lg);
+}
+main h3 {
+  font-size: var(--j6n-text-md);
+  margin-top: var(--j6n-space-5);
+}

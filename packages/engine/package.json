@@ -1,0 +1,18 @@
+{
+  "name": "@watch-relay/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "fast-check": "^4.11.0"
+  },
+  "dependencies": {
+    "@garmin/fitsdk": "^21.222.0",
+    "@zip.js/zip.js": "^2.25.0"
+  }
+}
