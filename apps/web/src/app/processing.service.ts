@@ -96,6 +96,7 @@ export class ProcessingService {
       options: {
         target: this.target(),
         healthExport: this.healthExport() && this.source() === 'garmin',
+        polarSessions: this.source() === 'polar',
       },
     });
   }

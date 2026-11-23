@@ -26,3 +26,5 @@ export * from './health.js';
 export * from './health-export.js';
 export * from './gpx.js';
 export * from './compress.js';
+export * from './polar.js';
+export * from './tcx-writer.js';

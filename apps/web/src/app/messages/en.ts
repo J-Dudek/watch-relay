@@ -73,6 +73,8 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    polarConverted: (n: number) =>
+      `${String(n)} Polar session(s) (JSON from the global export) converted to TCX. Times and time zones come from the export: check the first imported session.`,
     gpxConverted: (n: number) =>
       `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (walking and hiking become “Other”, the TCX format has no other category).`,
     healthExported: (rows: number, files: number) =>
@@ -236,9 +238,10 @@ const enPolar: PolarMessages = {
     s3Strong: 'TCX (or FIT)',
     s4Before: 'Repeat for each session, then put all the files in a single',
     s4After: 'file to upload here.',
-    noteBefore: 'Polar also offers a global export as JSON:',
-    noteStrong: 'not supported yet',
-    noteAfter: '. Polar Flow does not import history, so Polar is only a source.',
+    noteBefore: 'Polar also offers a global export of all your data (JSON):',
+    noteStrong: 'drop the ZIP as received',
+    noteAfter:
+      ', sessions are converted to TCX (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
     haveFile: 'I have my file',
   },
   drop: {

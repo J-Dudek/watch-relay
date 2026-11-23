@@ -30,8 +30,10 @@ export interface Candidate {
   /** Identifiant interne stable (jamais utilisé comme chemin d'écriture). */
   readonly id: string;
   readonly format: ActivityFormat;
-  /** `gpx` : fichier source GPX, converti en TCX à l'écriture (`format` vaut alors `tcx`). */
-  readonly convertedFrom?: 'gpx';
+  /** `gpx` ou `polar-json` : source convertie en TCX à l'écriture (`format` vaut alors `tcx`). */
+  readonly convertedFrom?: 'gpx' | 'polar-json';
+  /** Rang de la séance dans le JSON Polar d'origine (un JSON peut en contenir plusieurs). */
+  readonly exerciseIndex?: number;
   readonly size: number;
   readonly meta: ActivityMeta;
 }

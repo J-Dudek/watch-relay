@@ -51,7 +51,7 @@ le contrôle et le découpage.
 ## Fonctionnalités
 
 - **Quatre trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS et Polar → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
-- **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'export global JSON de Polar n'est pas encore pris en charge.
+- **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'**export global JSON de Polar** (un JSON par séance) est converti en TCX (trace GPS, fréquence cardiaque, cadence, calories) ; le schéma vient d'un convertisseur communautaire et n'est **pas validé sur un export récent** : les JSON de forme inattendue sont ignorés ou signalés, jamais convertis de travers.
 - **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :

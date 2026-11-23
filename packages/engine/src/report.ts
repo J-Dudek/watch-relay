@@ -17,6 +17,8 @@ export interface Report {
   readonly health: number;
   /** Activités GPX converties en TCX (destination COROS, qui n'importe que FIT et TCX). */
   readonly convertedGpx: number;
+  /** Séances Polar (JSON de l'export global) converties en TCX. */
+  readonly convertedPolar: number;
   /** Présent si l'extraction CSV des données de santé a produit des lignes. */
   readonly healthExport?: HealthExportStats;
   readonly rejectedByReason: Readonly<Partial<Record<RejectReason, number>>>;
@@ -48,6 +50,7 @@ export function buildReport(
     })),
     ignored,
     convertedGpx: kept.filter((c) => c.convertedFrom === 'gpx').length,
+    convertedPolar: kept.filter((c) => c.convertedFrom === 'polar-json').length,
     health: ignored.filter((i) => i.kind === 'health').length,
     rejectedByReason,
     bySport,

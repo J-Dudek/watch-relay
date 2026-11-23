@@ -35,7 +35,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'What about Polar?',
         a: [
-          'Polar is supported as a source: Polar → COROS and Polar → Garmin. Export your sessions from Polar Flow (a session’s Export menu, TCX or FIT format), put the files in a ZIP and drop it here. If a session is exported in several formats, it is counted once. The reverse (to Polar) does not exist: to my knowledge, Polar Flow does not import activity history, only routes. Polar’s global JSON export is not supported yet.',
+          'Polar is supported as a source: Polar → COROS and Polar → Garmin. Export your sessions from Polar Flow (a session’s Export menu, TCX or FIT format), put the files in a ZIP and drop it here. If a session is exported in several formats, it is counted once. The reverse (to Polar) does not exist: to my knowledge, Polar Flow does not import activity history, only routes. You can also drop Polar’s global export (JSON, sent by email from your account) as received: sessions are converted to TCX. This conversion is based on community examples and has not been validated on a recent export: check the first imported session.',
         ],
       },
       {

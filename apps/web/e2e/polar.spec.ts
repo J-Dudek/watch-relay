@@ -91,3 +91,54 @@ test('Polar : 0 violation d’accessibilité', async ({ page }) => {
     violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
   ).toEqual([]);
 });
+
+test('Polar : l’export global JSON est converti en TCX et signalé', async ({ page }) => {
+  const t0 = Date.UTC(2020, 2, 1, 10, 0, 0);
+  const iso = (i: number): string => new Date(t0 + i * 1000).toISOString().replace('Z', '');
+  const session = {
+    name: 'Footing',
+    startTime: iso(0),
+    exercises: [
+      {
+        startTime: iso(0),
+        timezoneOffset: 60,
+        duration: 'PT400.0S',
+        distance: 1200,
+        kiloCalories: 90,
+        sport: 'RUNNING',
+        heartRate: { avg: 140, max: 171 },
+        samples: {
+          recordedRoute: Array.from({ length: 400 }, (_, i) => ({
+            dateTime: iso(i),
+            latitude: 43.5 + i * 0.0001,
+            longitude: -1.3,
+            altitude: 20,
+          })),
+          heartRate: Array.from({ length: 400 }, (_, i) => ({
+            dateTime: iso(i),
+            value: 100 + (i % 60),
+          })),
+        },
+      },
+    ],
+  };
+  const zip = await makeZip([
+    ['polar/training-session-2020-03-01-1.json', JSON.stringify(session)],
+    ['polar/account-data.json', '{"name":"x"}'],
+  ]);
+
+  await page.goto('/');
+  await page.getByLabel('Depuis').selectOption('polar');
+  await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'polar-export.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from(await blobBytes(zip)),
+  });
+  await expect(page.locator('.summary')).toContainText('1', { timeout: 30_000 });
+  await expect(
+    page.getByText(/1 séance\(s\) Polar \(JSON de l’export global\) convertie\(s\)/),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await expect(page.getByText(/coros-import-01-2020-03_2020-03\.zip/)).toBeVisible();
+});

@@ -35,7 +35,7 @@ export const PAGES_FR: PagesMessages = {
       {
         q: 'Et Polar ?',
         a: [
-          'Polar est pris en charge comme source : Polar → COROS et Polar → Garmin. Exporte tes séances depuis Polar Flow (menu Exporter d’une séance, format TCX ou FIT), regroupe les fichiers dans un ZIP et dépose-le ici. Si une séance est exportée en plusieurs formats, elle n’est comptée qu’une fois. L’inverse (vers Polar) n’existe pas : à ma connaissance, Polar Flow n’importe pas d’historique d’activités, seulement des itinéraires. L’export global de Polar au format JSON n’est pas encore pris en charge.',
+          'Polar est pris en charge comme source : Polar → COROS et Polar → Garmin. Exporte tes séances depuis Polar Flow (menu Exporter d’une séance, format TCX ou FIT), regroupe les fichiers dans un ZIP et dépose-le ici. Si une séance est exportée en plusieurs formats, elle n’est comptée qu’une fois. L’inverse (vers Polar) n’existe pas : à ma connaissance, Polar Flow n’importe pas d’historique d’activités, seulement des itinéraires. Tu peux aussi déposer l’export global de Polar (JSON, par e-mail depuis ton compte) tel quel : les séances sont converties en TCX. Cette conversion est écrite d’après des exemples communautaires et n’a pas été validée sur un export récent : vérifie la première séance importée.',
         ],
       },
       {

@@ -50,6 +50,7 @@ async function start(
       ...(options?.period ? { period: options.period } : {}),
       ...(options?.target ? { target: options.target } : {}),
       ...(options?.healthExport ? { healthExport: true } : {}),
+      ...(options?.polarSessions ? { polarSessions: true } : {}),
       onProgress(progress) {
         const now = performance.now();
         if (now - last < 250 && progress.processed !== progress.total) return;

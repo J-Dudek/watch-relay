@@ -74,6 +74,8 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    polarConverted: (n: number) =>
+      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
     gpxConverted: (n: number) =>
       `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`,
     healthExported: (rows: number, files: number) =>
@@ -257,9 +259,10 @@ const frPolar: PolarMessages = {
     s3Strong: 'TCX (ou FIT)',
     s4Before: 'Répète pour chaque séance, puis regroupe tous les fichiers dans un seul',
     s4After: 'à déposer ici.',
-    noteBefore: 'Polar propose aussi un export global au format JSON :',
-    noteStrong: 'pas encore pris en charge',
-    noteAfter: '. Polar Flow n’importe pas d’historique : Polar n’est donc qu’une source.',
+    noteBefore: 'Polar propose aussi un export global de toutes tes données (JSON) :',
+    noteStrong: 'dépose le ZIP reçu tel quel',
+    noteAfter:
+      ', les séances sont converties en TCX (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
     haveFile: 'J’ai mon fichier',
   },
   drop: {
