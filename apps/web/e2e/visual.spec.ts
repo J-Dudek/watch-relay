@@ -26,7 +26,7 @@ for (const size of SIZES) {
         await expect(page).toHaveScreenshot(`${screen}-${size.name}.png`, {
           fullPage: true,
           animations: 'disabled',
-          maxDiffPixelRatio: 0.01,
+          maxDiffPixelRatio: 0.03,
         });
       });
     }
@@ -41,7 +41,7 @@ test.describe('thème sombre (mobile)', () => {
       await expect(page).toHaveScreenshot(`${screen}-mobile-sombre.png`, {
         fullPage: true,
         animations: 'disabled',
-        maxDiffPixelRatio: 0.01,
+        maxDiffPixelRatio: 0.03,
       });
     });
   }

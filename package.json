@@ -23,7 +23,7 @@
     "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json",
     "lighthouse": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs",
     "inspect:export": "node scripts/inspect-export.mjs",
-    "test:scripts": "node --test scripts/"
+    "test:scripts": "node --test scripts/*.test.mjs"
   },
   "lint-staged": {
     "*.{ts,mjs,js,json,md,yml}": "prettier --write",

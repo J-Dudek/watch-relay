@@ -162,7 +162,8 @@ test('le sélecteur de langue s’utilise au clavier', async ({ page }) => {
 
 test('le skiplink amène au contenu sans changer de page', async ({ page }) => {
   await page.goto('/faq');
-  await page.keyboard.press('Tab');
+  // Focus direct sur le lien (Safari/WebKit n'atteint pas les liens à la tabulation par défaut).
+  await page.getByRole('link', { name: 'Aller au contenu' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#main')).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Questions fréquentes' })).toBeVisible();
