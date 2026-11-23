@@ -70,6 +70,8 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    gpxConverted: (n: number) =>
+      `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`,
     healthExported: (rows: number, files: number) =>
       `Données de santé extraites : ${String(rows)} ligne(s) issues de ${String(files)} fichier(s), dans un CSV à part (non importables dans COROS).`,
     nothing:

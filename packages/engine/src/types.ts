@@ -1,4 +1,4 @@
-export type ActivityFormat = 'fit' | 'tcx';
+export type ActivityFormat = 'fit' | 'tcx' | 'gpx';
 
 export type RejectReason =
   | 'TOO_SMALL'
@@ -30,6 +30,8 @@ export interface Candidate {
   /** Identifiant interne stable (jamais utilisé comme chemin d'écriture). */
   readonly id: string;
   readonly format: ActivityFormat;
+  /** `gpx` : fichier source GPX, converti en TCX à l'écriture (`format` vaut alors `tcx`). */
+  readonly convertedFrom?: 'gpx';
   readonly size: number;
   readonly meta: ActivityMeta;
 }

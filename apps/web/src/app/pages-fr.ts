@@ -33,9 +33,15 @@ export const PAGES_FR: PagesMessages = {
         ],
       },
       {
+        q: 'Et mes activités au format GPX ?',
+        a: [
+          'COROS n’importe que des fichiers FIT ou TCX. Les activités GPX (par exemple celles importées de Strava dans Garmin) sont donc converties en TCX, avec la trace, l’altitude, la fréquence cardiaque et la cadence quand elles existent. Le sport est déduit du fichier ou de son nom ; le format TCX ne connaît que Course, Vélo et Autre, donc une marche ou une randonnée devient « Autre ». Vers Garmin, les GPX sont conservés tels quels.',
+        ],
+      },
+      {
         q: 'Mes fichiers sont-ils modifiés ?',
         a: [
-          'Non. Les fichiers .fit et .tcx sont copiés tels quels dans les ZIP : seul leur nom change (date et sport), pour un classement lisible. Ton export Garmin d’origine n’est jamais touché.',
+          'Non, sauf la conversion GPX en TCX décrite ci-dessus. Les fichiers .fit et .tcx sont copiés tels quels dans les ZIP : seul leur nom change (date et sport), pour un classement lisible. Ton export Garmin d’origine n’est jamais touché.',
         ],
       },
       {

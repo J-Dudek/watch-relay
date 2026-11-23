@@ -53,6 +53,10 @@ import type { RejectReason } from '@watch-relay/engine';
             {{ a.rejected }} · <strong>{{ r.ignored.length }}</strong> {{ a.ignored }}
           </p>
 
+          @if (r.convertedGpx > 0) {
+            <p class="j6n-callout" role="note">{{ a.gpxConverted(r.convertedGpx) }}</p>
+          }
+
           @if (r.healthExport; as h) {
             <p class="j6n-callout" role="note">{{ a.healthExported(h.rows, h.files) }}</p>
           } @else if (r.health > 0) {

@@ -70,6 +70,8 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    gpxConverted: (n: number) =>
+      `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (walking and hiking become “Other”, the TCX format has no other category).`,
     healthExported: (rows: number, files: number) =>
       `Health data extracted: ${String(rows)} row(s) from ${String(files)} file(s), in a separate CSV (not importable into COROS).`,
     nothing: 'No importable activity was found. Make sure you uploaded the complete Garmin export.',

@@ -19,6 +19,8 @@ export interface TargetProfile {
   /** Préfixe des archives générées, ex. `coros-import-01-….zip`. */
   readonly archivePrefix: string;
   readonly maxBatchSize: number;
+  /** Convertir les GPX en TCX (COROS n'importe que FIT et TCX ; Garmin accepte le GPX). */
+  readonly convertGpx: boolean;
   fileRules(overrides: ProfileOverrides): FileRule[];
 }
 
@@ -33,6 +35,7 @@ export const PROFILES: Record<Target, TargetProfile> = {
     id: 'coros',
     archivePrefix: 'coros-import',
     maxBatchSize: MAX_BATCH_SIZE,
+    convertGpx: true,
     fileRules: (o) => [
       ...createSizeRules(o.minFileSize, o.maxFileSize),
       createSportRule(o.supportedSports),
@@ -42,6 +45,7 @@ export const PROFILES: Record<Target, TargetProfile> = {
     id: 'garmin',
     archivePrefix: 'garmin-import',
     maxBatchSize: MAX_BATCH_SIZE,
+    convertGpx: false,
     fileRules: (o) => [
       {
         id: 'too-large-garmin',

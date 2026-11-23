@@ -1,4 +1,5 @@
 import { NotActivityError, parseFit, ParseError } from './fit.js';
+import { gpxToTcx, MAX_GPX_BYTES, parseGpx } from './gpx.js';
 import { parseTcx } from './tcx.js';
 import type { ActivityFormat, Candidate, Rejection } from './types.js';
 
@@ -23,7 +24,30 @@ export type AnalyzeOutcome =
  */
 export const MAX_FIT_ANALYZE_BYTES = 32 * 1024 * 1024;
 
-export function analyzeFile(id: string, format: ActivityFormat, data: Uint8Array): AnalyzeOutcome {
+export interface AnalyzeOptions {
+  /** Convertit les GPX en TCX (destination COROS) ; sinon le GPX est conservé tel quel. */
+  readonly convertGpx?: boolean;
+}
+
+/** Nom de fichier d'origine (indice de sport pour les GPX Strava : `…-Run.gpx`). */
+const baseName = (id: string): string => (id.split('/').pop() ?? id).replace(/#\d+$/, '');
+
+export function analyzeFile(
+  id: string,
+  format: ActivityFormat,
+  data: Uint8Array,
+  options: AnalyzeOptions = {},
+): AnalyzeOutcome {
+  if (format === 'gpx' && data.byteLength > MAX_GPX_BYTES) {
+    return {
+      ok: false,
+      rejection: {
+        candidate: { id, format, size: data.byteLength, meta: { sport: 'unknown', startTime: 0 } },
+        reason: 'TOO_LARGE',
+        detail: 'GPX trop volumineux pour être converti en toute sécurité',
+      },
+    };
+  }
   if (format === 'fit' && data.byteLength > MAX_FIT_ANALYZE_BYTES) {
     return {
       ok: false,
@@ -40,6 +64,23 @@ export function analyzeFile(id: string, format: ActivityFormat, data: Uint8Array
     };
   }
   try {
+    if (format === 'gpx') {
+      const parsed = parseGpx(data, baseName(id));
+      if (!options.convertGpx) {
+        return { ok: true, candidate: { id, format, size: data.byteLength, meta: parsed.meta } };
+      }
+      const tcx = new TextEncoder().encode(gpxToTcx(parsed));
+      return {
+        ok: true,
+        candidate: {
+          id,
+          format: 'tcx',
+          convertedFrom: 'gpx',
+          size: tcx.byteLength,
+          meta: parsed.meta,
+        },
+      };
+    }
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);
     return { ok: true, candidate: { id, format, size: data.byteLength, meta } };
   } catch (e) {

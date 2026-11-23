@@ -1,5 +1,6 @@
 import { TextReader, Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
+import { gpxToTcx, parseGpx } from './gpx.js';
 import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
@@ -115,7 +116,9 @@ export async function processArchive(
         collector?.add(event.path, event.data);
         ignored.push({ path: event.path, note: 'données de santé', kind: 'health' });
       } else if (event.kind === 'activity') {
-        const outcome = analyzeFile(id, event.format, event.data);
+        const outcome = analyzeFile(id, event.format, event.data, {
+          convertGpx: profile.convertGpx,
+        });
         if (outcome.ok) candidates.push(outcome.candidate);
         else if ('skipped' in outcome) {
           ignored.push({
@@ -170,14 +173,23 @@ export async function processArchive(
         const candidate = byId.get(id);
         const index = batchOf.get(id);
         if (!candidate || index === undefined) continue;
-        // Le fichier source ne doit pas avoir changé entre les deux passes.
-        if (event.data.byteLength !== candidate.size || event.format !== candidate.format) {
+        // Le fichier source ne doit pas avoir changé entre les deux passes (un GPX converti est
+        // reconverti : sa taille de sortie doit être identique à celle de la passe 1).
+        let output = event.data;
+        const sourceFormat = candidate.convertedFrom ?? candidate.format;
+        if (candidate.convertedFrom === 'gpx' && event.format === 'gpx') {
+          const slash = event.path.lastIndexOf('/');
+          output = new TextEncoder().encode(
+            gpxToTcx(parseGpx(event.data, event.path.slice(slash + 1))),
+          );
+        }
+        if (output.byteLength !== candidate.size || event.format !== sourceFormat) {
           throw new Error('Le fichier source a changé pendant le traitement.');
         }
         const taken = takenNames[index] as Set<string>;
         await (writers[index] as ZipWriter<unknown>).add(
           entryName(candidate, taken),
-          new Uint8ArrayReader(event.data),
+          new Uint8ArrayReader(output),
         );
         counts[index] = (counts[index] ?? 0) + 1;
         written++;

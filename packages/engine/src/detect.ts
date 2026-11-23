@@ -20,6 +20,14 @@ function isTcx(b: Uint8Array): boolean {
   );
 }
 
+function isGpx(b: Uint8Array): boolean {
+  let i = 0;
+  if (b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf) i = 3;
+  while (i < b.length && (b[i] === 0x20 || b[i] === 0x09 || b[i] === 0x0a || b[i] === 0x0d)) i++;
+  const head = new TextDecoder('utf-8').decode(b.subarray(i, i + 512));
+  return /^<\?xml[\s\S]*?<gpx[\s>]/.test(head) || head.startsWith('<gpx');
+}
+
 /**
  * Détecte le type d'un fichier d'après son contenu (T1.3), jamais son extension.
  * Reçoit au moins les 512 premiers octets.
@@ -27,5 +35,6 @@ function isTcx(b: Uint8Array): boolean {
 export function detectFormat(head: Uint8Array): ActivityFormat | null {
   if (isFit(head)) return 'fit';
   if (isTcx(head)) return 'tcx';
+  if (isGpx(head)) return 'gpx';
   return null;
 }

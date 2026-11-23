@@ -15,6 +15,8 @@ export interface Report {
   readonly ignored: readonly IgnoredEntry[];
   /** Nombre de fichiers de santé reconnus parmi les ignorés (non importables par cet outil). */
   readonly health: number;
+  /** Activités GPX converties en TCX (destination COROS, qui n'importe que FIT et TCX). */
+  readonly convertedGpx: number;
   /** Présent si l'extraction CSV des données de santé a produit des lignes. */
   readonly healthExport?: HealthExportStats;
   readonly rejectedByReason: Readonly<Partial<Record<RejectReason, number>>>;
@@ -45,6 +47,7 @@ export function buildReport(
       ...(r.detail === undefined ? {} : { detail: r.detail }),
     })),
     ignored,
+    convertedGpx: kept.filter((c) => c.convertedFrom === 'gpx').length,
     health: ignored.filter((i) => i.kind === 'health').length,
     rejectedByReason,
     bySport,

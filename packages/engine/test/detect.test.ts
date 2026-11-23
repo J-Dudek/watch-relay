@@ -28,8 +28,13 @@ describe('detectFormat', () => {
     expect(detectFormat(enc(xml))).toBe('tcx');
     expect(detectFormat(enc('\uFEFF  \n' + xml))).toBe('tcx');
   });
+  it('reconnaît un GPX par son contenu (prolog, BOM ou racine seule)', () => {
+    expect(detectFormat(enc('<?xml version="1.0"?>\n<gpx version="1.1" creator="x">'))).toBe('gpx');
+    expect(detectFormat(enc('<gpx>'))).toBe('gpx');
+  });
+
   it('rejette un XML quelconque et du texte', () => {
-    expect(detectFormat(enc('<?xml version="1.0"?><gpx></gpx>'))).toBeNull();
+    expect(detectFormat(enc('<?xml version="1.0"?><kml></kml>'))).toBeNull();
     expect(detectFormat(enc('hello'))).toBeNull();
     expect(detectFormat(enc('{"wellness":1}'))).toBeNull();
   });
