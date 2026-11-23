@@ -15,3 +15,5 @@ export * from './scan.js';
 export * from './fit.js';
 export * from './tcx.js';
 export * from './analyze.js';
+export * from './sink.js';
+export * from './process.js';
