@@ -1,14 +1,14 @@
 // Fonctions pures du référencement (sitemap, robots, redirections, métadonnées par page).
 // Testées dans seo.test.mjs ; utilisées par postbuild-seo.mjs.
 
-export const SITE_NAME = 'Migration Garmin ⇄ COROS';
+export const SITE_NAME = 'watch-relay';
 
 /** Pages indexables : une vraie URL chacune, servie par un fichier HTML dédié (métadonnées propres). */
 export const ROUTES = [
   {
     path: '/',
     file: 'index.html',
-    title: 'Migration Garmin ⇄ COROS – transfert d’activités, 100 % local',
+    title: 'watch-relay – migration d’activités Garmin, COROS et Polar, 100 % local',
     description:
       'Prépare ton historique d’activités entre Garmin, COROS et Polar. Tout se passe dans ton navigateur : aucune donnée n’est envoyée, aucun compte requis.',
   },
@@ -31,7 +31,7 @@ export const ROUTES = [
     file: 'legal.html',
     title: `Mentions légales — ${SITE_NAME}`,
     description:
-      'Éditeur, hébergement, non-affiliation à Garmin et COROS, responsabilité et composants tiers.',
+      'Éditeur, hébergement, non-affiliation à Garmin, COROS et Polar, responsabilité et composants tiers.',
   },
 ];
 

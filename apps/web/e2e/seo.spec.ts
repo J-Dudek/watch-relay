@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // Le build des tests est produit avec SITE_URL=https://watch-relay.example (cf. playwright.config.ts).
 const SITE = 'https://watch-relay.example';
 const PAGES = [
-  { path: '/', title: /Migration Garmin ⇄ COROS/ },
+  { path: '/', title: /^watch-relay – migration/ },
   { path: '/faq', title: /^FAQ — / },
   { path: '/privacy', title: /^Confidentialité — / },
   { path: '/legal', title: /^Mentions légales — / },
@@ -94,5 +94,5 @@ test('les anciens liens /#/faq sont ramenés à /faq', async ({ page }) => {
 test('la langue change aussi le titre de la page', async ({ page }) => {
   await page.goto('/faq');
   await page.getByRole('combobox', { name: 'Langue' }).selectOption('en');
-  await expect(page).toHaveTitle(/^FAQ — Garmin ⇄ COROS migration/);
+  await expect(page).toHaveTitle(/^FAQ — watch-relay$/);
 });

@@ -7,7 +7,7 @@ test.describe('langue anglaise du navigateur', () => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Get your Garmin export/ })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page).toHaveTitle(/Garmin ⇄ COROS/);
+    await expect(page).toHaveTitle(/^watch-relay – activity migration/);
   });
 });
 

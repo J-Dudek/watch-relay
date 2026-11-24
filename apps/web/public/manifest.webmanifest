@@ -1,7 +1,7 @@
 {
-  "name": "Migration Garmin → COROS",
-  "short_name": "Garmin → COROS",
-  "description": "Prépare ton historique Garmin pour COROS, 100 % sur ton appareil.",
+  "name": "watch-relay",
+  "short_name": "watch-relay",
+  "description": "Migre ton historique d’activités entre Garmin, COROS et Polar, 100 % sur ton appareil.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

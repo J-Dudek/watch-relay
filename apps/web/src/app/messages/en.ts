@@ -1,8 +1,8 @@
 import type { Base, Messages, PolarMessages, ReverseMessages } from './fr';
 
 const en: Base = {
-  htmlTitle: 'Garmin ⇄ COROS migration – activity transfer, 100% local',
-  siteName: 'Garmin ⇄ COROS migration',
+  htmlTitle: 'watch-relay – activity migration for Garmin, COROS and Polar, 100% local',
+  siteName: 'watch-relay',
   htmlDescription:
     'Prepare your activity history between Garmin, COROS and Polar. Everything happens in your browser: no data is sent, no account required.',
   tagline: '100% on your device: no data is sent, no account required.',
