@@ -14,6 +14,8 @@ export interface StartOptions {
   readonly healthExport?: boolean;
   /** Convertir les JSON de séance de l'export global Polar. */
   readonly polarSessions?: boolean;
+  /** Lire `activities.csv` de l'export Strava (sport des activités, activités sans fichier). */
+  readonly stravaMetadata?: boolean;
   /** Plateforme de destination (défaut : `coros`). */
   readonly target?: Target;
 }

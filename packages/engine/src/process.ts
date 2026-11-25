@@ -3,6 +3,7 @@ import { analyzeFile } from './analyze.js';
 import { ZipSizeEstimator } from './compress.js';
 import { gpxToTcx, parseGpx } from './gpx.js';
 import { parsePolarSession } from './polar.js';
+import { applySportHints, parseStravaCsv } from './strava.js';
 import { trackToTcx } from './tcx-writer.js';
 import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
@@ -55,6 +56,11 @@ export interface ProcessOptions {
    * défaut : tous les JSON d'un export doivent alors être lus pour reconnaître les séances.
    */
   readonly polarSessions?: boolean;
+  /**
+   * Lit `activities.csv` de l'export Strava pour retrouver le sport des activités dont le fichier ne
+   * l'indique pas, et compter les activités sans fichier. Les `.gz` de l'export sont toujours décompressés.
+   */
+  readonly stravaMetadata?: boolean;
   readonly signal?: AbortSignal;
   readonly onProgress?: (progress: ProcessProgress) => void;
 }
@@ -122,6 +128,7 @@ export async function processArchive(
     let processed = 0;
     let bytesRead = 0;
     const idFor = makeIdAllocator();
+    let strava: ReturnType<typeof parseStravaCsv> | undefined;
 
     const collector = options.healthExport ? new HealthCollector() : undefined;
     const estimator = new ZipSizeEstimator();
@@ -129,10 +136,14 @@ export async function processArchive(
     for await (const event of scanArchive(input, limits, signal, {
       collectHealth: collector !== undefined,
       collectSessions: options.polarSessions === true,
+      collectStrava: options.stravaMetadata === true,
     })) {
       throwIfAborted(signal);
       const id = idFor(event.path);
-      if (event.kind === 'json') {
+      if (event.kind === 'csv') {
+        strava = parseStravaCsv(event.data);
+        ignored.push({ path: event.path, note: 'pas une activité' });
+      } else if (event.kind === 'json') {
         let exercises: ReturnType<typeof parsePolarSession>;
         try {
           exercises = parsePolarSession(event.data);
@@ -208,8 +219,15 @@ export async function processArchive(
       createBatchFitRule(maxBatch),
       ...(options.period ? [createPeriodRule(options.period)] : []),
     ];
-    const { kept, rejected } = runPipeline(candidates, fileRules, [createDuplicateRule()]);
-    const report = buildReport(kept, [...rejections, ...rejected], ignored);
+    const { kept, rejected } = runPipeline(
+      strava ? applySportHints(candidates, strava.sports) : candidates,
+      fileRules,
+      [createDuplicateRule()],
+    );
+    const report = {
+      ...buildReport(kept, [...rejections, ...rejected], ignored),
+      ...(strava && strava.withoutFile > 0 ? { stravaWithoutFile: strava.withoutFile } : {}),
+    };
 
     // Passe 2 : écriture des seuls fichiers retenus. Les lots sont remplis d'après la taille
     // COMPRESSÉE estimée ; si une archive réelle dépasse la limite dure (estimation trop optimiste),
@@ -280,8 +298,12 @@ export async function processArchive(
           const sourceFormat = candidate.convertedFrom ?? candidate.format;
           if (candidate.convertedFrom === 'gpx' && event.format === 'gpx') {
             const slash = event.path.lastIndexOf('/');
+            // Le sport du candidat peut venir d'`activities.csv` (Strava) : c'est lui qui est écrit.
             output = new TextEncoder().encode(
-              gpxToTcx(parseGpx(event.data, event.path.slice(slash + 1))),
+              gpxToTcx({
+                ...parseGpx(event.data, event.path.slice(slash + 1)),
+                sport: candidate.meta.sport,
+              }),
             );
           }
           if (output.byteLength !== candidate.size || event.format !== sourceFormat) {

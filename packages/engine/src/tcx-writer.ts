@@ -30,6 +30,9 @@ export interface TrackData {
 const EARTH_RADIUS_M = 6_371_000;
 const TCX_SPORT: Record<string, string> = { running: 'Running', cycling: 'Biking' };
 
+/** Libellé de sport écrit dans le TCX (`Running`, `Biking` ou `Other`). */
+export const tcxSportName = (sport: string): string => TCX_SPORT[sport] ?? 'Other';
+
 export function haversine(
   a: { lat: string; lon: string },
   b: { lat: string; lon: string },
@@ -90,7 +93,7 @@ export function trackToTcx(track: TrackData): string {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenter/v2">',
-    `<Activities><Activity Sport="${TCX_SPORT[track.sport] ?? 'Other'}"><Id>${start}</Id>`,
+    `<Activities><Activity Sport="${tcxSportName(track.sport)}"><Id>${start}</Id>`,
     `<Lap StartTime="${start}"><TotalTimeSeconds>${track.durationS.toFixed(1)}</TotalTimeSeconds>`,
     `<DistanceMeters>${(track.distanceM ?? distance).toFixed(1)}</DistanceMeters><Calories>${String(Math.max(0, Math.round(track.calories ?? 0)))}</Calories>`,
     avg !== undefined && max !== undefined

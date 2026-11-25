@@ -1,5 +1,6 @@
 import { BlobReader, ZipReader, type FileEntry } from '@zip.js/zip.js';
 import { detectFormat } from './detect.js';
+import { GzipTooLargeError, gunzip, isGzip } from './gzip.js';
 import { isHealthJsonPath } from './health-export.js';
 import { ArchiveError, DEFAULT_LIMITS, LimitError, type ScanLimits } from './limits.js';
 import type { ActivityFormat } from './types.js';
@@ -15,6 +16,8 @@ export type ScanEvent =
   | { readonly kind: 'json'; readonly path: string; readonly data: Uint8Array }
   /** JSON de santé (si `collectHealth`) : contenu fourni pour l'extraction CSV. */
   | { readonly kind: 'health'; readonly path: string; readonly data: Uint8Array }
+  /** `activities.csv` de l'export Strava (si `collectStrava`) : sports et noms des activités. */
+  | { readonly kind: 'csv'; readonly path: string; readonly data: Uint8Array }
   | { readonly kind: 'ignored'; readonly path: string; readonly note: string }
   | { readonly kind: 'error'; readonly path: string; readonly note: string };
 
@@ -41,12 +44,18 @@ export interface ScanOptions {
   readonly collectHealth?: boolean;
   /** Fournit le contenu de tous les JSON (événements `json`) : séances de l'export global Polar. */
   readonly collectSessions?: boolean;
+  /** Fournit le contenu de `activities.csv` (événement `csv`) : export Strava. */
+  readonly collectStrava?: boolean;
 }
+
+/** `activities.csv` à la racine de l'export Strava (le préfixe d'archive imbriquée est toléré). */
+export const isStravaCsvPath = (path: string): boolean => /(^|[/!])activities\.csv$/i.test(path);
 
 interface State {
   readonly limits: ScanLimits;
   readonly collectHealth: boolean;
   readonly collectSessions: boolean;
+  readonly collectStrava: boolean;
   readonly signal?: AbortSignal;
   totalBytes: number;
   entries: number;
@@ -99,6 +108,8 @@ async function extract(
           at += Math.min(c.byteLength, HEAD_BYTES - at);
         }
         if (isZip(head)) limit = state.limits.maxNestedZipSize;
+        // Gzip : la taille COMPRESSÉE est bornée ici ; le contenu l'est à la décompression.
+        else if (isGzip(head)) limit = state.limits.maxFileSize;
         else if (detectFormat(head)) limit = state.limits.maxFileSize;
         else if (keepOther) limit = state.limits.maxHealthFileSize;
         else throw (stop = new EntryOther());
@@ -184,7 +195,8 @@ async function* walk(
         if (entry.uncompressedSize > cap) throw new EntryAbort();
         const keepOther =
           (state.collectHealth && isHealthJsonPath(path)) ||
-          (state.collectSessions && /\.json$/i.test(path));
+          (state.collectSessions && /\.json$/i.test(path)) ||
+          (state.collectStrava && isStravaCsvPath(path));
         data = await extract(entry, cap, state, keepOther);
       } catch (e) {
         if (e instanceof LimitError || isAbort(e)) throw e;
@@ -204,7 +216,41 @@ async function* walk(
         continue;
       }
 
-      const head = new Uint8Array(await data.slice(0, HEAD_BYTES).arrayBuffer());
+      let head = new Uint8Array(await data.slice(0, HEAD_BYTES).arrayBuffer());
+      if (isGzip(head)) {
+        try {
+          data = await gunzip(data, {
+            maxBytes: limits.maxFileSize,
+            maxRatio: limits.maxRatio,
+            ratioFloor: RATIO_FLOOR,
+            onBytes: (n) => {
+              if (state.signal?.aborted) throw abortError();
+              state.totalBytes += n;
+              if (state.totalBytes > limits.maxTotalUncompressed) {
+                state.fatal = new LimitError(
+                  'TOTAL_TOO_LARGE',
+                  'Le contenu décompressé dépasse la limite autorisée.',
+                );
+                throw state.fatal;
+              }
+            },
+          });
+        } catch (e) {
+          if (e instanceof LimitError || isAbort(e)) throw e;
+          yield {
+            kind: 'ignored',
+            path,
+            note: e instanceof GzipTooLargeError ? 'trop volumineux ou ratio suspect' : 'illisible',
+          };
+          continue;
+        }
+        head = new Uint8Array(await data.slice(0, HEAD_BYTES).arrayBuffer());
+        // Un gzip ou un ZIP dans un gzip n'est pas un cas d'export réel : on ne descend pas plus bas.
+        if (isGzip(head) || isZip(head)) {
+          yield { kind: 'ignored', path, note: 'archive imbriquée non prise en charge' };
+          continue;
+        }
+      }
       if (isZip(head)) {
         if (data.size > limits.maxNestedZipSize) {
           yield { kind: 'ignored', path, note: 'archive imbriquée trop volumineuse' };
@@ -223,6 +269,8 @@ async function* walk(
       if (!format) {
         if (state.collectSessions && /\.json$/i.test(path)) {
           yield { kind: 'json', path, data: new Uint8Array(await data.arrayBuffer()) };
+        } else if (state.collectStrava && isStravaCsvPath(path)) {
+          yield { kind: 'csv', path, data: new Uint8Array(await data.arrayBuffer()) };
         } else if (state.collectHealth && isHealthJsonPath(path)) {
           yield { kind: 'health', path, data: new Uint8Array(await data.arrayBuffer()) };
         } else yield { kind: 'ignored', path, note: 'pas une activité' };
@@ -251,6 +299,7 @@ export function scanArchive(
     limits,
     collectHealth: options.collectHealth ?? false,
     collectSessions: options.collectSessions ?? false,
+    collectStrava: options.collectStrava ?? false,
     ...(signal ? { signal } : {}),
     totalBytes: 0,
     entries: 0,
