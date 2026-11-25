@@ -11,15 +11,16 @@ import type {
   WorkerResponse,
 } from '@watch-relay/engine';
 
-/** Plateformes : Garmin et COROS en source et en destination ; Polar seulement en source. */
-export type Platform = 'garmin' | 'coros' | 'polar';
+/** Plateformes : Garmin et COROS en source et en destination ; Polar et Strava seulement en source. */
+export type Platform = 'garmin' | 'coros' | 'polar' | 'strava';
 export const PLATFORM_NAMES: Record<Platform, string> = {
   garmin: 'Garmin',
   coros: 'COROS',
   polar: 'Polar',
+  strava: 'Strava',
 };
 
-/** Destinations possibles pour une source donnée (Polar ne peut pas être une destination). */
+/** Destinations possibles pour une source donnée (Polar et Strava ne peuvent pas être une destination). */
 export function validTargets(source: Platform): Target[] {
   return (['coros', 'garmin'] as const).filter((p) => p !== source);
 }
@@ -38,7 +39,7 @@ export const MAX_INPUT_BYTES = 10 * 1024 ** 3;
 export class ProcessingService {
   /** Plateforme d'origine de l'export déposé. */
   readonly source = signal<Platform>('garmin');
-  /** Destination de l'import : COROS ou Garmin (jamais Polar, qui n'importe pas d'historique). */
+  /** Destination de l'import : COROS ou Garmin (jamais Polar ni Strava, sources seulement). */
   readonly target = signal<Target>('coros');
   /** Extraire aussi les données de santé en CSV (opt-in : données sensibles, lues sur demande). */
   readonly healthExport = signal(false);
@@ -97,6 +98,7 @@ export class ProcessingService {
         target: this.target(),
         healthExport: this.healthExport() && this.source() === 'garmin',
         polarSessions: this.source() === 'polar',
+        stravaMetadata: this.source() === 'strava',
       },
     });
   }

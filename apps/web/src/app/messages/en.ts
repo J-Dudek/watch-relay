@@ -1,4 +1,4 @@
-import type { Base, Messages, PolarMessages, ReverseMessages } from './fr';
+import type { Base, Messages, PolarMessages, ReverseMessages, StravaMessages } from './fr';
 
 const en: Base = {
   htmlTitle: 'watch-relay – activity migration for Garmin, COROS and Polar, 100% local',
@@ -11,7 +11,8 @@ const en: Base = {
     from: 'From',
     to: 'To',
     unavailable: 'unavailable',
-    polarNote: 'Polar Flow does not import activity history: Polar is only available as a source.',
+    polarNote:
+      'Polar Flow does not import activity history: Polar is only available as a source, like Strava.',
   },
   titleFor: (from: string, to: string) => `${from} → ${to} migration`,
   stepExport: (name: string) => `${name} export`,
@@ -20,7 +21,7 @@ const en: Base = {
   stepsLabel: 'Steps',
   languageLabel: 'Language',
   footer:
-    'Independent tool, not affiliated with Garmin, COROS or Polar. Brand names are used for descriptive purposes only.',
+    'Independent tool, not affiliated with Garmin, COROS, Polar or Strava. Brand names are used for descriptive purposes only.',
   loading: 'Loading…',
   logoAlt: 'watch-relay',
   theme: { label: 'Appearance', auto: 'Auto', light: 'Light', dark: 'Dark' },
@@ -73,6 +74,8 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    stravaWithoutFile: (n: number) =>
+      `${String(n)} Strava activity(ies) without a file (manual entries): they have no track to transfer and are not included.`,
     polarConverted: (n: number) =>
       `${String(n)} Polar session(s) (JSON from the global export) converted to TCX. Times and time zones come from the export: check the first imported session.`,
     gpxConverted: (n: number) =>
@@ -250,4 +253,36 @@ const enPolar: PolarMessages = {
   },
 };
 
-export const MESSAGES_EN: Messages = { ...en, reverse: enReverse, polar: enPolar };
+/** Strava: source only (full account export, files often gzipped). */
+const enStrava: StravaMessages = {
+  guide: {
+    title: '1. Get your Strava export',
+    s1Before: 'From a computer, open',
+    s1Href: 'https://www.strava.com',
+    s1Link: 'Strava',
+    s1After: 'and sign in.',
+    s2Before: 'Open your settings, then',
+    s2Strong: 'My Account, Download or Delete Your Account',
+    s3Before: 'Request your data archive:',
+    s3Strong: 'Request Your Archive',
+    s4Before: 'Download the',
+    s4After: 'received by e-mail, without unzipping it, and drop it here.',
+    noteBefore: 'The files in the export are often compressed (.gz):',
+    noteStrong: 'drop the ZIP as received',
+    noteAfter:
+      ', they are decompressed here. Strava menu labels may change; Strava is only available as a source.',
+    haveFile: 'I have my file',
+  },
+  drop: {
+    choose: 'Choose the Strava export ZIP',
+    notZip:
+      'This file is not a ZIP. Choose the archive you received from Strava, without unzipping it.',
+  },
+};
+
+export const MESSAGES_EN: Messages = {
+  ...en,
+  reverse: enReverse,
+  polar: enPolar,
+  strava: enStrava,
+};

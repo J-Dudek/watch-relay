@@ -26,7 +26,7 @@ import {
         <select id="platform-to" class="j6n-select" (change)="setTarget($event)">
           @for (p of platforms; track p) {
             <option [value]="p" [selected]="target() === p" [disabled]="!canTarget(p)">
-              {{ names[p] }}{{ p === 'polar' ? ' (' + t().direction.unavailable + ')' : '' }}
+              {{ names[p] }}{{ isSourceOnly(p) ? ' (' + t().direction.unavailable + ')' : '' }}
             </option>
           }
         </select>
@@ -66,7 +66,12 @@ export class GuideStep {
   protected readonly source = this.processing.source;
   protected readonly target = this.processing.target;
   protected readonly names = PLATFORM_NAMES;
-  protected readonly platforms: readonly Platform[] = ['garmin', 'coros', 'polar'];
+  protected readonly platforms: readonly Platform[] = ['garmin', 'coros', 'polar', 'strava'];
+
+  /** Polar et Strava n'importent pas d'historique : sources seulement. */
+  protected isSourceOnly(p: Platform): boolean {
+    return p === 'polar' || p === 'strava';
+  }
 
   protected canTarget(p: Platform): boolean {
     return (validTargets(this.source()) as Platform[]).includes(p);
@@ -75,14 +80,14 @@ export class GuideStep {
   protected setSource(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as Platform;
     this.source.set(value);
-    // La destination courante peut devenir invalide (même plateforme, Polar) : on prend la première valide.
+    // La destination courante peut devenir invalide (même plateforme, Polar ou Strava) : on prend la première valide.
     const targets = validTargets(value);
     if (!targets.includes(this.target())) this.target.set(targets[0] ?? 'coros');
   }
 
   protected setTarget(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as Platform;
-    if (this.canTarget(value) && value !== 'polar') this.target.set(value);
+    if (this.canTarget(value) && (value === 'coros' || value === 'garmin')) this.target.set(value);
   }
   readonly next = output();
 }

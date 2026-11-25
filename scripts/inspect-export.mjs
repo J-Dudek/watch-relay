@@ -2,7 +2,8 @@
 // Passe un VRAI export (Garmin ou COROS) dans le moteur, sous Node, et affiche un rapport anonyme :
 // aucun nom de fichier ni donnée d'activité n'est affiché, uniquement des comptes, des tailles et des
 // durées. Rien n'est envoyé ailleurs. Usage :
-//   npm run inspect:export -- chemin/export.zip [--target coros|garmin] [--out dossier]
+//   npm run inspect:export -- chemin/export.zip [--target coros|garmin] [--source strava|polar] [--out dossier]
+// --source strava lit activities.csv (sport des activités) ; --source polar convertit l'export global JSON.
 // --out écrit les ZIP générés sur disque, pour les importer à la main dans COROS / Garmin Connect (T0.3).
 import { createWriteStream, mkdirSync, openAsBlob, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -17,14 +18,19 @@ const flag = (name) => {
   return i === -1 ? undefined : args[i + 1];
 };
 const input = args.find(
-  (a, i) => !a.startsWith('--') && !['--target', '--out'].includes(args[i - 1]),
+  (a, i) => !a.startsWith('--') && !['--target', '--out', '--source'].includes(args[i - 1]),
 );
 const target = flag('--target') ?? 'coros';
 const outDir = flag('--out');
+const source = flag('--source');
 
-if (!input || !['coros', 'garmin'].includes(target)) {
+if (
+  !input ||
+  !['coros', 'garmin'].includes(target) ||
+  (source !== undefined && !['strava', 'polar'].includes(source))
+) {
   console.error(
-    'Usage : npm run inspect:export -- export.zip [--target coros|garmin] [--out dossier]',
+    'Usage : npm run inspect:export -- export.zip [--target coros|garmin] [--source strava|polar] [--out dossier]',
   );
   process.exit(2);
 }
@@ -75,6 +81,8 @@ const started = performance.now();
 try {
   const { report, archives } = await engine.processArchive(file, makeSink(), {
     target,
+    ...(source === 'strava' ? { stravaMetadata: true } : {}),
+    ...(source === 'polar' ? { polarSessions: true } : {}),
     onProgress: (p) => {
       const line = `${p.phase} : ${String(p.processed)} fichier(s), ${mb(p.bytesRead)} lus`;
       if (line !== lastLine && process.stderr.isTTY) process.stderr.write(`\r${line}   `);

@@ -30,7 +30,7 @@ describe('App', () => {
       await fixture.whenStable();
     }
     expect(el.querySelector('h2')?.textContent).toContain('Get your Garmin export');
-    expect(el.textContent).toContain('not affiliated with Garmin, COROS or Polar');
+    expect(el.textContent).toContain('not affiliated with Garmin, COROS, Polar or Strava');
   });
 
   it('affiche le parcours en 4 étapes et démarre sur le guide Garmin', async () => {
@@ -46,7 +46,7 @@ describe('App', () => {
     const fixture = await setup();
     await fixture.whenStable();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'non affilié à Garmin, COROS ni Polar',
+      'non affilié à Garmin, COROS, Polar ni Strava',
     );
   });
 

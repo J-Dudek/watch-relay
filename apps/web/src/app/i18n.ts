@@ -52,7 +52,9 @@ export class I18n {
         ? { guide: t.guide, drop: t.drop }
         : source === 'coros'
           ? { guide: t.reverse.guide, drop: t.reverse.drop }
-          : { guide: t.polar.guide, drop: { ...t.drop, ...t.polar.drop } };
+          : source === 'strava'
+            ? { guide: t.strava.guide, drop: { ...t.drop, ...t.strava.drop } }
+            : { guide: t.polar.guide, drop: { ...t.drop, ...t.polar.drop } };
     const destination =
       target === 'coros'
         ? { import: t.import, reject: t.reject }

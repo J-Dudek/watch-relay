@@ -31,7 +31,7 @@ export const ROUTES = [
     file: 'legal.html',
     title: `Mentions légales — ${SITE_NAME}`,
     description:
-      'Éditeur, hébergement, non-affiliation à Garmin, COROS et Polar, responsabilité et composants tiers.',
+      'Éditeur, hébergement, non-affiliation à Garmin, COROS, Polar et Strava, responsabilité et composants tiers.',
   },
 ];
 

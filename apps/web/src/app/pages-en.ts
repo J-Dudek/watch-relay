@@ -39,6 +39,12 @@ export const PAGES_EN: PagesMessages = {
         ],
       },
       {
+        q: 'What about Strava?',
+        a: [
+          'Strava is supported as a source: Strava → COROS and Strava → Garmin. Request your account archive (Settings, My Account, Download or Delete Your Account), then drop the ZIP as received. The activity files in the export are often compressed (.gz): they are decompressed here. If the export contains activities.csv, the tool uses it to recover the sport of activities whose file does not state it. Manually entered activities have no file: they are counted in the report but cannot be transferred. The reverse (to Strava) does not exist in this tool. Strava menu labels may change, and the export format has not yet been validated on many accounts: check the first imported activity.',
+        ],
+      },
+      {
         q: 'What about my GPX activities?',
         a: [
           'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to TCX, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name; the TCX format only knows Running, Biking and Other, so a walk or a hike becomes “Other”. Towards Garmin, GPX files are kept as they are.',
@@ -83,7 +89,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'Is the tool official? Is it free?',
         a: [
-          'It is an independent, free tool, not affiliated with Garmin, COROS or Polar. No account is needed and it never asks for any of your credentials.',
+          'It is an independent, free tool, not affiliated with Garmin, COROS, Polar or Strava. No account is needed and it never asks for any of your credentials.',
         ],
       },
     ],
@@ -140,7 +146,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Non-affiliation and trademarks',
         p: [
-          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin, COROS or Polar. “Garmin”, “COROS” and “Polar” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
+          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin, COROS, Polar or Strava. “Garmin”, “COROS”, “Polar” and “Strava” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
         ],
       },
       {

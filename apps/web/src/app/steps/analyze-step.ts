@@ -57,6 +57,10 @@ import type { RejectReason } from '@watch-relay/engine';
             <p class="j6n-callout" role="note">{{ a.polarConverted(r.convertedPolar) }}</p>
           }
 
+          @if (r.stravaWithoutFile; as n) {
+            <p class="j6n-callout" role="note">{{ a.stravaWithoutFile(n) }}</p>
+          }
+
           @if (r.convertedGpx > 0) {
             <p class="j6n-callout" role="note">{{ a.gpxConverted(r.convertedGpx) }}</p>
           }
