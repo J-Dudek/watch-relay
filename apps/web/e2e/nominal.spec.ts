@@ -74,3 +74,40 @@ test('le rapport liste les sports non pris en charge et les doublons', async ({ 
   await expect(page.locator('.file-list code', { hasText: 'run1-copy.fit' })).toBeVisible();
   await expect(page.getByText(/conservé :/)).toBeVisible();
 });
+
+test('reclassement : un sport non pris en charge est importé après relance de l’analyse', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'export.zip',
+    mimeType: 'application/zip',
+    buffer: await buildExport(),
+  });
+  await expect(page.locator('.summary')).toContainText('2 activité(s) prête(s)', {
+    timeout: 30_000,
+  });
+
+  await page.getByText('Sports non pris en charge (1)').click();
+  const run = page.getByRole('button', { name: 'Relancer l’analyse avec ces choix' });
+  await expect(run).toBeDisabled();
+  await page.getByLabel('Traiter « golf » comme').selectOption('walking');
+  await expect(run).toBeEnabled();
+
+  const { default: AxeBuilder } = await import('@axe-core/playwright');
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  expect(
+    violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
+  ).toEqual([]);
+
+  await run.click();
+
+  await expect(page.locator('.summary')).toContainText('3 activité(s) prête(s)', {
+    timeout: 30_000,
+  });
+  await expect(page.getByText(/golf → walking \(1\)/)).toBeVisible();
+  await expect(page.getByText('Sports non pris en charge')).toHaveCount(0);
+});

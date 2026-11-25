@@ -52,6 +52,7 @@ async function start(
       ...(options?.healthExport ? { healthExport: true } : {}),
       ...(options?.polarSessions ? { polarSessions: true } : {}),
       ...(options?.stravaMetadata ? { stravaMetadata: true } : {}),
+      ...(options?.sportMap ? { sportMap: options.sportMap } : {}),
       onProgress(progress) {
         const now = performance.now();
         if (now - last < 250 && progress.processed !== progress.total) return;

@@ -39,6 +39,12 @@ export const PAGES_FR: PagesMessages = {
         ],
       },
       {
+        q: 'Certaines activités sont écartées « sport non pris en charge » : que faire ?',
+        a: [
+          'Un seul sport inconnu ferait échouer l’import du ZIP entier dans COROS : ces activités sont donc écartées, et la liste (sports et fichiers) s’affiche dans l’analyse. Tu peux choisir de les traiter comme un sport accepté (par exemple golf comme marche) puis relancer l’analyse. Pour un FIT d’origine, seuls les octets du sport sont corrigés (le reste du fichier est conservé et le CRC recalculé) ; pour un GPX ou une séance Polar, le sport est écrit dans le FIT converti ; un TCX d’origine n’est pas modifié. Le reclassement est signalé dans le rapport. Ton fichier d’origine n’est jamais modifié.',
+        ],
+      },
+      {
         q: 'Et Strava ?',
         a: [
           'Strava est pris en charge comme source : Strava → COROS et Strava → Garmin. Demande l’archive de ton compte (Paramètres, Mon compte, Télécharger ou supprimer ton compte), puis dépose le ZIP reçu tel quel. Les fichiers d’activité de l’export sont souvent compressés (.gz) : ils sont décompressés ici. Si l’export contient activities.csv, l’outil s’en sert pour retrouver le sport des activités dont le fichier ne l’indique pas. Les activités saisies à la main n’ont pas de fichier : elles sont comptées dans le rapport mais ne peuvent pas être transférées. L’inverse (vers Strava) n’existe pas dans cet outil. Les intitulés des menus de Strava peuvent changer, et le format de l’export n’a pas encore été validé sur de nombreux comptes : vérifie la première activité importée.',

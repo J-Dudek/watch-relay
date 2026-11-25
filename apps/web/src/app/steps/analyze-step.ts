@@ -1,9 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { formatBytes } from '../format';
 import { I18n } from '../i18n';
 import { ProcessingService } from '../processing.service';
-import type { RejectReason } from '@watch-relay/engine';
+import { DEFAULT_SUPPORTED_SPORTS, type RejectReason } from '@watch-relay/engine';
 
 /** Nombre maximal de fichiers listés par motif à l'écran (la liste complète est dans le CSV). */
 const MAX_LISTED = 30;
@@ -60,6 +67,10 @@ const MAX_LISTED = 30;
             <p class="j6n-callout" role="note">{{ a.polarConverted(r.convertedPolar) }}</p>
           }
 
+          @if (r.reclassified; as items) {
+            <p class="j6n-callout" role="note">{{ a.reclassified(items) }}</p>
+          }
+
           @if (r.stravaWithoutFile; as n) {
             <p class="j6n-callout" role="note">{{ a.stravaWithoutFile(n) }}</p>
           }
@@ -96,9 +107,35 @@ const MAX_LISTED = 30;
                       @for (s of entry.sports; track s.name) {
                         <li>
                           <strong>{{ s.name }}</strong> : {{ s.count }}
+                          <label class="reclassify" [for]="'reclass-' + s.name">
+                            {{ a.reclassify.label(s.name) }}
+                            <select
+                              class="j6n-select"
+                              [id]="'reclass-' + s.name"
+                              (change)="choose(s.name, $event)"
+                            >
+                              <option value="" [selected]="!choices()[s.name]">
+                                {{ a.reclassify.keep }}
+                              </option>
+                              @for (o of accepted; track o) {
+                                <option [value]="o" [selected]="choices()[s.name] === o">
+                                  {{ o }}
+                                </option>
+                              }
+                            </select>
+                          </label>
                         </li>
                       }
                     </ul>
+                    <p class="note">{{ a.reclassify.hint }}</p>
+                    <button
+                      type="button"
+                      class="j6n-btn j6n-btn--secondary btn-wrap"
+                      [disabled]="!hasChoices()"
+                      (click)="rerun()"
+                    >
+                      {{ a.reclassify.run }}
+                    </button>
                   }
                   <ul class="file-list">
                     @for (f of entry.files; track f.id) {
@@ -158,6 +195,24 @@ export class AnalyzeStep {
   readonly restart = output();
   protected readonly report = this.processing.report;
   protected readonly bytes = (n: number): string => formatBytes(n, this.t());
+
+  /** Sports acceptés par la destination, proposés comme cibles de reclassement. */
+  protected readonly accepted = [...DEFAULT_SUPPORTED_SPORTS].sort();
+  protected readonly choices = signal<Readonly<Record<string, string>>>({});
+  protected readonly hasChoices = computed(() =>
+    Object.values(this.choices()).some((v) => v !== ''),
+  );
+
+  protected choose(sport: string, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.choices.update((c) => ({ ...c, [sport]: value }));
+  }
+
+  protected rerun(): void {
+    const chosen = Object.fromEntries(Object.entries(this.choices()).filter(([, v]) => v !== ''));
+    this.choices.set({});
+    this.processing.reprocess(chosen);
+  }
 
   protected readonly rejectedTotal = computed(() =>
     Object.values(this.report()?.rejectedByReason ?? {}).reduce((a, b) => a + b, 0),

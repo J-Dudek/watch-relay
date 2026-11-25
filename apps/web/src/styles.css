@@ -152,6 +152,19 @@ code {
   font-size: var(--j6n-text-sm);
   overflow-wrap: anywhere;
 }
+.btn-wrap {
+  white-space: normal;
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+}
+.reclassify {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--j6n-space-2);
+  margin-left: var(--j6n-space-3);
+}
 .cols {
   display: grid;
   gap: var(--j6n-space-4);

@@ -74,6 +74,14 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    reclassify: {
+      label: (sport: string) => `Traiter « ${sport} » comme`,
+      keep: 'Ne pas importer',
+      run: 'Relancer l’analyse avec ces choix',
+      hint: 'Pour importer quand même certains de ces sports, choisis un sport accepté : l’archive est alors analysée à nouveau (le fichier ne quitte pas ton appareil).',
+    },
+    reclassified: (items: readonly { from: string; to: string; count: number }[]) =>
+      `Reclassé(s) à ta demande : ${items.map((i) => `${i.from} → ${i.to} (${String(i.count)})`).join(', ')}.`,
     sportsFound: 'Sports concernés :',
     keptInstead: 'conservé :',
     moreFiles: (n: number) =>

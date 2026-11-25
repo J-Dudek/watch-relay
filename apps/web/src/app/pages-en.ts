@@ -39,6 +39,12 @@ export const PAGES_EN: PagesMessages = {
         ],
       },
       {
+        q: 'Some activities are dropped as “unsupported sport”: what can I do?',
+        a: [
+          'A single unknown sport would make COROS reject the whole ZIP, so these activities are dropped, and the list (sports and files) is shown in the analysis. You can choose to treat them as an accepted sport (for example golf as walking) and run the analysis again. For an original FIT file, only the sport bytes are changed (the rest of the file is kept and the CRC recomputed); for a GPX or a Polar session, the sport is written into the converted FIT; an original TCX is not modified. The reclassification is reported. Your original file is never modified.',
+        ],
+      },
+      {
         q: 'What about Strava?',
         a: [
           'Strava is supported as a source: Strava → COROS and Strava → Garmin. Request your account archive (Settings, My Account, Download or Delete Your Account), then drop the ZIP as received. The activity files in the export are often compressed (.gz): they are decompressed here. If the export contains activities.csv, the tool uses it to recover the sport of activities whose file does not state it. Manually entered activities have no file: they are counted in the report but cannot be transferred. The reverse (to Strava) does not exist in this tool. Strava menu labels may change, and the export format has not yet been validated on many accounts: check the first imported activity.',

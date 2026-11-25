@@ -74,6 +74,14 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    reclassify: {
+      label: (sport: string) => `Treat “${sport}” as`,
+      keep: 'Do not import',
+      run: 'Run the analysis again with these choices',
+      hint: 'To import some of these sports anyway, pick an accepted sport: the archive is then analysed again (the file never leaves your device).',
+    },
+    reclassified: (items: readonly { from: string; to: string; count: number }[]) =>
+      `Reclassified at your request : ${items.map((i) => `${i.from} → ${i.to} (${String(i.count)})`).join(', ')}.`,
     sportsFound: 'Sports involved:',
     keptInstead: 'kept:',
     moreFiles: (n: number) =>
