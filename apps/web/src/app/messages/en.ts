@@ -1,4 +1,4 @@
-import type { Base, Messages, PolarMessages, ReverseMessages } from './fr';
+import type { Base, Messages, PolarMessages, ReverseMessages, StravaMessages } from './fr';
 
 const en: Base = {
   htmlTitle: 'watch-relay – activity migration for Garmin, COROS and Polar, 100% local',
@@ -11,7 +11,8 @@ const en: Base = {
     from: 'From',
     to: 'To',
     unavailable: 'unavailable',
-    polarNote: 'Polar Flow does not import activity history: Polar is only available as a source.',
+    polarNote:
+      'Polar Flow does not import activity history: Polar is only available as a source, like Strava.',
   },
   titleFor: (from: string, to: string) => `${from} → ${to} migration`,
   stepExport: (name: string) => `${name} export`,
@@ -20,7 +21,7 @@ const en: Base = {
   stepsLabel: 'Steps',
   languageLabel: 'Language',
   footer:
-    'Independent tool, not affiliated with Garmin, COROS or Polar. Brand names are used for descriptive purposes only.',
+    'Independent tool, not affiliated with Garmin, COROS, Polar or Strava. Brand names are used for descriptive purposes only.',
   loading: 'Loading…',
   logoAlt: 'watch-relay',
   theme: { label: 'Appearance', auto: 'Auto', light: 'Light', dark: 'Dark' },
@@ -73,10 +74,28 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    reclassify: {
+      label: (sport: string) => `Treat “${sport}” as`,
+      keep: 'Do not import',
+      run: 'Run the analysis again with these choices',
+      hint: 'To import some of these sports anyway, pick an accepted sport: the archive is then analysed again (the file never leaves your device).',
+    },
+    reclassified: (items: readonly { from: string; to: string; count: number }[]) =>
+      `Reclassified at your request : ${items.map((i) => `${i.from} → ${i.to} (${String(i.count)})`).join(', ')}.`,
+    sportsFound: 'Sports involved:',
+    keptInstead: 'kept:',
+    moreFiles: (n: number) =>
+      `… and ${String(n)} more. The full list is in the CSV report, on the next step.`,
+    stravaWithoutFile: (n: number) =>
+      `${String(n)} Strava activity(ies) without a file (manual entries): they have no track to transfer and are not included.`,
     polarConverted: (n: number) =>
-      `${String(n)} Polar session(s) (JSON from the global export) converted to TCX. Times and time zones come from the export: check the first imported session.`,
-    gpxConverted: (n: number) =>
-      `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (walking and hiking become “Other”, the TCX format has no other category).`,
+      `${String(n)} Polar session(s) (JSON from the global export) converted to FIT or TCX. Times and time zones come from the export: check the first imported session.`,
+    gpxConverted: (n: number, fit: number) =>
+      fit === n
+        ? `${String(n)} GPX activity(ies) converted to FIT: COROS only imports FIT or TCX files, and FIT keeps the sport (walking, hiking…).`
+        : fit === 0
+          ? `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (Walking or Hiking becomes “Other”, TCX has no other sport).`
+          : `${String(n)} GPX activity(ies) converted: ${String(fit)} to FIT (sport kept) and ${String(n - fit)} to TCX, too short for a FIT that COROS accepts (the sport becomes Running, Biking or “Other”).`,
     healthExported: (rows: number, files: number) =>
       `Health data extracted: ${String(rows)} row(s) from ${String(files)} file(s), in a separate CSV (not importable into COROS).`,
     nothing: 'No importable activity was found. Make sure you uploaded the complete Garmin export.',
@@ -241,7 +260,7 @@ const enPolar: PolarMessages = {
     noteBefore: 'Polar also offers a global export of all your data (JSON):',
     noteStrong: 'drop the ZIP as received',
     noteAfter:
-      ', sessions are converted to TCX (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
+      ', sessions are converted (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
     haveFile: 'I have my file',
   },
   drop: {
@@ -250,4 +269,36 @@ const enPolar: PolarMessages = {
   },
 };
 
-export const MESSAGES_EN: Messages = { ...en, reverse: enReverse, polar: enPolar };
+/** Strava: source only (full account export, files often gzipped). */
+const enStrava: StravaMessages = {
+  guide: {
+    title: '1. Get your Strava export',
+    s1Before: 'From a computer, open',
+    s1Href: 'https://www.strava.com',
+    s1Link: 'Strava',
+    s1After: 'and sign in.',
+    s2Before: 'Open your settings, then',
+    s2Strong: 'My Account, Download or Delete Your Account',
+    s3Before: 'Request your data archive:',
+    s3Strong: 'Request Your Archive',
+    s4Before: 'Download the',
+    s4After: 'received by e-mail, without unzipping it, and drop it here.',
+    noteBefore: 'The files in the export are often compressed (.gz):',
+    noteStrong: 'drop the ZIP as received',
+    noteAfter:
+      ', they are decompressed here. Strava menu labels may change; Strava is only available as a source.',
+    haveFile: 'I have my file',
+  },
+  drop: {
+    choose: 'Choose the Strava export ZIP',
+    notZip:
+      'This file is not a ZIP. Choose the archive you received from Strava, without unzipping it.',
+  },
+};
+
+export const MESSAGES_EN: Messages = {
+  ...en,
+  reverse: enReverse,
+  polar: enPolar,
+  strava: enStrava,
+};

@@ -11,15 +11,16 @@ import type {
   WorkerResponse,
 } from '@watch-relay/engine';
 
-/** Plateformes : Garmin et COROS en source et en destination ; Polar seulement en source. */
-export type Platform = 'garmin' | 'coros' | 'polar';
+/** Plateformes : Garmin et COROS en source et en destination ; Polar et Strava seulement en source. */
+export type Platform = 'garmin' | 'coros' | 'polar' | 'strava';
 export const PLATFORM_NAMES: Record<Platform, string> = {
   garmin: 'Garmin',
   coros: 'COROS',
   polar: 'Polar',
+  strava: 'Strava',
 };
 
-/** Destinations possibles pour une source donnée (Polar ne peut pas être une destination). */
+/** Destinations possibles pour une source donnée (Polar et Strava ne peuvent pas être une destination). */
 export function validTargets(source: Platform): Target[] {
   return (['coros', 'garmin'] as const).filter((p) => p !== source);
 }
@@ -38,10 +39,12 @@ export const MAX_INPUT_BYTES = 10 * 1024 ** 3;
 export class ProcessingService {
   /** Plateforme d'origine de l'export déposé. */
   readonly source = signal<Platform>('garmin');
-  /** Destination de l'import : COROS ou Garmin (jamais Polar, qui n'importe pas d'historique). */
+  /** Destination de l'import : COROS ou Garmin (jamais Polar ni Strava, sources seulement). */
   readonly target = signal<Target>('coros');
   /** Extraire aussi les données de santé en CSV (opt-in : données sensibles, lues sur demande). */
   readonly healthExport = signal(false);
+  /** Reclassements de sport choisis (`{ golf: 'walking' }`) : appliqués au prochain traitement. */
+  readonly sportMap = signal<Readonly<Record<string, string>>>({});
   readonly status = signal<Status>('idle');
   readonly progress = signal<ProcessProgress | null>(null);
   readonly report = signal<Report | null>(null);
@@ -71,8 +74,13 @@ export class ProcessingService {
     event.preventDefault(); // T3.12
   };
 
-  start(file: File): void {
+  /** Dernier fichier déposé, gardé pour relancer l'analyse avec d'autres choix (jamais envoyé nulle part). */
+  private sourceFile: File | null = null;
+
+  start(file: File, sportMap: Readonly<Record<string, string>> = {}): void {
     this.reset();
+    this.sourceFile = file;
+    this.sportMap.set(sportMap);
     this.fileName.set(file.name);
     this.status.set('running');
     this.startedAt.set(Date.now());
@@ -97,8 +105,19 @@ export class ProcessingService {
         target: this.target(),
         healthExport: this.healthExport() && this.source() === 'garmin',
         polarSessions: this.source() === 'polar',
+        stravaMetadata: this.source() === 'strava',
+        ...(Object.keys(sportMap).length > 0 ? { sportMap } : {}),
       },
     });
+  }
+
+  /**
+   * Relance l'analyse du même fichier en traitant certains sports comme d'autres (au lieu de les écarter).
+   * Les choix précédents sont conservés.
+   */
+  reprocess(choices: Readonly<Record<string, string>>): void {
+    const file = this.sourceFile;
+    if (file) this.start(file, { ...this.sportMap(), ...choices });
   }
 
   cancel(): void {
@@ -112,6 +131,8 @@ export class ProcessingService {
     this.worker = null;
     void this.clearStorage();
     this.release();
+    this.sourceFile = null;
+    this.sportMap.set({});
     this.status.set('idle');
     this.progress.set(null);
     this.report.set(null);

@@ -13,7 +13,7 @@ export const fr = {
     to: 'Vers',
     unavailable: 'indisponible',
     polarNote:
-      'Polar Flow n’importe pas d’historique d’activités : Polar n’est proposé qu’en source.',
+      'Polar Flow n’importe pas d’historique d’activités : Polar n’est proposé qu’en source, comme Strava.',
   },
   titleFor: (from: string, to: string) => `Migration ${from} → ${to}`,
   stepExport: (name: string) => `Export ${name}`,
@@ -22,7 +22,7 @@ export const fr = {
   stepsLabel: 'Étapes',
   languageLabel: 'Langue',
   footer:
-    'Outil indépendant, non affilié à Garmin, COROS ni Polar. Les noms de marques ne sont utilisés qu’à titre descriptif.',
+    'Outil indépendant, non affilié à Garmin, COROS, Polar ni Strava. Les noms de marques ne sont utilisés qu’à titre descriptif.',
   loading: 'Chargement…',
   logoAlt: 'watch-relay',
   theme: { label: 'Apparence', auto: 'Auto', light: 'Clair', dark: 'Sombre' },
@@ -74,10 +74,28 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    reclassify: {
+      label: (sport: string) => `Traiter « ${sport} » comme`,
+      keep: 'Ne pas importer',
+      run: 'Relancer l’analyse avec ces choix',
+      hint: 'Pour importer quand même certains de ces sports, choisis un sport accepté : l’archive est alors analysée à nouveau (le fichier ne quitte pas ton appareil).',
+    },
+    reclassified: (items: readonly { from: string; to: string; count: number }[]) =>
+      `Reclassé(s) à ta demande : ${items.map((i) => `${i.from} → ${i.to} (${String(i.count)})`).join(', ')}.`,
+    sportsFound: 'Sports concernés :',
+    keptInstead: 'conservé :',
+    moreFiles: (n: number) =>
+      `… et ${String(n)} autre(s). La liste complète est dans le rapport CSV, à l’étape suivante.`,
+    stravaWithoutFile: (n: number) =>
+      `${String(n)} activité(s) Strava sans fichier (saisies manuelles) : elles n’ont pas de trace à transférer et ne sont pas incluses.`,
     polarConverted: (n: number) =>
-      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
-    gpxConverted: (n: number) =>
-      `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`,
+      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en FIT ou TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
+    gpxConverted: (n: number, fit: number) =>
+      fit === n
+        ? `${String(n)} activité(s) GPX convertie(s) en FIT : COROS n’importe que des fichiers FIT ou TCX, et le FIT conserve le sport (marche, randonnée…).`
+        : fit === 0
+          ? `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`
+          : `${String(n)} activité(s) GPX convertie(s) : ${String(fit)} en FIT (sport conservé) et ${String(n - fit)} en TCX, trop courtes pour un FIT que COROS accepte (le sport y devient Course, Vélo ou « Autre »).`,
     healthExported: (rows: number, files: number) =>
       `Données de santé extraites : ${String(rows)} ligne(s) issues de ${String(files)} fichier(s), dans un CSV à part (non importables dans COROS).`,
     nothing:
@@ -186,7 +204,12 @@ export interface PolarMessages {
   readonly guide: Base['guide'];
   readonly drop: Pick<Base['drop'], 'choose' | 'notZip'>;
 }
-export type Messages = Base & { readonly reverse: ReverseMessages; readonly polar: PolarMessages };
+export type StravaMessages = PolarMessages;
+export type Messages = Base & {
+  readonly reverse: ReverseMessages;
+  readonly polar: PolarMessages;
+  readonly strava: StravaMessages;
+};
 
 const frReverse: ReverseMessages = {
   guide: {
@@ -262,7 +285,7 @@ const frPolar: PolarMessages = {
     noteBefore: 'Polar propose aussi un export global de toutes tes données (JSON) :',
     noteStrong: 'dépose le ZIP reçu tel quel',
     noteAfter:
-      ', les séances sont converties en TCX (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
+      ', les séances sont converties (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
     haveFile: 'J’ai mon fichier',
   },
   drop: {
@@ -271,4 +294,35 @@ const frPolar: PolarMessages = {
   },
 };
 
-export const MESSAGES_FR: Messages = { ...fr, reverse: frReverse, polar: frPolar };
+/** Strava : source uniquement (export complet du compte, fichiers souvent en .gz). */
+const frStrava: StravaMessages = {
+  guide: {
+    title: '1. Récupérer ton export Strava',
+    s1Before: 'Depuis un ordinateur, ouvre',
+    s1Href: 'https://www.strava.com',
+    s1Link: 'Strava',
+    s1After: 'et connecte-toi.',
+    s2Before: 'Ouvre tes paramètres, puis',
+    s2Strong: 'Mon compte, Télécharger ou supprimer ton compte',
+    s3Before: 'Demande l’archive de tes données :',
+    s3Strong: 'Demander ton archive',
+    s4Before: 'Télécharge le',
+    s4After: 'reçu par e-mail, sans le décompresser, et dépose-le ici.',
+    noteBefore: 'Les fichiers de l’export sont souvent compressés (.gz) :',
+    noteStrong: 'dépose le ZIP tel quel',
+    noteAfter:
+      ', ils sont décompressés ici. Les intitulés des menus Strava peuvent changer ; Strava n’est proposé qu’en source.',
+    haveFile: 'J’ai mon fichier',
+  },
+  drop: {
+    choose: 'Choisir le ZIP de l’export Strava',
+    notZip: 'Ce fichier n’est pas un ZIP. Choisis l’archive reçue de Strava, sans la décompresser.',
+  },
+};
+
+export const MESSAGES_FR: Messages = {
+  ...fr,
+  reverse: frReverse,
+  polar: frPolar,
+  strava: frStrava,
+};

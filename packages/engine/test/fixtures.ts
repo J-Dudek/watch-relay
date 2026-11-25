@@ -84,3 +84,21 @@ export function makeFitOfType(type: string | number): Uint8Array {
   });
   return enc.close();
 }
+
+/** Compresse en gzip (les fixtures binaires ne sont jamais commitées : on les fabrique). */
+export async function gzip(content: Uint8Array | string): Promise<Uint8Array> {
+  const bytes = typeof content === 'string' ? new TextEncoder().encode(content) : content;
+  const stream = new Blob([bytes as Uint8Array<ArrayBuffer>])
+    .stream()
+    .pipeThrough(new CompressionStream('gzip'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+/** GPX de type Strava : trace horodatée, sans sport reconnaissable dans le contenu. */
+export function makeGpx(points = 400, start = Date.UTC(2021, 5, 1, 8, 0, 0)): string {
+  const pts = Array.from({ length: points }, (_, i) => {
+    const t = new Date(start + i * 1000).toISOString();
+    return `<trkpt lat="${(43.5 + i * 0.0001).toFixed(5)}" lon="-1.30000"><ele>${String(20 + (i % 5))}</ele><time>${t}</time></trkpt>`;
+  }).join('');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1"><trk><name>Sortie</name><trkseg>${pts}</trkseg></trk></gpx>`;
+}

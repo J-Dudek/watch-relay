@@ -4,7 +4,7 @@
 
 # watch-relay
 
-**Migrez l'historique de vos activités entre montres Garmin, COROS et Polar, sans qu'aucune donnée ne quitte votre navigateur.**
+**Migrez l'historique de vos activités entre montres Garmin, COROS, Polar et Strava, sans qu'aucune donnée ne quitte votre navigateur.**
 
 [![CI](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml)
 [![Security scans](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml)
@@ -12,11 +12,11 @@
 ![Node 22](https://img.shields.io/badge/node-22-339933.svg)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)
 
-watch-relay lit l'export de données d'un compte **Garmin**, **COROS** ou **Polar**, en extrait les fichiers d'activité
+watch-relay lit l'export de données d'un compte **Garmin**, **COROS**, **Polar** ou **Strava**, en extrait les fichiers d'activité
 (`.fit`, `.tcx`), applique les contraintes de la plateforme de destination et produit des archives prêtes à
 importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou écarté, et pourquoi.
 
-> Projet indépendant, non affilié à Garmin, COROS ni Polar. « Garmin », « COROS » et « Polar » sont des marques de leurs propriétaires respectifs.
+> Projet indépendant, non affilié à Garmin, COROS, Polar ni Strava. « Garmin », « COROS », « Polar » et « Strava » sont des marques de leurs propriétaires respectifs.
 
 ## Sommaire
 
@@ -29,6 +29,7 @@ importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou éca
 - [Démarrage rapide](#démarrage-rapide)
 - [Qualité et tests](#qualité-et-tests)
 - [Référencement (SEO)](#référencement-seo)
+- [Ligne de commande](#ligne-de-commande)
 - [Valider sur un vrai export](#valider-sur-un-vrai-export)
 - [Déploiement](#déploiement)
 - [État du projet et limites connues](#état-du-projet-et-limites-connues)
@@ -50,15 +51,18 @@ le contrôle et le découpage.
 
 ## Fonctionnalités
 
-- **Quatre trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS et Polar → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
+- **Six trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS, Polar → Garmin, Strava → COROS et Strava → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
 - **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'**export global JSON de Polar** (un JSON par séance) est converti en TCX (trace GPS, fréquence cardiaque, cadence, calories) ; le schéma vient d'un convertisseur communautaire et n'est **pas validé sur un export récent** : les JSON de forme inattendue sont ignorés ou signalés, jamais convertis de travers.
+- **Strava, source uniquement** : l'archive du compte Strava (Paramètres, Mon compte, Télécharger ou supprimer votre compte) se dépose telle quelle. Ses fichiers d'activité, souvent compressés (`.fit.gz`, `.gpx.gz`), sont **décompressés en flux** avec les mêmes garde-fous que les ZIP (ratio, taille par fichier et volume global comptés sur les octets réellement produits ; un gzip tronqué, corrompu ou imbriqué est ignoré sans interrompre le lot). `activities.csv` est lu pour retrouver le sport des activités dont le fichier ne l'indique pas (colonnes reconnues par leur contenu, en-têtes localisés) sans jamais écraser un sport lu dans le fichier. Les activités saisies à la main n'ont pas de fichier : elles sont comptées dans le rapport mais ne sont pas transférables. Le format de l'export n'est **pas validé sur de nombreux comptes** (voir les limites).
+- **Reclassement de sport** : un sport non pris en charge par COROS (golf, kayak…) est écarté par défaut, mais l'analyse permet de le traiter comme un sport accepté (golf → marche) puis de relancer l'analyse. Sur un FIT d'origine, **seuls les octets du sport sont corrigés sur place** (messages `session`, `lap` et `sport`, sous-sport remis à « generic », CRC recalculé, taille inchangée) sans réécrire le fichier ; un GPX ou une séance Polar reçoit le sport dans son FIT converti ; un TCX d'origine n'est pas modifié. Cible limitée aux sports acceptés ; reclassement signalé dans le rapport.
+- **Ligne de commande** : le même moteur est disponible sans navigateur (`packages/cli`, voir [Ligne de commande](#ligne-de-commande)), pour les très gros exports ou les scripts.
 - **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
   on garde le fichier le plus complet).
 - **Découpage** en archives ≤ 180 Mo **compressés** (taille mesurée par échantillonnage par type de fichier, avec repli prudent si une archive dépasse 198 Mo), en ordre chronologique, nommées de façon lisible
   (`coros-import-01-2019-03_2021-07.zip`).
-- **GPX → TCX** : COROS n'importe que FIT et TCX ; les activités GPX (ex. issues de Strava) sont converties en TCX (trace, altitude, fréquence cardiaque, cadence, distance cumulée), sans parseur XML ni DTD, avec le sport déduit du fichier ou de son nom. Vers Garmin, les GPX sont conservés tels quels.
+- **GPX → FIT (COROS)** : COROS n'importe que FIT et TCX ; les activités GPX (ex. issues de Strava) sont converties en **FIT** avec l'encodeur officiel de Garmin (trace, altitude, fréquence cardiaque, cadence, distance cumulée), ce qui **conserve le sport** (marche, randonnée, natation, ski…) que le TCX réduirait à Course, Vélo ou « Autre ». Le GPX est lu sans parseur XML ni DTD, avec le sport déduit du fichier ou de son nom (ou d'`activities.csv` pour Strava). Une activité si courte que son FIT passerait sous les 20 Ko minimum de COROS reste en TCX plutôt que d'être écartée. Il en va de même pour les séances de l'export global Polar vers COROS. Vers Garmin, les GPX sont conservés tels quels. **Les FIT produits n'ont pas encore été validés par des imports réels dans COROS** (voir les limites).
 - **Données de santé reconnues** : les fichiers de suivi quotidien, de sommeil, etc. sont comptés et signalés (et non traités comme « corrompus »). Ils ne sont pas transférés (COROS n'importe que des activités), mais une option explicite (désactivée par défaut) les extrait en **CSV lisibles**, dans une archive à part, pour un archivage personnel (les formats JSON de Garmin variant, les fichiers sont aplatis sans supposer de champs).
 - **Rapport clair** : motifs d'exclusion en langage simple, répartition par sport et par année, export **CSV**
   (protégé contre l'injection de formule).
@@ -202,6 +206,26 @@ donc les moteurs de recherche voient la version française (pas d'URL ni de `hre
 
 Tests : `scripts/seo.test.mjs` (`npm run test:scripts`) pour les fonctions pures, `e2e/seo.spec.ts` sur le build réel.
 
+## Ligne de commande
+
+Le moteur tourne aussi sous Node (≥ 22), sans navigateur ni serveur : mêmes règles, mêmes rapports, rien n'est envoyé.
+
+```bash
+npm run build -w watch-relay                       # produit packages/cli/dist/watch-relay.mjs
+node packages/cli/dist/watch-relay.mjs export.zip  # Garmin → COROS, archives dans ./watch-relay-out
+
+watch-relay export.zip --from strava --to garmin --out sortie/
+watch-relay export.zip --dry-run                   # rapport seulement, rien n'est conservé
+watch-relay export.zip --since 2020-01-01 --until 2022-12-31
+watch-relay export.zip --reclassify golf=walking   # traite un sport écarté comme un sport accepté
+watch-relay export.zip --json --report rapport.csv # JSON sur stdout, CSV détaillé
+```
+
+`--from` : `garmin` (défaut), `coros`, `polar`, `strava` ; `--to` : `coros` (défaut) ou `garmin`. `--verbose` liste tous
+les fichiers écartés (10 par motif sinon). Codes de sortie : `0` succès, `1` erreur de traitement, `2` usage
+incorrect, `3` aucune activité importable, `130` interrompu. Le paquet est marqué `private` : sa publication sur npm
+(`npx watch-relay`) reste à décider (nom, licence), puis retirer `private` de `packages/cli/package.json`.
+
 ## Valider sur un vrai export
 
 Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré ; un hook et la CI refusent les `.fit`,
@@ -210,6 +234,7 @@ Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré ; 
 ```bash
 npm run inspect:export -- local-data/export-garmin.zip                          # vers COROS
 npm run inspect:export -- local-data/export-coros.zip --target garmin           # vers Garmin
+npm run inspect:export -- local-data/export-strava.zip --source strava          # export Strava (sports du CSV)
 npm run inspect:export -- local-data/export-garmin.zip --out local-data/sortie  # écrit les ZIP pour un import manuel
 ```
 
@@ -237,6 +262,8 @@ Ce qui reste à valider, par honnêteté :
 - **Export COROS** : son contenu exact n'est pas documenté ; le moteur lit n'importe quelle structure, mais cela doit
   être confirmé sur un vrai export. Les limites Garmin (nombre de fichiers par import, sports acceptés) ne sont pas
   toutes documentées.
+- **FIT produits par conversion (GPX, Polar → COROS)** : relus et vérifiés (CRC, sport, nombre de points) par le décodeur officiel dans les tests, mais pas encore importés dans un vrai compte COROS. Importer d'abord un petit lot, puis vérifier le sport et la trace de la première activité.
+- **Export Strava** : structure (dossier `activities/`, `.gz`, colonnes d'`activities.csv`) décrite d'après la documentation et des exports connus, à confirmer sur de vrais comptes ; la correspondance des types d'activité Strava vers les sports (EN/FR) est volontairement prudente et ne devine pas les types inconnus.
 - **Appareils réels** : OPFS n'a pas été vérifié sur un vrai iPhone ; en repli mémoire, un export de plusieurs Go peut
   faire échouer l'onglet. Les tests sur appareils physiques restent à faire.
 - **Pas de délai maximal strict par fichier** : le décodage est synchrone ; des plafonds de mémoire et d'entrée limitent

@@ -1,0 +1,25 @@
+{
+  "name": "watch-relay",
+  "version": "0.1.0",
+  "description": "Prépare l'historique d'activités Garmin, COROS, Polar ou Strava pour un import ailleurs, en local, sans aucun envoi de données.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "watch-relay": "./dist/watch-relay.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "esbuild src/cli.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/watch-relay.mjs --banner:js=\"#!/usr/bin/env node\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@watch-relay/engine": "*"
+  }
+}

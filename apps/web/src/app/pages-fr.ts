@@ -39,15 +39,27 @@ export const PAGES_FR: PagesMessages = {
         ],
       },
       {
+        q: 'Certaines activités sont écartées « sport non pris en charge » : que faire ?',
+        a: [
+          'Un seul sport inconnu ferait échouer l’import du ZIP entier dans COROS : ces activités sont donc écartées, et la liste (sports et fichiers) s’affiche dans l’analyse. Tu peux choisir de les traiter comme un sport accepté (par exemple golf comme marche) puis relancer l’analyse. Pour un FIT d’origine, seuls les octets du sport sont corrigés (le reste du fichier est conservé et le CRC recalculé) ; pour un GPX ou une séance Polar, le sport est écrit dans le FIT converti ; un TCX d’origine n’est pas modifié. Le reclassement est signalé dans le rapport. Ton fichier d’origine n’est jamais modifié.',
+        ],
+      },
+      {
+        q: 'Et Strava ?',
+        a: [
+          'Strava est pris en charge comme source : Strava → COROS et Strava → Garmin. Demande l’archive de ton compte (Paramètres, Mon compte, Télécharger ou supprimer ton compte), puis dépose le ZIP reçu tel quel. Les fichiers d’activité de l’export sont souvent compressés (.gz) : ils sont décompressés ici. Si l’export contient activities.csv, l’outil s’en sert pour retrouver le sport des activités dont le fichier ne l’indique pas. Les activités saisies à la main n’ont pas de fichier : elles sont comptées dans le rapport mais ne peuvent pas être transférées. L’inverse (vers Strava) n’existe pas dans cet outil. Les intitulés des menus de Strava peuvent changer, et le format de l’export n’a pas encore été validé sur de nombreux comptes : vérifie la première activité importée.',
+        ],
+      },
+      {
         q: 'Et mes activités au format GPX ?',
         a: [
-          'COROS n’importe que des fichiers FIT ou TCX. Les activités GPX (par exemple celles importées de Strava dans Garmin) sont donc converties en TCX, avec la trace, l’altitude, la fréquence cardiaque et la cadence quand elles existent. Le sport est déduit du fichier ou de son nom ; le format TCX ne connaît que Course, Vélo et Autre, donc une marche ou une randonnée devient « Autre ». Vers Garmin, les GPX sont conservés tels quels.',
+          'COROS n’importe que des fichiers FIT ou TCX. Les activités GPX (par exemple celles importées de Strava dans Garmin) sont donc converties en FIT, avec la trace, l’altitude, la fréquence cardiaque et la cadence quand elles existent. Le sport est déduit du fichier ou de son nom (ou, pour Strava, de activities.csv) et conservé : marche, randonnée, natation… Exception : une activité très courte dont le FIT serait plus petit que les 20 Ko minimum de COROS reste en TCX, qui ne connaît que Course, Vélo et Autre, plutôt que d’être écartée. Le FIT produit n’a pas encore été validé par des imports réels dans COROS : vérifie la première activité importée. Vers Garmin, les GPX sont conservés tels quels.',
         ],
       },
       {
         q: 'Mes fichiers sont-ils modifiés ?',
         a: [
-          'Non, sauf la conversion GPX en TCX décrite ci-dessus. Les fichiers .fit et .tcx sont copiés tels quels dans les ZIP : seul leur nom change (date et sport), pour un classement lisible. Ton export Garmin d’origine n’est jamais touché.',
+          'Non, sauf la conversion des GPX décrite ci-dessus. Les fichiers .fit et .tcx sont copiés tels quels dans les ZIP : seul leur nom change (date et sport), pour un classement lisible. Ton export Garmin d’origine n’est jamais touché.',
         ],
       },
       {
@@ -83,7 +95,7 @@ export const PAGES_FR: PagesMessages = {
       {
         q: 'L’outil est-il officiel ? Est-il gratuit ?',
         a: [
-          'C’est un outil indépendant, gratuit, non affilié à Garmin, COROS ni Polar. Aucun compte n’est nécessaire et il n’a besoin d’aucun de tes identifiants.',
+          'C’est un outil indépendant, gratuit, non affilié à Garmin, COROS, Polar ni Strava. Aucun compte n’est nécessaire et il n’a besoin d’aucun de tes identifiants.',
         ],
       },
     ],
@@ -140,7 +152,7 @@ export const PAGES_FR: PagesMessages = {
       {
         h: 'Non-affiliation et marques',
         p: [
-          'Cet outil est indépendant et n’est affilié, approuvé ni parrainé par Garmin, COROS ni Polar. « Garmin », « COROS » et « Polar » sont des marques de leurs propriétaires respectifs, utilisées ici uniquement pour décrire la compatibilité de l’outil.',
+          'Cet outil est indépendant et n’est affilié, approuvé ni parrainé par Garmin, COROS, Polar ni Strava. « Garmin », « COROS », « Polar » et « Strava » sont des marques de leurs propriétaires respectifs, utilisées ici uniquement pour décrire la compatibilité de l’outil.',
         ],
       },
       {

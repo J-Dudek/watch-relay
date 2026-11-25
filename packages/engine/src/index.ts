@@ -28,3 +28,7 @@ export * from './gpx.js';
 export * from './compress.js';
 export * from './polar.js';
 export * from './tcx-writer.js';
+export * from './gzip.js';
+export * from './strava.js';
+export * from './fit-writer.js';
+export * from './fit-patch.js';

@@ -1,5 +1,6 @@
 import { NotActivityError, parseFit, ParseError } from './fit.js';
-import { gpxToTcx, MAX_GPX_BYTES, parseGpx } from './gpx.js';
+import { convertTrack, type ConvertedFormat } from './fit-writer.js';
+import { gpxToTrack, MAX_GPX_BYTES, parseGpx } from './gpx.js';
 import { parseTcx } from './tcx.js';
 import type { ActivityFormat, Candidate, Rejection } from './types.js';
 
@@ -7,6 +8,8 @@ export type AnalyzeOutcome =
   | {
       readonly ok: true;
       readonly candidate: Candidate;
+      /** Sport d'origine, si le sport a été reclassé pendant la conversion (GPX). */
+      readonly reclassifiedFrom?: string;
       /** Octets réellement écrits dans l'archive quand ils diffèrent de la source (GPX converti). */
       readonly output?: Uint8Array;
     }
@@ -32,6 +35,12 @@ export const MAX_FIT_ANALYZE_BYTES = 32 * 1024 * 1024;
 export interface AnalyzeOptions {
   /** Convertit les GPX en TCX (destination COROS) ; sinon le GPX est conservé tel quel. */
   readonly convertGpx?: boolean;
+  /** Format de la conversion (défaut : TCX). */
+  readonly convertTo?: ConvertedFormat;
+  /** Taille minimale de la destination, pour le repli FIT → TCX d'une courte activité. */
+  readonly minSize?: number;
+  /** Reclassement de sport appliqué avant la conversion d'un GPX (le sport est écrit dans le FIT / TCX). */
+  readonly mapSport?: (sport: string) => string;
 }
 
 /** Nom de fichier d'origine (indice de sport pour les GPX Strava : `…-Run.gpx`). */
@@ -70,21 +79,33 @@ export function analyzeFile(
   }
   try {
     if (format === 'gpx') {
-      const parsed = parseGpx(data, baseName(id));
+      const read = parseGpx(data, baseName(id));
+      const mapped = options.convertGpx
+        ? (options.mapSport?.(read.sport) ?? read.sport)
+        : read.sport;
+      const parsed =
+        mapped === read.sport
+          ? read
+          : { ...read, sport: mapped, meta: { ...read.meta, sport: mapped } };
+      const reclassified = mapped === read.sport ? {} : { reclassifiedFrom: read.sport };
       if (!options.convertGpx) {
         return { ok: true, candidate: { id, format, size: data.byteLength, meta: parsed.meta } };
       }
-      const tcx = new TextEncoder().encode(gpxToTcx(parsed));
+      const converted = convertTrack(gpxToTrack(parsed), {
+        format: options.convertTo ?? 'tcx',
+        ...(options.minSize === undefined ? {} : { minSize: options.minSize }),
+      });
       return {
         ok: true,
+        ...reclassified,
         candidate: {
           id,
-          format: 'tcx',
+          format: converted.format,
           convertedFrom: 'gpx',
-          size: tcx.byteLength,
+          size: converted.bytes.byteLength,
           meta: parsed.meta,
         },
-        output: tcx,
+        output: converted.bytes,
       };
     }
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);

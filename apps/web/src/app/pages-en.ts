@@ -39,15 +39,27 @@ export const PAGES_EN: PagesMessages = {
         ],
       },
       {
+        q: 'Some activities are dropped as “unsupported sport”: what can I do?',
+        a: [
+          'A single unknown sport would make COROS reject the whole ZIP, so these activities are dropped, and the list (sports and files) is shown in the analysis. You can choose to treat them as an accepted sport (for example golf as walking) and run the analysis again. For an original FIT file, only the sport bytes are changed (the rest of the file is kept and the CRC recomputed); for a GPX or a Polar session, the sport is written into the converted FIT; an original TCX is not modified. The reclassification is reported. Your original file is never modified.',
+        ],
+      },
+      {
+        q: 'What about Strava?',
+        a: [
+          'Strava is supported as a source: Strava → COROS and Strava → Garmin. Request your account archive (Settings, My Account, Download or Delete Your Account), then drop the ZIP as received. The activity files in the export are often compressed (.gz): they are decompressed here. If the export contains activities.csv, the tool uses it to recover the sport of activities whose file does not state it. Manually entered activities have no file: they are counted in the report but cannot be transferred. The reverse (to Strava) does not exist in this tool. Strava menu labels may change, and the export format has not yet been validated on many accounts: check the first imported activity.',
+        ],
+      },
+      {
         q: 'What about my GPX activities?',
         a: [
-          'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to TCX, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name; the TCX format only knows Running, Biking and Other, so a walk or a hike becomes “Other”. Towards Garmin, GPX files are kept as they are.',
+          'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to FIT, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name (or, for Strava, from activities.csv) and kept: walking, hiking, swimming… Exception: a very short activity whose FIT would be smaller than COROS’s 20 KB minimum stays in TCX, which only knows Running, Biking and Other, rather than being dropped. The FIT we write has not yet been validated by real imports into COROS: check the first imported activity. Towards Garmin, GPX files are kept as they are.',
         ],
       },
       {
         q: 'Are my files modified?',
         a: [
-          'No, apart from the GPX to TCX conversion described above. The .fit and .tcx files are copied as-is into the ZIPs: only their name changes (date and sport) for a readable listing. Your original Garmin export is never touched.',
+          'No, apart from the GPX conversion described above. The .fit and .tcx files are copied as-is into the ZIPs: only their name changes (date and sport) for a readable listing. Your original Garmin export is never touched.',
         ],
       },
       {
@@ -83,7 +95,7 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'Is the tool official? Is it free?',
         a: [
-          'It is an independent, free tool, not affiliated with Garmin, COROS or Polar. No account is needed and it never asks for any of your credentials.',
+          'It is an independent, free tool, not affiliated with Garmin, COROS, Polar or Strava. No account is needed and it never asks for any of your credentials.',
         ],
       },
     ],
@@ -140,7 +152,7 @@ export const PAGES_EN: PagesMessages = {
       {
         h: 'Non-affiliation and trademarks',
         p: [
-          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin, COROS or Polar. “Garmin”, “COROS” and “Polar” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
+          'This tool is independent and is not affiliated with, endorsed or sponsored by Garmin, COROS, Polar or Strava. “Garmin”, “COROS”, “Polar” and “Strava” are trademarks of their respective owners, used here only to describe the tool’s compatibility.',
         ],
       },
       {

@@ -1,9 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { formatBytes } from '../format';
 import { I18n } from '../i18n';
 import { ProcessingService } from '../processing.service';
-import type { RejectReason } from '@watch-relay/engine';
+import { DEFAULT_SUPPORTED_SPORTS, type RejectReason } from '@watch-relay/engine';
+
+/** Nombre maximal de fichiers listés par motif à l'écran (la liste complète est dans le CSV). */
+const MAX_LISTED = 30;
 
 @Component({
   selector: 'app-analyze-step',
@@ -57,8 +67,18 @@ import type { RejectReason } from '@watch-relay/engine';
             <p class="j6n-callout" role="note">{{ a.polarConverted(r.convertedPolar) }}</p>
           }
 
+          @if (r.reclassified; as items) {
+            <p class="j6n-callout" role="note">{{ a.reclassified(items) }}</p>
+          }
+
+          @if (r.stravaWithoutFile; as n) {
+            <p class="j6n-callout" role="note">{{ a.stravaWithoutFile(n) }}</p>
+          }
+
           @if (r.convertedGpx > 0) {
-            <p class="j6n-callout" role="note">{{ a.gpxConverted(r.convertedGpx) }}</p>
+            <p class="j6n-callout" role="note">
+              {{ a.gpxConverted(r.convertedGpx, r.convertedGpxFit) }}
+            </p>
           }
 
           @if (r.healthExport; as h) {
@@ -81,6 +101,55 @@ import type { RejectReason } from '@watch-relay/engine';
                 </summary>
                 <div class="j6n-accordion__panel">
                   <p>{{ entry.hint }}</p>
+                  @if (entry.sports.length > 0) {
+                    <p class="j6n-mt-3">{{ a.sportsFound }}</p>
+                    <ul class="file-list">
+                      @for (s of entry.sports; track s.name) {
+                        <li>
+                          <strong>{{ s.name }}</strong> : {{ s.count }}
+                          <label class="reclassify" [for]="'reclass-' + s.name">
+                            {{ a.reclassify.label(s.name) }}
+                            <select
+                              class="j6n-select"
+                              [id]="'reclass-' + s.name"
+                              (change)="choose(s.name, $event)"
+                            >
+                              <option value="" [selected]="!choices()[s.name]">
+                                {{ a.reclassify.keep }}
+                              </option>
+                              @for (o of accepted; track o) {
+                                <option [value]="o" [selected]="choices()[s.name] === o">
+                                  {{ o }}
+                                </option>
+                              }
+                            </select>
+                          </label>
+                        </li>
+                      }
+                    </ul>
+                    <p class="note">{{ a.reclassify.hint }}</p>
+                    <button
+                      type="button"
+                      class="j6n-btn j6n-btn--secondary btn-wrap"
+                      [disabled]="!hasChoices()"
+                      (click)="rerun()"
+                    >
+                      {{ a.reclassify.run }}
+                    </button>
+                  }
+                  <ul class="file-list">
+                    @for (f of entry.files; track f.id) {
+                      <li>
+                        <code>{{ f.id }}</code>
+                        @if (f.detail && entry.reason === 'DUPLICATE') {
+                          <br />{{ a.keptInstead }} <code>{{ f.detail }}</code>
+                        }
+                      </li>
+                    }
+                  </ul>
+                  @if (entry.more > 0) {
+                    <p class="note">{{ a.moreFiles(entry.more) }}</p>
+                  }
                 </div>
               </details>
             }
@@ -127,15 +196,54 @@ export class AnalyzeStep {
   protected readonly report = this.processing.report;
   protected readonly bytes = (n: number): string => formatBytes(n, this.t());
 
+  /** Sports acceptés par la destination, proposés comme cibles de reclassement. */
+  protected readonly accepted = [...DEFAULT_SUPPORTED_SPORTS].sort();
+  protected readonly choices = signal<Readonly<Record<string, string>>>({});
+  protected readonly hasChoices = computed(() =>
+    Object.values(this.choices()).some((v) => v !== ''),
+  );
+
+  protected choose(sport: string, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.choices.update((c) => ({ ...c, [sport]: value }));
+  }
+
+  protected rerun(): void {
+    const chosen = Object.fromEntries(Object.entries(this.choices()).filter(([, v]) => v !== ''));
+    this.choices.set({});
+    this.processing.reprocess(chosen);
+  }
+
   protected readonly rejectedTotal = computed(() =>
     Object.values(this.report()?.rejectedByReason ?? {}).reduce((a, b) => a + b, 0),
   );
 
-  protected readonly reasons = computed(() =>
-    (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
-      ([reason, count]) => ({ reason, count, ...this.i18n.flow().reject[reason] }),
-    ),
-  );
+  protected readonly reasons = computed(() => {
+    const rejected = this.report()?.rejected ?? [];
+    return (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
+      ([reason, count]) => {
+        const items = rejected.filter((r) => r.reason === reason);
+        // Sports non pris en charge : un compte par sport (le détail du rejet est le nom du sport).
+        const bySport = new Map<string, number>();
+        if (reason === 'UNSUPPORTED_SPORT') {
+          for (const r of items) {
+            const name = r.detail ?? 'unknown';
+            bySport.set(name, (bySport.get(name) ?? 0) + 1);
+          }
+        }
+        return {
+          reason,
+          count,
+          ...this.i18n.flow().reject[reason],
+          sports: [...bySport.entries()]
+            .map(([name, n]) => ({ name, count: n }))
+            .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name)),
+          files: items.slice(0, MAX_LISTED),
+          more: Math.max(0, items.length - MAX_LISTED),
+        };
+      },
+    );
+  });
 
   protected errorText(code: string): string {
     const e = this.t().errors;

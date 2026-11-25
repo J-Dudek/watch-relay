@@ -1,5 +1,5 @@
 import { ParseError } from './fit.js';
-import { haversine, trackToTcx } from './tcx-writer.js';
+import { haversine, trackToTcx, type TrackData } from './tcx-writer.js';
 import type { ActivityMeta } from './types.js';
 
 /**
@@ -170,13 +170,18 @@ function xmlUnescape(s: string): string {
 
 /** TCX conforme au schéma Garmin (le schéma ne connaît que Running, Biking et Other). */
 export function gpxToTcx(parsed: ParsedGpx): string {
-  return trackToTcx({
+  return trackToTcx(gpxToTrack(parsed));
+}
+
+/** Trace neutre d'un GPX lu, pour l'écriture en TCX ou en FIT. */
+export function gpxToTrack(parsed: ParsedGpx): TrackData {
+  return {
     sport: parsed.sport,
     ...(parsed.name ? { name: parsed.name } : {}),
     startTime: parsed.meta.startTime,
     durationS: parsed.meta.durationS ?? 0,
     segments: parsed.segments,
-  });
+  };
 }
 
 /** Distance totale (m), utile au rapport. */
