@@ -21,6 +21,8 @@ export interface Report {
   readonly convertedGpxFit: number;
   /** Séances Polar (JSON de l'export global) converties en TCX. */
   readonly convertedPolar: number;
+  /** Activités reclassées d'un sport vers un autre (choix de l'utilisateur), regroupées par couple. */
+  readonly reclassified?: readonly { from: string; to: string; count: number }[];
   /** Export Strava : activités listées sans fichier (saisies manuelles), non transférables. */
   readonly stravaWithoutFile?: number;
   /** Présent si l'extraction CSV des données de santé a produit des lignes. */

@@ -8,6 +8,8 @@ export type AnalyzeOutcome =
   | {
       readonly ok: true;
       readonly candidate: Candidate;
+      /** Sport d'origine, si le sport a été reclassé pendant la conversion (GPX). */
+      readonly reclassifiedFrom?: string;
       /** Octets réellement écrits dans l'archive quand ils diffèrent de la source (GPX converti). */
       readonly output?: Uint8Array;
     }
@@ -37,6 +39,8 @@ export interface AnalyzeOptions {
   readonly convertTo?: ConvertedFormat;
   /** Taille minimale de la destination, pour le repli FIT → TCX d'une courte activité. */
   readonly minSize?: number;
+  /** Reclassement de sport appliqué avant la conversion d'un GPX (le sport est écrit dans le FIT / TCX). */
+  readonly mapSport?: (sport: string) => string;
 }
 
 /** Nom de fichier d'origine (indice de sport pour les GPX Strava : `…-Run.gpx`). */
@@ -75,7 +79,15 @@ export function analyzeFile(
   }
   try {
     if (format === 'gpx') {
-      const parsed = parseGpx(data, baseName(id));
+      const read = parseGpx(data, baseName(id));
+      const mapped = options.convertGpx
+        ? (options.mapSport?.(read.sport) ?? read.sport)
+        : read.sport;
+      const parsed =
+        mapped === read.sport
+          ? read
+          : { ...read, sport: mapped, meta: { ...read.meta, sport: mapped } };
+      const reclassified = mapped === read.sport ? {} : { reclassifiedFrom: read.sport };
       if (!options.convertGpx) {
         return { ok: true, candidate: { id, format, size: data.byteLength, meta: parsed.meta } };
       }
@@ -85,6 +97,7 @@ export function analyzeFile(
       });
       return {
         ok: true,
+        ...reclassified,
         candidate: {
           id,
           format: converted.format,

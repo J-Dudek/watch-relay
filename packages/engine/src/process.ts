@@ -12,7 +12,9 @@ import { runPipeline } from './pipeline.js';
 import { MAX_ARCHIVE_SIZE, splitIntoBatches } from './batching.js';
 import { buildReport, type IgnoredEntry, type Report } from './report.js';
 import { DEFAULT_LIMITS, type ScanLimits } from './limits.js';
+import { patchFitSport } from './fit-patch.js';
 import { createDuplicateRule } from './rules/duplicate.js';
+import { DEFAULT_SUPPORTED_SPORTS } from './sports.js';
 import { createPeriodRule, type Period } from './rules/period.js';
 import { PROFILES } from './profiles.js';
 import { createBatchFitRule, MIN_FILE_SIZE } from './rules/size.js';
@@ -61,6 +63,13 @@ export interface ProcessOptions {
    * l'indique pas, et compter les activités sans fichier. Les `.gz` de l'export sont toujours décompressés.
    */
   readonly stravaMetadata?: boolean;
+  /**
+   * Reclassement de sport : `{ golf: 'walking' }` fait traiter les activités « golf » comme des « walking »
+   * au lieu de les écarter. Seuls les sports acceptés par la destination sont admis comme cible. Pour un FIT
+   * d'origine, les octets du sport sont corrigés sur place (CRC recalculé) ; pour un GPX ou une séance Polar,
+   * le sport est écrit dans le fichier converti ; un TCX d'origine n'est pas modifié.
+   */
+  readonly sportMap?: Readonly<Record<string, string>>;
   readonly signal?: AbortSignal;
   readonly onProgress?: (progress: ProcessProgress) => void;
 }
@@ -118,6 +127,16 @@ export async function processArchive(
   const profile = PROFILES[options.target ?? 'coros'];
   const maxBatch = options.maxBatchSize ?? profile.maxBatchSize;
   const minSize = options.minFileSize ?? MIN_FILE_SIZE;
+  const acceptedSports = options.supportedSports ?? DEFAULT_SUPPORTED_SPORTS;
+  const sportMap = new Map(
+    Object.entries(options.sportMap ?? {}).filter(
+      ([from, to]) => from !== to && acceptedSports.has(to),
+    ),
+  );
+  const mapSport = (sport: string): string => sportMap.get(sport) ?? sport;
+  /** Activités reclassées (identifiant → sport d'origine) et FIT d'origine dont les octets sont corrigés. */
+  const reclassFrom = new Map<string, string>();
+  const patchedFit = new Set<string>();
   const targets: ArchiveTarget[] = [];
   let done = false;
 
@@ -167,15 +186,19 @@ export async function processArchive(
           continue;
         }
         for (const [i, ex] of exercises.entries()) {
-          const converted = convertTrack(ex.track, { format: profile.convertTo, minSize });
+          const polarSport = mapSport(ex.meta.sport);
+          const track =
+            polarSport === ex.track.sport ? ex.track : { ...ex.track, sport: polarSport };
+          const converted = convertTrack(track, { format: profile.convertTo, minSize });
           const candidate: Candidate = {
             id: `${id}~${String(i)}`,
             format: converted.format,
             convertedFrom: 'polar-json',
             exerciseIndex: i,
             size: converted.bytes.byteLength,
-            meta: ex.meta,
+            meta: polarSport === ex.meta.sport ? ex.meta : { ...ex.meta, sport: polarSport },
           };
+          if (polarSport !== ex.meta.sport) reclassFrom.set(candidate.id, ex.meta.sport);
           candidates.push(candidate);
           await estimator.observe(ZipSizeEstimator.groupOf(candidate), converted.bytes);
           processed++;
@@ -190,14 +213,32 @@ export async function processArchive(
           convertGpx: profile.convertGpx,
           convertTo: profile.convertTo,
           minSize,
+          mapSport,
         });
         if (outcome.ok) {
-          candidates.push(outcome.candidate);
+          let candidate = outcome.candidate;
+          let bytes = outcome.output ?? event.data;
+          if (outcome.reclassifiedFrom !== undefined) {
+            reclassFrom.set(candidate.id, outcome.reclassifiedFrom);
+          } else if (candidate.convertedFrom === undefined && sportMap.has(candidate.meta.sport)) {
+            const to = mapSport(candidate.meta.sport);
+            let ok = true;
+            if (candidate.format === 'fit') {
+              try {
+                bytes = patchFitSport(event.data, to);
+              } catch {
+                ok = false; // structure inattendue : le fichier reste tel quel (écarté s'il est non supporté)
+              }
+            }
+            if (ok) {
+              reclassFrom.set(candidate.id, candidate.meta.sport);
+              if (candidate.format === 'fit') patchedFit.add(candidate.id);
+              candidate = { ...candidate, meta: { ...candidate.meta, sport: to } };
+            }
+          }
+          candidates.push(candidate);
           // Mesure (sur un échantillon) le taux de compression de ce type de fichier.
-          await estimator.observe(
-            ZipSizeEstimator.groupOf(outcome.candidate),
-            outcome.output ?? event.data,
-          );
+          await estimator.observe(ZipSizeEstimator.groupOf(candidate), bytes);
         } else if ('skipped' in outcome) {
           ignored.push({
             path: event.path,
@@ -227,8 +268,20 @@ export async function processArchive(
       fileRules,
       [createDuplicateRule()],
     );
+    const reclassCounts = new Map<string, number>();
+    for (const c of kept) {
+      const from = reclassFrom.get(c.id);
+      if (from === undefined) continue;
+      const key = `${from}\u0000${c.meta.sport}`;
+      reclassCounts.set(key, (reclassCounts.get(key) ?? 0) + 1);
+    }
+    const reclassified = [...reclassCounts.entries()].map(([key, count]) => {
+      const [from = '', to = ''] = key.split('\u0000');
+      return { from, to, count };
+    });
     const report = {
       ...buildReport(kept, [...rejections, ...rejected], ignored),
+      ...(reclassified.length > 0 ? { reclassified } : {}),
       ...(strava && strava.withoutFile > 0 ? { stravaWithoutFile: strava.withoutFile } : {}),
     };
 
@@ -277,7 +330,12 @@ export async function processArchive(
               const candidate = byId.get(`${id}~${String(i)}`);
               const index = batchOf.get(`${id}~${String(i)}`);
               if (!candidate || index === undefined) continue;
-              const converted = convertTrack(ex.track, { format: profile.convertTo, minSize });
+              const converted = convertTrack(
+                candidate.meta.sport === ex.track.sport
+                  ? ex.track
+                  : { ...ex.track, sport: candidate.meta.sport },
+                { format: profile.convertTo, minSize },
+              );
               const output = converted.bytes;
               if (output.byteLength !== candidate.size || converted.format !== candidate.format) {
                 throw new Error('Le fichier source a changé pendant le traitement.');
@@ -315,6 +373,7 @@ export async function processArchive(
             }
             output = converted.bytes;
           }
+          if (patchedFit.has(id)) output = patchFitSport(event.data, candidate.meta.sport);
           if (output.byteLength !== candidate.size || event.format !== sourceFormat) {
             throw new Error('Le fichier source a changé pendant le traitement.');
           }
