@@ -4,7 +4,7 @@
 
 # watch-relay
 
-**Migrez l'historique de vos activités entre montres Garmin, COROS et Polar, sans qu'aucune donnée ne quitte votre navigateur.**
+**Migrez l'historique de vos activités entre montres Garmin, COROS, Polar et Strava, sans qu'aucune donnée ne quitte votre navigateur.**
 
 [![CI](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/ci.yml)
 [![Security scans](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml/badge.svg)](https://github.com/J-Dudek/watch-relay/actions/workflows/security-scans.yml)
@@ -12,11 +12,11 @@
 ![Node 22](https://img.shields.io/badge/node-22-339933.svg)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)
 
-watch-relay lit l'export de données d'un compte **Garmin**, **COROS** ou **Polar**, en extrait les fichiers d'activité
+watch-relay lit l'export de données d'un compte **Garmin**, **COROS**, **Polar** ou **Strava**, en extrait les fichiers d'activité
 (`.fit`, `.tcx`), applique les contraintes de la plateforme de destination et produit des archives prêtes à
 importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou écarté, et pourquoi.
 
-> Projet indépendant, non affilié à Garmin, COROS ni Polar. « Garmin », « COROS » et « Polar » sont des marques de leurs propriétaires respectifs.
+> Projet indépendant, non affilié à Garmin, COROS, Polar ni Strava. « Garmin », « COROS », « Polar » et « Strava » sont des marques de leurs propriétaires respectifs.
 
 ## Sommaire
 
@@ -50,8 +50,9 @@ le contrôle et le découpage.
 
 ## Fonctionnalités
 
-- **Quatre trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS et Polar → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
+- **Six trajets** : Garmin → COROS, COROS → Garmin, Polar → COROS, Polar → Garmin, Strava → COROS et Strava → Garmin, chacun avec ses règles et ses consignes d'import (choix de la source et de la destination dans l'interface).
 - **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'**export global JSON de Polar** (un JSON par séance) est converti en TCX (trace GPS, fréquence cardiaque, cadence, calories) ; le schéma vient d'un convertisseur communautaire et n'est **pas validé sur un export récent** : les JSON de forme inattendue sont ignorés ou signalés, jamais convertis de travers.
+- **Strava, source uniquement** : l'archive du compte Strava (Paramètres, Mon compte, Télécharger ou supprimer votre compte) se dépose telle quelle. Ses fichiers d'activité, souvent compressés (`.fit.gz`, `.gpx.gz`), sont **décompressés en flux** avec les mêmes garde-fous que les ZIP (ratio, taille par fichier et volume global comptés sur les octets réellement produits ; un gzip tronqué, corrompu ou imbriqué est ignoré sans interrompre le lot). `activities.csv` est lu pour retrouver le sport des activités dont le fichier ne l'indique pas (colonnes reconnues par leur contenu, en-têtes localisés) sans jamais écraser un sport lu dans le fichier. Les activités saisies à la main n'ont pas de fichier : elles sont comptées dans le rapport mais ne sont pas transférables. Le format de l'export n'est **pas validé sur de nombreux comptes** (voir les limites).
 - **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
@@ -210,6 +211,7 @@ Les exports réels ne vont jamais dans le dépôt (`/local-data/` est ignoré ; 
 ```bash
 npm run inspect:export -- local-data/export-garmin.zip                          # vers COROS
 npm run inspect:export -- local-data/export-coros.zip --target garmin           # vers Garmin
+npm run inspect:export -- local-data/export-strava.zip --source strava          # export Strava (sports du CSV)
 npm run inspect:export -- local-data/export-garmin.zip --out local-data/sortie  # écrit les ZIP pour un import manuel
 ```
 
@@ -237,6 +239,7 @@ Ce qui reste à valider, par honnêteté :
 - **Export COROS** : son contenu exact n'est pas documenté ; le moteur lit n'importe quelle structure, mais cela doit
   être confirmé sur un vrai export. Les limites Garmin (nombre de fichiers par import, sports acceptés) ne sont pas
   toutes documentées.
+- **Export Strava** : structure (dossier `activities/`, `.gz`, colonnes d'`activities.csv`) décrite d'après la documentation et des exports connus, à confirmer sur de vrais comptes ; la correspondance des types d'activité Strava vers les sports (EN/FR) est volontairement prudente et ne devine pas les types inconnus.
 - **Appareils réels** : OPFS n'a pas été vérifié sur un vrai iPhone ; en repli mémoire, un export de plusieurs Go peut
   faire échouer l'onglet. Les tests sur appareils physiques restent à faire.
 - **Pas de délai maximal strict par fichier** : le décodage est synchrone ; des plafonds de mémoire et d'entrée limitent
