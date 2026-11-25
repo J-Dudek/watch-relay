@@ -29,6 +29,7 @@ importer, accompagnées d'un rapport détaillé de ce qui a été retenu ou éca
 - [Démarrage rapide](#démarrage-rapide)
 - [Qualité et tests](#qualité-et-tests)
 - [Référencement (SEO)](#référencement-seo)
+- [Ligne de commande](#ligne-de-commande)
 - [Valider sur un vrai export](#valider-sur-un-vrai-export)
 - [Déploiement](#déploiement)
 - [État du projet et limites connues](#état-du-projet-et-limites-connues)
@@ -54,6 +55,7 @@ le contrôle et le découpage.
 - **Polar, source uniquement** : à ma connaissance, Polar Flow n'importe pas d'historique d'activités (seulement des itinéraires), donc Garmin → Polar et COROS → Polar n'existent pas ; les destinations Polar sont affichées comme indisponibles. Les séances Polar s'exportent une par une (TCX, FIT ou GPX) : regroupez-les dans un ZIP ; une séance exportée en plusieurs formats n'est comptée qu'une fois. L'**export global JSON de Polar** (un JSON par séance) est converti en TCX (trace GPS, fréquence cardiaque, cadence, calories) ; le schéma vient d'un convertisseur communautaire et n'est **pas validé sur un export récent** : les JSON de forme inattendue sont ignorés ou signalés, jamais convertis de travers.
 - **Strava, source uniquement** : l'archive du compte Strava (Paramètres, Mon compte, Télécharger ou supprimer votre compte) se dépose telle quelle. Ses fichiers d'activité, souvent compressés (`.fit.gz`, `.gpx.gz`), sont **décompressés en flux** avec les mêmes garde-fous que les ZIP (ratio, taille par fichier et volume global comptés sur les octets réellement produits ; un gzip tronqué, corrompu ou imbriqué est ignoré sans interrompre le lot). `activities.csv` est lu pour retrouver le sport des activités dont le fichier ne l'indique pas (colonnes reconnues par leur contenu, en-têtes localisés) sans jamais écraser un sport lu dans le fichier. Les activités saisies à la main n'ont pas de fichier : elles sont comptées dans le rapport mais ne sont pas transférables. Le format de l'export n'est **pas validé sur de nombreux comptes** (voir les limites).
 - **Reclassement de sport** : un sport non pris en charge par COROS (golf, kayak…) est écarté par défaut, mais l'analyse permet de le traiter comme un sport accepté (golf → marche) puis de relancer l'analyse. Sur un FIT d'origine, **seuls les octets du sport sont corrigés sur place** (messages `session`, `lap` et `sport`, sous-sport remis à « generic », CRC recalculé, taille inchangée) sans réécrire le fichier ; un GPX ou une séance Polar reçoit le sport dans son FIT converti ; un TCX d'origine n'est pas modifié. Cible limitée aux sports acceptés ; reclassement signalé dans le rapport.
+- **Ligne de commande** : le même moteur est disponible sans navigateur (`packages/cli`, voir [Ligne de commande](#ligne-de-commande)), pour les très gros exports ou les scripts.
 - **Lecture récursive et en flux** des archives, quelle que soit leur structure : les fichiers sont reconnus par leur
   **contenu** (octets magiques), jamais par leur nom ou leur extension.
 - **Règles par destination** : taille, nombre de points, sports pris en charge, période, doublons (même sport, ± 2 s :
@@ -203,6 +205,26 @@ La navigation interne utilise l'History API (pas de rechargement : un traitement
 donc les moteurs de recherche voient la version française (pas d'URL ni de `hreflang` par langue).
 
 Tests : `scripts/seo.test.mjs` (`npm run test:scripts`) pour les fonctions pures, `e2e/seo.spec.ts` sur le build réel.
+
+## Ligne de commande
+
+Le moteur tourne aussi sous Node (≥ 22), sans navigateur ni serveur : mêmes règles, mêmes rapports, rien n'est envoyé.
+
+```bash
+npm run build -w watch-relay                       # produit packages/cli/dist/watch-relay.mjs
+node packages/cli/dist/watch-relay.mjs export.zip  # Garmin → COROS, archives dans ./watch-relay-out
+
+watch-relay export.zip --from strava --to garmin --out sortie/
+watch-relay export.zip --dry-run                   # rapport seulement, rien n'est conservé
+watch-relay export.zip --since 2020-01-01 --until 2022-12-31
+watch-relay export.zip --reclassify golf=walking   # traite un sport écarté comme un sport accepté
+watch-relay export.zip --json --report rapport.csv # JSON sur stdout, CSV détaillé
+```
+
+`--from` : `garmin` (défaut), `coros`, `polar`, `strava` ; `--to` : `coros` (défaut) ou `garmin`. `--verbose` liste tous
+les fichiers écartés (10 par motif sinon). Codes de sortie : `0` succès, `1` erreur de traitement, `2` usage
+incorrect, `3` aucune activité importable, `130` interrompu. Le paquet est marqué `private` : sa publication sur npm
+(`npx watch-relay`) reste à décider (nom, licence), puis retirer `private` de `packages/cli/package.json`.
 
 ## Valider sur un vrai export
 
