@@ -65,7 +65,9 @@ const MAX_LISTED = 30;
           }
 
           @if (r.convertedGpx > 0) {
-            <p class="j6n-callout" role="note">{{ a.gpxConverted(r.convertedGpx) }}</p>
+            <p class="j6n-callout" role="note">
+              {{ a.gpxConverted(r.convertedGpx, r.convertedGpxFit) }}
+            </p>
           }
 
           @if (r.healthExport; as h) {

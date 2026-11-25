@@ -81,9 +81,13 @@ const en: Base = {
     stravaWithoutFile: (n: number) =>
       `${String(n)} Strava activity(ies) without a file (manual entries): they have no track to transfer and are not included.`,
     polarConverted: (n: number) =>
-      `${String(n)} Polar session(s) (JSON from the global export) converted to TCX. Times and time zones come from the export: check the first imported session.`,
-    gpxConverted: (n: number) =>
-      `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (walking and hiking become “Other”, the TCX format has no other category).`,
+      `${String(n)} Polar session(s) (JSON from the global export) converted to FIT or TCX. Times and time zones come from the export: check the first imported session.`,
+    gpxConverted: (n: number, fit: number) =>
+      fit === n
+        ? `${String(n)} GPX activity(ies) converted to FIT: COROS only imports FIT or TCX files, and FIT keeps the sport (walking, hiking…).`
+        : fit === 0
+          ? `${String(n)} GPX activity(ies) converted to TCX: COROS only imports FIT or TCX files (Walking or Hiking becomes “Other”, TCX has no other sport).`
+          : `${String(n)} GPX activity(ies) converted: ${String(fit)} to FIT (sport kept) and ${String(n - fit)} to TCX, too short for a FIT that COROS accepts (the sport becomes Running, Biking or “Other”).`,
     healthExported: (rows: number, files: number) =>
       `Health data extracted: ${String(rows)} row(s) from ${String(files)} file(s), in a separate CSV (not importable into COROS).`,
     nothing: 'No importable activity was found. Make sure you uploaded the complete Garmin export.',
@@ -248,7 +252,7 @@ const enPolar: PolarMessages = {
     noteBefore: 'Polar also offers a global export of all your data (JSON):',
     noteStrong: 'drop the ZIP as received',
     noteAfter:
-      ', sessions are converted to TCX (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
+      ', sessions are converted (format not validated on a recent export). Polar Flow does not import history, so Polar is only a source.',
     haveFile: 'I have my file',
   },
   drop: {

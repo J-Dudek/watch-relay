@@ -81,9 +81,13 @@ export const fr = {
     stravaWithoutFile: (n: number) =>
       `${String(n)} activité(s) Strava sans fichier (saisies manuelles) : elles n’ont pas de trace à transférer et ne sont pas incluses.`,
     polarConverted: (n: number) =>
-      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
-    gpxConverted: (n: number) =>
-      `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`,
+      `${String(n)} séance(s) Polar (JSON de l’export global) convertie(s) en FIT ou TCX. Heures et fuseaux issus de l’export : à vérifier sur la première séance importée.`,
+    gpxConverted: (n: number, fit: number) =>
+      fit === n
+        ? `${String(n)} activité(s) GPX convertie(s) en FIT : COROS n’importe que des fichiers FIT ou TCX, et le FIT conserve le sport (marche, randonnée…).`
+        : fit === 0
+          ? `${String(n)} activité(s) GPX convertie(s) en TCX : COROS n’importe que des fichiers FIT ou TCX (le sport Marche ou Randonnée devient « Autre », le format TCX n’en connaît pas d’autre).`
+          : `${String(n)} activité(s) GPX convertie(s) : ${String(fit)} en FIT (sport conservé) et ${String(n - fit)} en TCX, trop courtes pour un FIT que COROS accepte (le sport y devient Course, Vélo ou « Autre »).`,
     healthExported: (rows: number, files: number) =>
       `Données de santé extraites : ${String(rows)} ligne(s) issues de ${String(files)} fichier(s), dans un CSV à part (non importables dans COROS).`,
     nothing:
@@ -273,7 +277,7 @@ const frPolar: PolarMessages = {
     noteBefore: 'Polar propose aussi un export global de toutes tes données (JSON) :',
     noteStrong: 'dépose le ZIP reçu tel quel',
     noteAfter:
-      ', les séances sont converties en TCX (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
+      ', les séances sont converties (format non validé sur un export récent). Polar Flow n’importe pas d’historique : Polar n’est qu’une source.',
     haveFile: 'J’ai mon fichier',
   },
   drop: {

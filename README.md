@@ -59,7 +59,7 @@ le contrôle et le découpage.
   on garde le fichier le plus complet).
 - **Découpage** en archives ≤ 180 Mo **compressés** (taille mesurée par échantillonnage par type de fichier, avec repli prudent si une archive dépasse 198 Mo), en ordre chronologique, nommées de façon lisible
   (`coros-import-01-2019-03_2021-07.zip`).
-- **GPX → TCX** : COROS n'importe que FIT et TCX ; les activités GPX (ex. issues de Strava) sont converties en TCX (trace, altitude, fréquence cardiaque, cadence, distance cumulée), sans parseur XML ni DTD, avec le sport déduit du fichier ou de son nom. Vers Garmin, les GPX sont conservés tels quels.
+- **GPX → FIT (COROS)** : COROS n'importe que FIT et TCX ; les activités GPX (ex. issues de Strava) sont converties en **FIT** avec l'encodeur officiel de Garmin (trace, altitude, fréquence cardiaque, cadence, distance cumulée), ce qui **conserve le sport** (marche, randonnée, natation, ski…) que le TCX réduirait à Course, Vélo ou « Autre ». Le GPX est lu sans parseur XML ni DTD, avec le sport déduit du fichier ou de son nom (ou d'`activities.csv` pour Strava). Une activité si courte que son FIT passerait sous les 20 Ko minimum de COROS reste en TCX plutôt que d'être écartée. Il en va de même pour les séances de l'export global Polar vers COROS. Vers Garmin, les GPX sont conservés tels quels. **Les FIT produits n'ont pas encore été validés par des imports réels dans COROS** (voir les limites).
 - **Données de santé reconnues** : les fichiers de suivi quotidien, de sommeil, etc. sont comptés et signalés (et non traités comme « corrompus »). Ils ne sont pas transférés (COROS n'importe que des activités), mais une option explicite (désactivée par défaut) les extrait en **CSV lisibles**, dans une archive à part, pour un archivage personnel (les formats JSON de Garmin variant, les fichiers sont aplatis sans supposer de champs).
 - **Rapport clair** : motifs d'exclusion en langage simple, répartition par sport et par année, export **CSV**
   (protégé contre l'injection de formule).
@@ -239,6 +239,7 @@ Ce qui reste à valider, par honnêteté :
 - **Export COROS** : son contenu exact n'est pas documenté ; le moteur lit n'importe quelle structure, mais cela doit
   être confirmé sur un vrai export. Les limites Garmin (nombre de fichiers par import, sports acceptés) ne sont pas
   toutes documentées.
+- **FIT produits par conversion (GPX, Polar → COROS)** : relus et vérifiés (CRC, sport, nombre de points) par le décodeur officiel dans les tests, mais pas encore importés dans un vrai compte COROS. Importer d'abord un petit lot, puis vérifier le sport et la trace de la première activité.
 - **Export Strava** : structure (dossier `activities/`, `.gz`, colonnes d'`activities.csv`) décrite d'après la documentation et des exports connus, à confirmer sur de vrais comptes ; la correspondance des types d'activité Strava vers les sports (EN/FR) est volontairement prudente et ne devine pas les types inconnus.
 - **Appareils réels** : OPFS n'a pas été vérifié sur un vrai iPhone ; en repli mémoire, un export de plusieurs Go peut
   faire échouer l'onglet. Les tests sur appareils physiques restent à faire.

@@ -47,13 +47,13 @@ export const PAGES_EN: PagesMessages = {
       {
         q: 'What about my GPX activities?',
         a: [
-          'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to TCX, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name; the TCX format only knows Running, Biking and Other, so a walk or a hike becomes “Other”. Towards Garmin, GPX files are kept as they are.',
+          'COROS only imports FIT or TCX files. GPX activities (for example those imported from Strava into Garmin) are therefore converted to FIT, with the track, altitude, heart rate and cadence when present. The sport is deduced from the file or its name (or, for Strava, from activities.csv) and kept: walking, hiking, swimming… Exception: a very short activity whose FIT would be smaller than COROS’s 20 KB minimum stays in TCX, which only knows Running, Biking and Other, rather than being dropped. The FIT we write has not yet been validated by real imports into COROS: check the first imported activity. Towards Garmin, GPX files are kept as they are.',
         ],
       },
       {
         q: 'Are my files modified?',
         a: [
-          'No, apart from the GPX to TCX conversion described above. The .fit and .tcx files are copied as-is into the ZIPs: only their name changes (date and sport) for a readable listing. Your original Garmin export is never touched.',
+          'No, apart from the GPX conversion described above. The .fit and .tcx files are copied as-is into the ZIPs: only their name changes (date and sport) for a readable listing. Your original Garmin export is never touched.',
         ],
       },
       {
