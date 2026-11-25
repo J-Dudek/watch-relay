@@ -74,6 +74,10 @@ const en: Base = {
     ignored: 'file(s) ignored',
     health: (n: number) =>
       `${String(n)} health data file(s) detected (sleep, daily monitoring…). They are not included: this tool only transfers activities.`,
+    sportsFound: 'Sports involved:',
+    keptInstead: 'kept:',
+    moreFiles: (n: number) =>
+      `… and ${String(n)} more. The full list is in the CSV report, on the next step.`,
     stravaWithoutFile: (n: number) =>
       `${String(n)} Strava activity(ies) without a file (manual entries): they have no track to transfer and are not included.`,
     polarConverted: (n: number) =>

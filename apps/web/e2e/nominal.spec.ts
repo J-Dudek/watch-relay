@@ -54,3 +54,23 @@ test('refuse un fichier qui n’est pas un ZIP', async ({ page }) => {
     .setInputFiles({ name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from('x') });
   await expect(page.getByRole('alert')).toContainText('n’est pas un ZIP');
 });
+
+test('le rapport liste les sports non pris en charge et les doublons', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'J’ai mon fichier' }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'export.zip',
+    mimeType: 'application/zip',
+    buffer: await buildExport(),
+  });
+  await expect(page.getByText('activité(s) prête(s)')).toBeVisible({ timeout: 30_000 });
+
+  await page.getByText('Sports non pris en charge (1)').click();
+  await expect(page.getByText('Sports concernés :')).toBeVisible();
+  await expect(page.getByText('golf : 1')).toBeVisible();
+  await expect(page.locator('.file-list code', { hasText: 'golf.fit' })).toBeVisible();
+
+  await page.getByText('Doublons (1)').click();
+  await expect(page.locator('.file-list code', { hasText: 'run1-copy.fit' })).toBeVisible();
+  await expect(page.getByText(/conservé :/)).toBeVisible();
+});

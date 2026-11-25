@@ -5,6 +5,9 @@ import { I18n } from '../i18n';
 import { ProcessingService } from '../processing.service';
 import type { RejectReason } from '@watch-relay/engine';
 
+/** Nombre maximal de fichiers listés par motif à l'écran (la liste complète est dans le CSV). */
+const MAX_LISTED = 30;
+
 @Component({
   selector: 'app-analyze-step',
   imports: [KeyValuePipe],
@@ -85,6 +88,29 @@ import type { RejectReason } from '@watch-relay/engine';
                 </summary>
                 <div class="j6n-accordion__panel">
                   <p>{{ entry.hint }}</p>
+                  @if (entry.sports.length > 0) {
+                    <p class="j6n-mt-3">{{ a.sportsFound }}</p>
+                    <ul class="file-list">
+                      @for (s of entry.sports; track s.name) {
+                        <li>
+                          <strong>{{ s.name }}</strong> : {{ s.count }}
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <ul class="file-list">
+                    @for (f of entry.files; track f.id) {
+                      <li>
+                        <code>{{ f.id }}</code>
+                        @if (f.detail && entry.reason === 'DUPLICATE') {
+                          <br />{{ a.keptInstead }} <code>{{ f.detail }}</code>
+                        }
+                      </li>
+                    }
+                  </ul>
+                  @if (entry.more > 0) {
+                    <p class="note">{{ a.moreFiles(entry.more) }}</p>
+                  }
                 </div>
               </details>
             }
@@ -135,11 +161,32 @@ export class AnalyzeStep {
     Object.values(this.report()?.rejectedByReason ?? {}).reduce((a, b) => a + b, 0),
   );
 
-  protected readonly reasons = computed(() =>
-    (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
-      ([reason, count]) => ({ reason, count, ...this.i18n.flow().reject[reason] }),
-    ),
-  );
+  protected readonly reasons = computed(() => {
+    const rejected = this.report()?.rejected ?? [];
+    return (Object.entries(this.report()?.rejectedByReason ?? {}) as [RejectReason, number][]).map(
+      ([reason, count]) => {
+        const items = rejected.filter((r) => r.reason === reason);
+        // Sports non pris en charge : un compte par sport (le détail du rejet est le nom du sport).
+        const bySport = new Map<string, number>();
+        if (reason === 'UNSUPPORTED_SPORT') {
+          for (const r of items) {
+            const name = r.detail ?? 'unknown';
+            bySport.set(name, (bySport.get(name) ?? 0) + 1);
+          }
+        }
+        return {
+          reason,
+          count,
+          ...this.i18n.flow().reject[reason],
+          sports: [...bySport.entries()]
+            .map(([name, n]) => ({ name, count: n }))
+            .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name)),
+          files: items.slice(0, MAX_LISTED),
+          more: Math.max(0, items.length - MAX_LISTED),
+        };
+      },
+    );
+  });
 
   protected errorText(code: string): string {
     const e = this.t().errors;

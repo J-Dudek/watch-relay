@@ -74,6 +74,10 @@ export const fr = {
     ignored: 'fichier(s) ignoré(s)',
     health: (n: number) =>
       `${String(n)} fichier(s) de données de santé détecté(s) (sommeil, suivi quotidien…). Ils ne sont pas inclus : cet outil ne transfère que les activités.`,
+    sportsFound: 'Sports concernés :',
+    keptInstead: 'conservé :',
+    moreFiles: (n: number) =>
+      `… et ${String(n)} autre(s). La liste complète est dans le rapport CSV, à l’étape suivante.`,
     stravaWithoutFile: (n: number) =>
       `${String(n)} activité(s) Strava sans fichier (saisies manuelles) : elles n’ont pas de trace à transférer et ne sont pas incluses.`,
     polarConverted: (n: number) =>

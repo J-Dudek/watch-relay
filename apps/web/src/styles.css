@@ -146,6 +146,12 @@ code {
 .summary {
   font-size: var(--j6n-text-md);
 }
+.file-list {
+  margin: var(--j6n-space-2) 0 0;
+  padding-left: var(--j6n-space-4);
+  font-size: var(--j6n-text-sm);
+  overflow-wrap: anywhere;
+}
 .cols {
   display: grid;
   gap: var(--j6n-space-4);
