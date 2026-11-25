@@ -1,10 +1,10 @@
 import { TextReader, Uint8ArrayReader, ZipWriter } from '@zip.js/zip.js';
 import { analyzeFile } from './analyze.js';
 import { ZipSizeEstimator } from './compress.js';
-import { gpxToTcx, parseGpx } from './gpx.js';
+import { convertTrack } from './fit-writer.js';
+import { gpxToTrack, parseGpx } from './gpx.js';
 import { parsePolarSession } from './polar.js';
 import { applySportHints, parseStravaCsv } from './strava.js';
-import { trackToTcx } from './tcx-writer.js';
 import { HealthCollector, type HealthExportStats } from './health-export.js';
 import { isHealthPath } from './health.js';
 import { archiveName, entryName } from './naming.js';
@@ -15,7 +15,7 @@ import { DEFAULT_LIMITS, type ScanLimits } from './limits.js';
 import { createDuplicateRule } from './rules/duplicate.js';
 import { createPeriodRule, type Period } from './rules/period.js';
 import { PROFILES } from './profiles.js';
-import { createBatchFitRule } from './rules/size.js';
+import { createBatchFitRule, MIN_FILE_SIZE } from './rules/size.js';
 import { scanArchive } from './scan.js';
 import type { ArchiveSink, ArchiveTarget } from './sink.js';
 import type { Candidate, FileRule, Rejection, Target } from './types.js';
@@ -117,6 +117,7 @@ export async function processArchive(
   const limits = options.limits ?? DEFAULT_LIMITS;
   const profile = PROFILES[options.target ?? 'coros'];
   const maxBatch = options.maxBatchSize ?? profile.maxBatchSize;
+  const minSize = options.minFileSize ?? MIN_FILE_SIZE;
   const targets: ArchiveTarget[] = [];
   let done = false;
 
@@ -166,17 +167,17 @@ export async function processArchive(
           continue;
         }
         for (const [i, ex] of exercises.entries()) {
-          const tcx = new TextEncoder().encode(trackToTcx(ex.track));
+          const converted = convertTrack(ex.track, { format: profile.convertTo, minSize });
           const candidate: Candidate = {
             id: `${id}~${String(i)}`,
-            format: 'tcx',
+            format: converted.format,
             convertedFrom: 'polar-json',
             exerciseIndex: i,
-            size: tcx.byteLength,
+            size: converted.bytes.byteLength,
             meta: ex.meta,
           };
           candidates.push(candidate);
-          await estimator.observe(ZipSizeEstimator.groupOf(candidate), tcx);
+          await estimator.observe(ZipSizeEstimator.groupOf(candidate), converted.bytes);
           processed++;
           onProgress?.({ phase: 'analyze', processed, bytesRead });
         }
@@ -187,6 +188,8 @@ export async function processArchive(
       } else if (event.kind === 'activity') {
         const outcome = analyzeFile(id, event.format, event.data, {
           convertGpx: profile.convertGpx,
+          convertTo: profile.convertTo,
+          minSize,
         });
         if (outcome.ok) {
           candidates.push(outcome.candidate);
@@ -274,8 +277,9 @@ export async function processArchive(
               const candidate = byId.get(`${id}~${String(i)}`);
               const index = batchOf.get(`${id}~${String(i)}`);
               if (!candidate || index === undefined) continue;
-              const output = new TextEncoder().encode(trackToTcx(ex.track));
-              if (output.byteLength !== candidate.size) {
+              const converted = convertTrack(ex.track, { format: profile.convertTo, minSize });
+              const output = converted.bytes;
+              if (output.byteLength !== candidate.size || converted.format !== candidate.format) {
                 throw new Error('Le fichier source a changé pendant le traitement.');
               }
               await (writers[index] as ZipWriter<unknown>).add(
@@ -299,12 +303,17 @@ export async function processArchive(
           if (candidate.convertedFrom === 'gpx' && event.format === 'gpx') {
             const slash = event.path.lastIndexOf('/');
             // Le sport du candidat peut venir d'`activities.csv` (Strava) : c'est lui qui est écrit.
-            output = new TextEncoder().encode(
-              gpxToTcx({
+            const converted = convertTrack(
+              gpxToTrack({
                 ...parseGpx(event.data, event.path.slice(slash + 1)),
                 sport: candidate.meta.sport,
               }),
+              { format: profile.convertTo, minSize },
             );
+            if (converted.format !== candidate.format) {
+              throw new Error('Le fichier source a changé pendant le traitement.');
+            }
+            output = converted.bytes;
           }
           if (output.byteLength !== candidate.size || event.format !== sourceFormat) {
             throw new Error('Le fichier source a changé pendant le traitement.');

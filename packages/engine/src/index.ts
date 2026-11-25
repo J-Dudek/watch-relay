@@ -30,3 +30,4 @@ export * from './polar.js';
 export * from './tcx-writer.js';
 export * from './gzip.js';
 export * from './strava.js';
+export * from './fit-writer.js';

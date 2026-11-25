@@ -187,7 +187,9 @@ export function applySportHints(
     if (hint === undefined || hint === c.meta.sport) return c;
     if (c.meta.sport !== 'generic' && c.meta.sport !== 'unknown') return c;
     const delta =
-      c.convertedFrom === 'gpx' ? tcxSportName(hint).length - tcxSportName(c.meta.sport).length : 0;
+      c.convertedFrom === 'gpx' && c.format === 'tcx'
+        ? tcxSportName(hint).length - tcxSportName(c.meta.sport).length
+        : 0;
     return { ...c, size: c.size + delta, meta: { ...c.meta, sport: hint } };
   });
 }

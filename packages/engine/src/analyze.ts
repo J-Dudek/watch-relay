@@ -1,5 +1,6 @@
 import { NotActivityError, parseFit, ParseError } from './fit.js';
-import { gpxToTcx, MAX_GPX_BYTES, parseGpx } from './gpx.js';
+import { convertTrack, type ConvertedFormat } from './fit-writer.js';
+import { gpxToTrack, MAX_GPX_BYTES, parseGpx } from './gpx.js';
 import { parseTcx } from './tcx.js';
 import type { ActivityFormat, Candidate, Rejection } from './types.js';
 
@@ -32,6 +33,10 @@ export const MAX_FIT_ANALYZE_BYTES = 32 * 1024 * 1024;
 export interface AnalyzeOptions {
   /** Convertit les GPX en TCX (destination COROS) ; sinon le GPX est conservé tel quel. */
   readonly convertGpx?: boolean;
+  /** Format de la conversion (défaut : TCX). */
+  readonly convertTo?: ConvertedFormat;
+  /** Taille minimale de la destination, pour le repli FIT → TCX d'une courte activité. */
+  readonly minSize?: number;
 }
 
 /** Nom de fichier d'origine (indice de sport pour les GPX Strava : `…-Run.gpx`). */
@@ -74,17 +79,20 @@ export function analyzeFile(
       if (!options.convertGpx) {
         return { ok: true, candidate: { id, format, size: data.byteLength, meta: parsed.meta } };
       }
-      const tcx = new TextEncoder().encode(gpxToTcx(parsed));
+      const converted = convertTrack(gpxToTrack(parsed), {
+        format: options.convertTo ?? 'tcx',
+        ...(options.minSize === undefined ? {} : { minSize: options.minSize }),
+      });
       return {
         ok: true,
         candidate: {
           id,
-          format: 'tcx',
+          format: converted.format,
           convertedFrom: 'gpx',
-          size: tcx.byteLength,
+          size: converted.bytes.byteLength,
           meta: parsed.meta,
         },
-        output: tcx,
+        output: converted.bytes,
       };
     }
     const meta = format === 'fit' ? parseFit(data) : parseTcx(data);

@@ -2,6 +2,7 @@ import { MAX_BATCH_SIZE } from './batching.js';
 import { createPointsRule } from './rules/points.js';
 import { createSizeRules } from './rules/size.js';
 import { createSportRule } from './rules/sport.js';
+import type { ConvertedFormat } from './fit-writer.js';
 import type { FileRule, Target } from './types.js';
 
 /** Garmin Connect, import manuel : FIT ≤ 50 Mo, GPX/TCX ≤ 25 Mo (support Garmin). */
@@ -21,6 +22,11 @@ export interface TargetProfile {
   readonly maxBatchSize: number;
   /** Convertir les GPX en TCX (COROS n'importe que FIT et TCX ; Garmin accepte le GPX). */
   readonly convertGpx: boolean;
+  /**
+   * Format des traces converties (GPX, JSON Polar). COROS : FIT, qui conserve le sport (le TCX le réduit à
+   * Running, Biking ou Other). Garmin : TCX, que Garmin Connect importe sans le réduire inutilement.
+   */
+  readonly convertTo: ConvertedFormat;
   fileRules(overrides: ProfileOverrides): FileRule[];
 }
 
@@ -36,6 +42,7 @@ export const PROFILES: Record<Target, TargetProfile> = {
     archivePrefix: 'coros-import',
     maxBatchSize: MAX_BATCH_SIZE,
     convertGpx: true,
+    convertTo: 'fit',
     fileRules: (o) => [
       ...createSizeRules(o.minFileSize, o.maxFileSize),
       createSportRule(o.supportedSports),
@@ -46,6 +53,7 @@ export const PROFILES: Record<Target, TargetProfile> = {
     archivePrefix: 'garmin-import',
     maxBatchSize: MAX_BATCH_SIZE,
     convertGpx: false,
+    convertTo: 'tcx',
     fileRules: (o) => [
       {
         id: 'too-large-garmin',

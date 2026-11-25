@@ -1,10 +1,11 @@
 import fc from 'fast-check';
-import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
+import { BlobReader, Uint8ArrayWriter, ZipReader } from '@zip.js/zip.js';
 import { describe, expect, it } from 'vitest';
 import {
   applySportHints,
   createMemorySink,
   parseCsv,
+  parseFit,
   parseStravaCsv,
   processArchive,
   stravaSport,
@@ -132,7 +133,7 @@ describe('export Strava de bout en bout', () => {
     ]);
   }
 
-  it('vers COROS : .gz décompressés, GPX converti en TCX avec le sport du CSV, activité manuelle signalée', async () => {
+  it('vers COROS : .gz décompressés, GPX converti en FIT avec le sport du CSV, activité manuelle signalée', async () => {
     const result = await processArchive(await archive(), createMemorySink(), {
       stravaMetadata: true,
       minFileSize: 0,
@@ -145,14 +146,15 @@ describe('export Strava de bout en bout', () => {
     });
     const files = await names(result.archives[0]?.blob as Blob);
     expect(files.sort()).toEqual([
-      '2021-06-01T08-00-00_running.tcx',
+      '2021-06-01T08-00-00_running.fit',
       '2021-06-03T08-00-00_cycling.fit',
     ]);
     const r = new ZipReader(new BlobReader(result.archives[0]?.blob as Blob));
-    const tcx = (await r.getEntries()).find((e) => e.filename.endsWith('.tcx'));
-    expect(
-      await (tcx as { getData: (w: TextWriter) => Promise<string> }).getData(new TextWriter()),
-    ).toContain('Sport="Running"');
+    const converted = (await r.getEntries()).find((e) => e.filename.startsWith('2021-06-01'));
+    const bytes = await (
+      converted as { getData: (w: Uint8ArrayWriter) => Promise<Uint8Array> }
+    ).getData(new Uint8ArrayWriter());
+    expect(parseFit(bytes)).toMatchObject({ sport: 'running', points: 1500 });
     await r.close();
   });
 
